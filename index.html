@@ -1,113 +1,63 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم - مكتب حج فاضل</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مكتب حج فاضل - تسجيل الدخول</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        h2 { color: #001d3d; border-bottom: 3px solid #ffd60a; padding-bottom: 10px; }
-        
-        .add-box { display: flex; gap: 10px; background: #eef2f7; padding: 20px; border-radius: 10px; margin-bottom: 25px; }
-        input { padding: 12px; border: 1px solid #ccc; border-radius: 6px; flex: 1; font-size: 16px; }
-        
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-add { background: #27ae60; }
-        .btn-update { background: #2980b9; }
-        .btn-delete { background: #e74c3c; }
-        .btn:hover { opacity: 0.8; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #001d3d; color: white; padding: 15px; }
-        td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
-        .price-input { width: 120px; text-align: center; border: 2px solid #ddd; color: #2c3e50; font-weight: bold; }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #7B1FA2; }
+        h2 { color: #333; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; }
+        button { width: 100%; padding: 12px; background: #7B1FA2; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; margin-top: 15px; }
+        button:hover { background: #D32F2F; } /* أحمر عند التمرير */
+        .logo-text { font-weight: bold; color: #7B1FA2; font-size: 24px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>إدارة أسعار العملات - مكتب حج فاضل</h2>
-
-    <div class="add-box">
-        <input type="text" id="newCode" placeholder="رمز العملة (مثلاً: GBP)">
-        <input type="text" id="newBuy" placeholder="سعر الشراء">
-        <input type="text" id="newSale" placeholder="سعر البيع">
-        <button class="btn btn-add" onclick="addNewCurrency()">+ إضافة عملة جديدة</button>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>العملة</th>
-                <th>سعر الشراء</th>
-                <th>سعر البيع</th>
-                <th>إجراءات</th>
-            </tr>
-        </thead>
-        <tbody id="currencyTable">
-            </tbody>
-    </table>
+<div class="login-box">
+    <div class="logo-text">مكتب حج فاضل</div>
+    <h2>تسجيل الدخول للنظام</h2>
+    <input type="email" id="mail" placeholder="البريد الإلكتروني">
+    <input type="password" id="pass" placeholder="كلمة المرور">
+    <button id="btn-login">دخول للمكتب</button>
 </div>
 
-<script>
-    // جلب البيانات من الذاكرة أو تعيين قيم افتراضية
-    let rates = JSON.parse(localStorage.getItem("office_rates")) || [
-        { code: "USD", buy: "152,500", sale: "153,000" },
-        { code: "EUR", buy: "1.175", sale: "1.16" },
-        { code: "TRY", buy: "0", sale: "0" }
-    ];
+<!-- ربط Firebase Modules كما في الصورة image_394eb8.png -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    function renderTable() {
-        const tableBody = document.getElementById("currencyTable");
-        tableBody.innerHTML = "";
-        rates.forEach((item, index) => {
-            tableBody.innerHTML += `
-                <tr>
-                    <td style="font-weight:bold; color:#001d3d; font-size:18px;">${item.code}</td>
-                    <td><input type="text" class="price-input" id="buy-${index}" value="${item.buy}"></td>
-                    <td><input type="text" class="price-input" id="sale-${index}" value="${item.sale}"></td>
-                    <td>
-                        <button class="btn btn-update" onclick="updateRate(${index})">تحديث السعر</button>
-                        <button class="btn btn-delete" onclick="deleteCurrency(${index})">حذف</button>
-                    </td>
-                </tr>
-            `;
-        });
-        localStorage.setItem("office_rates", JSON.stringify(rates));
-    }
+  // إعدادات مشروعك الحقيقية
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+    authDomain: "haj-fadel-accounting.firebaseapp.com",
+    projectId: "haj-fadel-accounting",
+    storageBucket: "haj-fadel-accounting.firebasestorage.app",
+    messagingSenderId: "449205985318",
+    appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+  };
 
-    function updateRate(index) {
-        rates[index].buy = document.getElementById(`buy-${index}`).value;
-        rates[index].sale = document.getElementById(`sale-${index}`).value;
-        localStorage.setItem("office_rates", JSON.stringify(rates));
-        alert("تم تحديث سعر " + rates[index].code + " بنجاح!");
-    }
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-    function addNewCurrency() {
-        const code = document.getElementById("newCode").value.toUpperCase();
-        const buy = document.getElementById("newBuy").value;
-        const sale = document.getElementById("newSale").value;
+  document.getElementById('btn-login').addEventListener('click', (e) => {
+    const email = document.getElementById('mail').value;
+    const password = document.getElementById('pass').value;
 
-        if (code && buy && sale) {
-            rates.push({ code, buy, sale });
-            renderTable();
-            document.getElementById("newCode").value = "";
-            document.getElementById("newBuy").value = "";
-            document.getElementById("newSale").value = "";
-        } else {
-            alert("يرجى إكمال جميع الحقول");
-        }
-    }
-
-    function deleteCurrency(index) {
-        if (confirm("هل أنت متأكد من حذف هذه العملة؟")) {
-            rates.splice(index, 1);
-            renderTable();
-        }
-    }
-
-    renderTable();
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // عند نجاح الدخول نذهب للوحة التحكم
+        alert("تم الدخول بنجاح! أهلاً بك يا حاج.");
+        window.location.href = "dashboard.html"; 
+      })
+      .catch((error) => {
+        alert("خطأ: تأكد من الإيميل وكلمة السر");
+      });
+  });
 </script>
+
 </body>
 </html>
