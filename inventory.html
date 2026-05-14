@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المخزن - مكتب حاج فاضل</title>
+    <style>
+        :root { --main-purple: #800080; --light-purple: #f3e5f5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-right: 8px solid var(--main-purple); }
+        h2 { color: var(--main-purple); text-align: center; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; flex: 1; min-width: 150px; font-size: 16px; }
+        .btn-save { background: var(--main-purple); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-save:hover { background: #600060; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--light-purple); color: var(--main-purple); padding: 15px; border-bottom: 2px solid var(--main-purple); }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📦 إدارة بضاعة المخزن</h2>
+    
+    <div class="input-group">
+        <input type="text" id="itemName" placeholder="اسم المادة">
+        <input type="number" id="itemQty" placeholder="الكمية المتوفرة">
+        <input type="number" id="itemPrice" placeholder="السعر بالدولار ($)">
+        <button class="btn-save" onclick="addNewItem()">إضافة المادة</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>المادة</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody id="inventoryTable">
+            <!-- هنا ستظهر البضاعة -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function addNewItem() {
+        const name = document.getElementById('itemName').value;
+        const qty = document.getElementById('itemQty').value;
+        const price = document.getElementById('itemPrice').value;
+
+        if(name && qty && price) {
+            const table = document.getElementById('inventoryTable');
+            const row = `<tr>
+                <td><b>${name}</b></td>
+                <td>${qty}</td>
+                <td>$${price}</td>
+                <td><span class="status-badge">متوفر</span></td>
+            </tr>`;
+            table.innerHTML += row;
+            
+            // مسح الخانات بعد الإضافة
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQty').value = '';
+            document.getElementById('itemPrice').value = '';
+        } else {
+            alert("يرجى ملء كافة الخانات");
+        }
+    }
+</script>
+
+</body>
+</html>
