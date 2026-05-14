@@ -1,63 +1,36 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مكتب حج فاضل - تسجيل الدخول</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #7B1FA2; }
-        h2 { color: #333; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; }
-        button { width: 100%; padding: 12px; background: #7B1FA2; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; margin-top: 15px; }
-        button:hover { background: #D32F2F; } /* أحمر عند التمرير */
-        .logo-text { font-weight: bold; color: #7B1FA2; font-size: 24px; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
-
-<div class="login-box">
-    <div class="logo-text">مكتب حج فاضل</div>
-    <h2>تسجيل الدخول للنظام</h2>
-    <input type="email" id="mail" placeholder="البريد الإلكتروني">
-    <input type="password" id="pass" placeholder="كلمة المرور">
-    <button id="btn-login">دخول للمكتب</button>
+<!-- واجهة إضافة مستخدم جديد وتحديد صلاحياته -->
+<div class="card p-4 shadow-sm">
+    <h4 class="mb-3">إضافة مستخدم جديد وصلاحياته</h4>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <input type="text" id="userName" class="form-control" placeholder="اسم المستخدم">
+        </div>
+        <div class="col-md-6">
+            <select id="userRole" class="form-select">
+                <option value="employee">مندوب / موظف</option>
+                <option value="admin">مدير نظام</option>
+            </select>
+        </div>
+        
+        <!-- قائمة الصلاحيات -->
+        <div class="col-12 mt-3">
+            <h6>تخصيص الصلاحيات:</h6>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="p_view_profit">
+                <label class="form-check-label">رؤية الأرباح والخزنة</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="p_edit_stock">
+                <label class="form-check-label">تعديل كميات المخزن</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="p_delete_invoice">
+                <label class="form-check-label">حذف الفواتير</label>
+            </div>
+        </div>
+        
+        <div class="col-12 mt-4">
+            <button onclick="saveUser()" class="btn btn-primary w-100">حفظ المستخدم وصلاحياته</button>
+        </div>
+    </div>
 </div>
-
-<!-- ربط Firebase Modules كما في الصورة image_394eb8.png -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-  // إعدادات مشروعك الحقيقية
-  const firebaseConfig = {
-    apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
-    authDomain: "haj-fadel-accounting.firebaseapp.com",
-    projectId: "haj-fadel-accounting",
-    storageBucket: "haj-fadel-accounting.firebasestorage.app",
-    messagingSenderId: "449205985318",
-    appId: "1:449205985318:web:2dece1e1412165b01f46e7"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-
-  document.getElementById('btn-login').addEventListener('click', (e) => {
-    const email = document.getElementById('mail').value;
-    const password = document.getElementById('pass').value;
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // عند نجاح الدخول نذهب للوحة التحكم
-        alert("تم الدخول بنجاح! أهلاً بك يا حاج.");
-        window.location.href = "dashboard.html"; 
-      })
-      .catch((error) => {
-        alert("خطأ: تأكد من الإيميل وكلمة السر");
-      });
-  });
-</script>
-
-</body>
-</html>
