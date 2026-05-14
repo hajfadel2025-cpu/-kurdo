@@ -3,173 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم مكتب حاج فاضل - المندوب الكامل</title>
+    <!-- هذا السطر هو المسؤول عن الألوان والترتيب -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --purple-main: #800080; --bg-light: #f4f7f6; }
-        body { background-color: var(--bg-light); font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .sidebar { min-width: 250px; background: var(--purple-main); color: white; min-height: 100vh; }
-        .nav-link { color: rgba(255,255,255,0.8); margin: 5px 0; border-radius: 5px; }
-        .nav-link:hover, .active-link { background: rgba(255,255,255,0.2); color: white; }
-        .card-header { background-color: var(--purple-main); color: white; font-weight: bold; }
-        .btn-purple { background-color: var(--purple-main); color: white; }
-        #productPreview img { max-width: 100px; border-radius: 8px; margin-top: 10px; }
-        @media print { .sidebar, .no-print, .search-box { display: none !important; } .main-content { margin: 0; width: 100%; } }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .card { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; margin-top: 20px; }
+        .btn-purple { background-color: #800080; color: white; border-radius: 8px; padding: 10px 25px; }
+        .btn-purple:hover { background-color: #600060; color: white; }
     </style>
 </head>
 <body>
-
-<div class="d-flex">
-    <!-- القائمة الجانبية -->
-    <div class="sidebar p-3 no-print">
-        <h4 class="text-center mb-4 border-bottom pb-2">مكتب حاج فاضل</h4>
-        <nav class="nav flex-column">
-            <a class="nav-link active-link" href="#"><i class="fas fa-home me-2"></i> الشاشة الرئيسية</a>
-            <a class="nav-link" href="#" onclick="showSection('inventory')"><i class="fas fa-warehouse me-2"></i> المخزن</a>
-            <a class="nav-link" href="#" onclick="showSection('sales')"><i class="fas fa-file-invoice-dollar me-2"></i> فاتورة بيع</a>
-            <a class="nav-link" href="#" onclick="showSection('customers')"><i class="fas fa-users me-2"></i> العملاء</a>
-            <a class="nav-link" href="#" id="adminProfitBtn" style="display:none;"><i class="fas fa-chart-line me-2"></i> الأرباح</a>
-            <a class="nav-link text-danger mt-5" href="index.html"><i class="fas fa-sign-out-alt me-2"></i> خروج</a>
-        </nav>
-    </div>
-
-    <!-- المحتوى الرئيسي -->
-    <div class="flex-grow-1 p-4 main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-            <h2 id="sectionTitle">لوحة التحكم</h2>
-            <div class="search-box w-50">
-                <input type="text" id="globalSearch" class="form-control" placeholder="🔍 بحث شامل عن مواد، عملاء، أو فواتير...">
-            </div>
-        </div>
-
-        <!-- قسم الإحصائيات السريعة -->
-        <div class="row g-3 mb-4 no-print" id="statsRow">
-            <div class="col-md-3">
-                <div class="card p-3 shadow-sm border-0 bg-white">
-                    <small class="text-muted">عدد المواد</small>
-                    <h3 id="stockCount">0</h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3 shadow-sm border-0 bg-white">
-                    <small class="text-muted">مبيعات اليوم</small>
-                    <h3 id="dailySales">$0</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم فاتورة البيع -->
-        <section id="salesSection" class="section-content">
-            <div class="card shadow-sm">
-                <div class="card-header">إنشاء فاتورة بيع جديدة</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label>العميل</label>
-                            <div class="input-group">
-                                <select class="form-select" id="invCustomer"></select>
-                                <button class="btn btn-outline-secondary" onclick="showSection('customers')">+</button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label>المادة</label>
-                            <select class="form-select" id="invProduct" onchange="previewItem()"></select>
-                            <div id="productPreview"></div>
-                        </div>
-                        <div class="col-md-2">
-                            <label>الكمية</label>
-                            <input type="number" class="form-control" id="invQty" oninput="calcTotal()">
-                        </div>
-                        <div class="col-md-2">
-                            <label>السعر ($)</label>
-                            <input type="number" class="form-control" id="invPrice" oninput="calcTotal()">
-                        </div>
-                        <div class="col-12 text-end">
-                            <h4 class="mt-2">الإجمالي: <span id="invTotal">0</span> $</h4>
-                            <button class="btn btn-purple px-5" onclick="saveInvoice()">حفظ وطباعة</button>
-                            <button class="btn btn-success" onclick="shareWhatsApp()">واتساب</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- قسم المخزن (سيتم تبديله ديناميكياً) -->
-        <section id="inventorySection" class="section-content" style="display:none;">
-            <div class="card">
-                <div class="card-header">إضافة أصناف للمخزن</div>
-                <div class="card-body">
-                    <!-- نموذج إضافة مواد مع صورة -->
-                    <div class="row g-2">
-                        <div class="col-md-3"><input type="text" id="pName" class="form-control" placeholder="اسم المادة"></div>
-                        <div class="col-md-2"><input type="number" id="pQty" class="form-control" placeholder="الكمية"></div>
-                        <div class="col-md-2"><input type="number" id="pPrice" class="form-control" placeholder="سعر الشراء"></div>
-                        <div class="col-md-3"><input type="file" id="pImage" class="form-control"></div>
-                        <div class="col-md-2"><button class="btn btn-purple w-100" onclick="addToStock()">إضافة</button></div>
-                    </div>
-                </div>
-            </div>
-        </section>
+<div class="container mt-5">
+    <!-- هنا يوضع الكود الذي ظهر في صورتك لكن داخل حاوية منظمة -->
+    <div class="card p-4">
+        <h4 class="mb-4" style="color: #800080;">إضافة مستخدم جديد وصلاحياته</h4>
+        <!-- بقية الكود... -->
     </div>
 </div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-
-<script>
-    // --- بيانات Firebase (ضع كود مشروعك هنا) ---
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // --- التبديل بين الأقسام ---
-    function showSection(section) {
-        document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
-        document.getElementById(section + 'Section').style.display = 'block';
-        document.getElementById('sectionTitle').innerText = section === 'sales' ? 'المبيعات' : 'المخزن';
-    }
-
-    // --- حسابات الفاتورة ---
-    function calcTotal() {
-        const q = document.getElementById('invQty').value || 0;
-        const p = document.getElementById('invPrice').value || 0;
-        document.getElementById('invTotal').innerText = (q * p).toLocaleString();
-    }
-
-    // --- البحث الشامل ---
-    document.getElementById('globalSearch').addEventListener('keyup', function() {
-        let val = this.value.toLowerCase();
-        document.querySelectorAll('tr').forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
-        });
-    });
-
-    // --- وظائف المندوب (حفظ وطباعة) ---
-    function saveInvoice() {
-        alert("تم حفظ الفاتورة في السجل وخصم المواد من المخزن");
-        window.print();
-    }
-
-    function shareWhatsApp() {
-        const msg = `مكتب حاج فاضل\nفاتورة بيع\nالإجمالي: ${document.getElementById('invTotal').innerText} $`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    // --- التحقق من الصلاحيات (مثال) ---
-    const userRole = "admin"; // يتم جلبها عند تسجيل الدخول
-    if(userRole === "admin") {
-        document.getElementById('adminProfitBtn').style.display = 'block';
-    }
-</script>
-
 </body>
 </html>
