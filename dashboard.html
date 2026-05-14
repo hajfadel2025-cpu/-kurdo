@@ -3,107 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام مكتب حاج فاضل v2.0</title>
-    
+    <title>نظام مندوب مكتب حاج فاضل v2.0</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        /* الألوان الأساسية للمكتب */
-        :root { --purple: #800080; --light-grey: #f4f7f6; }
-        
-        body { 
-            background-color: var(--light-grey); 
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            margin: 0; padding: 0;
-        }
-
-        /* تنسيق القائمة الجانبية */
-        .sidebar {
-            width: 260px; background: var(--purple); color: white;
-            height: 100vh; position: fixed; right: 0; top: 0; padding: 20px;
-            z-index: 1000;
-        }
-
+        :root { --purple-main: #800080; --bg-light: #f4f7f6; }
+        body { background-color: var(--bg-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; }
+        /* القائمة الجانبية */
+        .sidebar { width: 250px; background: var(--purple-main); color: white; height: 100vh; position: fixed; right: 0; top: 0; padding: 20px; z-index: 1000; }
         /* المحتوى الرئيسي */
-        .main-content {
-            margin-right: 260px; padding: 30px; min-height: 100vh;
-        }
-
-        /* كروت العرض */
-        .card-custom {
-            background: white; border-radius: 15px; border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 25px;
-        }
-
-        .btn-purple { background: var(--purple); color: white; border-radius: 8px; border: none; padding: 10px 20px; }
-        .btn-purple:hover { background: #600060; color: white; }
-
-        .nav-link { color: #eee; padding: 12px; display: block; text-decoration: none; border-radius: 8px; margin-bottom: 5px; }
+        .main-content { margin-right: 250px; padding: 30px; }
+        .card-custom { background: white; border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 25px; }
+        .btn-purple { background-color: var(--purple-main); color: white; border-radius: 10px; padding: 10px 20px; border: none; font-weight: bold; }
+        .btn-purple:hover { background-color: #600060; color: white; }
+        .nav-link { color: rgba(255,255,255,0.8); padding: 12px; display: block; text-decoration: none; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; }
         .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
-        
-        /* البحث العلوي */
-        .top-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; }
+        .top-bar { background: white; padding: 15px 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; }
+        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h3 class="text-center mb-4">مكتب حاج فاضل</h3>
-        <hr>
-        <a href="#" class="nav-link"><i class="fas fa-home ms-2"></i> الرئيسية</a>
-        <a href="#" class="nav-link"><i class="fas fa-box ms-2"></i> المخزن</a>
-        <a href="#" class="nav-link"><i class="fas fa-shopping-cart ms-2"></i> المبيعات</a>
-        <a href="#" class="nav-link"><i class="fas fa-user-shield ms-2"></i> الصلاحيات</a>
-        <a href="index.html" class="nav-link text-warning mt-5"><i class="fas fa-power-off ms-2"></i> خروج</a>
+    <div class="sidebar shadow">
+        <div class="text-center mb-4">
+            <h4 class="fw-bold">مكتب حاج فاضل</h4>
+            <small class="opacity-75">نظام المندوب الكامل</small>
+        </div>
+        <hr class="opacity-25">
+        <nav>
+            <a href="#" class="nav-link"><i class="fas fa-home ms-2"></i> الرئيسية</a>
+            <a href="#" class="nav-link"><i class="fas fa-box ms-2"></i> المخزن</a>
+            <a href="#" class="nav-link"><i class="fas fa-shopping-cart ms-2"></i> المبيعات (فاتورة)</a>
+            <a href="#" class="nav-link"><i class="fas fa-users ms-2"></i> العملاء</a>
+            <a href="#" class="nav-link"><i class="fas fa-user-shield ms-2"></i> الصلاحيات</a>
+            <a href="index.html" class="nav-link text-warning mt-5"><i class="fas fa-power-off ms-2"></i> تسجيل خروج</a>
+        </nav>
     </div>
 
     <div class="main-content">
-        <div class="top-bar shadow-sm">
-            <input type="text" id="searchInput" class="form-control w-50" placeholder="🔍 ابحث هنا عن أي مادة أو عميل...">
+        <div class="top-bar">
+            <div class="w-50">
+                <input type="text" id="globalSearch" class="form-control rounded-pill" placeholder="🔍 بحث شامل عن مادة، عميل، أو فاتورة...">
+            </div>
+            <div class="status-badge">النظام متصل أونلاين</div>
         </div>
 
         <div class="row">
-            <div class="col-md-4">
-                <div class="card-custom text-center">
-                    <h6 class="text-muted">المواد المتوفرة</h6>
-                    <h2 style="color: var(--purple);">1,420</h2>
-                </div>
-            </div>
-            
-            <div class="col-md-8">
+            <div class="col-md-7">
                 <div class="card-custom">
-                    <h5 class="mb-4" style="color: var(--purple);">إضافة مستخدم وصلاحياته</h5>
+                    <h5 class="mb-4 fw-bold" style="color: var(--purple-main);"><i class="fas fa-user-plus ms-2"></i> إضافة مستخدم جديد وتحديد صلاحياته</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <input type="text" class="form-control" placeholder="اسم المندوب">
+                            <label class="form-label">اسم الموظف / المندوب</label>
+                            <input type="text" class="form-control" placeholder="مثلاً: محمد علي">
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">نوع الحساب</label>
                             <select class="form-select">
-                                <option>مندوب</option>
-                                <option>مدير</option>
+                                <option>مندوب / موظف ميداني</option>
+                                <option>مدير مخزن</option>
+                                <option>مدير نظام (كامل الصلاحيات)</option>
                             </select>
                         </div>
                         <div class="col-12 mt-3">
-                            <label class="d-block mb-2">تحديد الصلاحيات:</label>
-                            <input type="checkbox"> رؤية الأرباح | 
-                            <input type="checkbox"> تعديل المخزن | 
-                            <input type="checkbox"> حذف الفواتير
+                            <h6 class="fw-bold">تحديد الصلاحيات المتاحة:</h6>
+                            <div class="d-flex gap-4 mt-2">
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="c1"> <label for="c1">رؤية الأرباح</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="c2"> <label for="c2">تعديل المخزن</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="c3"> <label for="c3">حذف الفواتير</label></div>
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <button class="btn btn-purple w-100">حفظ البيانات</button>
+                        <div class="col-12 mt-4 text-start">
+                            <button class="btn btn-purple px-5 shadow-sm">حفظ المستخدم وصلاحياته</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card-custom text-center">
+                    <h6 class="text-muted mb-2">إجمالي المواد بالمخزن</h6>
+                    <h1 class="display-4 fw-bold" style="color: var(--purple-main);">1,450</h1>
+                    <p class="text-success fw-bold mt-2">تحديث منذ دقيقة واحدة</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('searchInput').onkeyup = function() {
+        document.getElementById('globalSearch').addEventListener('keyup', function() {
+            // كود البحث البرمجي سيربط مع Firebase لاحقاً
             console.log("Searching for: " + this.value);
-            // سيتم ربط البحث مع Firebase هنا
-        };
+        });
     </script>
 </body>
 </html>
