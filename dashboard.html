@@ -55,14 +55,14 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">اسم الموظف / المندوب</label>
-                            <input type="text" class="form-control" placeholder="مثلاً: محمد علي">
+                            <input type="text" id="employeeName" class="form-control" placeholder="مثلاً: محمد علي">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">نوع الحساب</label>
-                            <select class="form-select">
-                                <option>مندوب / موظف ميداني</option>
-                                <option>مدير مخزن</option>
-                                <option>مدير نظام (كامل الصلاحيات)</option>
+                            <select id="accountType" class="form-select">
+                                <option value="مندوب">مندوب / موظف ميداني</option>
+                                <option value="مدير مخزن">مدير مخزن</option>
+                                <option value="مدير نظام">مدير نظام (كامل الصلاحيات)</option>
                             </select>
                         </div>
                         <div class="col-12 mt-3">
@@ -74,7 +74,7 @@
                             </div>
                         </div>
                         <div class="col-12 mt-4 text-start">
-                            <button class="btn btn-purple px-5 shadow-sm">حفظ المستخدم وصلاحياته</button>
+                            <button id="saveUserBtn" class="btn btn-purple px-5 shadow-sm">حفظ المستخدم وصلاحياته</button>
                         </div>
                     </div>
                 </div>
@@ -83,18 +83,14 @@
             <div class="col-md-5">
                 <div class="card-custom text-center">
                     <h6 class="text-muted mb-2">إجمالي المواد بالمخزن</h6>
-                    <h1 class="display-4 fw-bold" style="color: var(--purple-main);">1,450</h1>
-                    <p class="text-success fw-bold mt-2">تحديث منذ دقيقة واحدة</p>
+                    <h1 class="display-4 fw-bold" id="totalItemsCount" style="color: var(--purple-main);">0</h1>
+                    <p class="text-success fw-bold mt-2">تحديث مباشر أونلاين</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.getElementById('globalSearch').addEventListener('keyup', function() {
-            // كود البحث البرمجي سيربط مع Firebase لاحقاً
-            console.log("Searching for: " + this.value);
-        });
-    </script>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="dashboard.js"></script>
 </body>
 </html>
