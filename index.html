@@ -1,36 +1,44 @@
-<!-- واجهة إضافة مستخدم جديد وتحديد صلاحياته -->
-<div class="card p-4 shadow-sm">
-    <h4 class="mb-3">إضافة مستخدم جديد وصلاحياته</h4>
-    <div class="row g-3">
-        <div class="col-md-6">
-            <input type="text" id="userName" class="form-control" placeholder="اسم المستخدم">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حج فاضل - تسجيل الدخول</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-container { background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #2c3e50; }
+        h2 { color: #2c3e50; margin-bottom: 10px; font-size: 24px; }
+        p { color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
+        .form-group { margin-bottom: 20px; text-align: right; }
+        label { display: block; margin-bottom: 8px; color: #34495e; font-weight: 600; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: right; outline: none; transition: 0.3s; }
+        input:focus { border-color: #2c3e50; box-shadow: 0 0 5px rgba(44, 62, 80, 0.3); }
+        button { width: 100%; padding: 12px; background: #2c3e50; border: none; color: white; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1a252f; }
+        .error-msg { color: #e74c3c; font-size: 14px; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>نظام المندوبين والمبيعات</h2>
+    <p>مكتب الحج فاضل</p>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label>البريد الإلكتروني:</label>
+            <input type="email" id="email" placeholder="example@mail.com" required>
         </div>
-        <div class="col-md-6">
-            <select id="userRole" class="form-select">
-                <option value="employee">مندوب / موظف</option>
-                <option value="admin">مدير نظام</option>
-            </select>
+        <div class="form-group">
+            <label>كلمة المرور:</label>
+            <input type="password" id="password" placeholder="********" required>
         </div>
-        
-        <!-- قائمة الصلاحيات -->
-        <div class="col-12 mt-3">
-            <h6>تخصيص الصلاحيات:</h6>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="p_view_profit">
-                <label class="form-check-label">رؤية الأرباح والخزنة</label>
-            </div>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="p_edit_stock">
-                <label class="form-check-label">تعديل كميات المخزن</label>
-            </div>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="p_delete_invoice">
-                <label class="form-check-label">حذف الفواتير</label>
-            </div>
-        </div>
-        
-        <div class="col-12 mt-4">
-            <button onclick="saveUser()" class="btn btn-primary w-100">حفظ المستخدم وصلاحياته</button>
-        </div>
-    </div>
+        <button type="submit">تسجيل الدخول</button>
+        <div class="error-msg" id="errorMsg">خطأ في البريد الإلكتروني أو كلمة المرور!</div>
+    </form>
 </div>
+
+<script type="module" src="login.js"></script>
+</body>
+</html>
