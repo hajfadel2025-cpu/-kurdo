@@ -3,13 +3,14 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getFirestore, doc, setDoc, addDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
+// الإعدادات الحقيقية الخاصة بمشروعك
 const firebaseConfig = {
-    apiKey: "ضع_هنا_الـ_apiKey_الخاص_بك",
-    authDomain: "ضع_هنا_الـ_authDomain_الخاص_بك",
-    projectId: "ضع_هنا_الـ_projectId_الخاص_بك",
-    storageBucket: "ضع_هنا_الـ_storageBucket_الخاص_بك",
-    messagingSenderId: "ضع_هنا_الـ_messagingSenderId_الخاص_بك",
-    appId: "ضع_هنا_الـ_appId_الخاص_بك"
+    apiKey: "AIzaSyBYYTuw5by2RZM27mZynVuvmmWxQNvomKQ",
+    authDomain: "haj-fadel-accounting.firebaseapp.com",
+    projectId: "haj-fadel-accounting",
+    storageBucket: "haj-fadel-accounting.firebasestorage.app",
+    messagingSenderId: "449205985318",
+    appId: "1:449205985318:web:2dece1e1412165b01f46e7"
 };
 
 const app = initializeApp(firebaseConfig);
