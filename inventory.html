@@ -17,6 +17,7 @@
         th { background: var(--light-purple); color: var(--main-purple); padding: 15px; border-bottom: 2px solid var(--main-purple); }
         td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
         .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; background: #e8f5e9; color: #2e7d32; }
+        .status-out { background: #ffebee; color: #c62828; }
     </style>
 </head>
 <body>
@@ -28,7 +29,7 @@
         <input type="text" id="itemName" placeholder="اسم المادة">
         <input type="number" id="itemQty" placeholder="الكمية المتوفرة">
         <input type="number" id="itemPrice" placeholder="السعر بالدولار ($)">
-        <button class="btn-save" onclick="addNewItem()">إضافة المادة</button>
+        <button class="btn-save" id="addItemBtn">إضافة المادة</button>
     </div>
 
     <table>
@@ -41,36 +42,11 @@
             </tr>
         </thead>
         <tbody id="inventoryTable">
-            <!-- هنا ستظهر البضاعة -->
-        </tbody>
+            </tbody>
     </table>
 </div>
 
-<script>
-    function addNewItem() {
-        const name = document.getElementById('itemName').value;
-        const qty = document.getElementById('itemQty').value;
-        const price = document.getElementById('itemPrice').value;
-
-        if(name && qty && price) {
-            const table = document.getElementById('inventoryTable');
-            const row = `<tr>
-                <td><b>${name}</b></td>
-                <td>${qty}</td>
-                <td>$${price}</td>
-                <td><span class="status-badge">متوفر</span></td>
-            </tr>`;
-            table.innerHTML += row;
-            
-            // مسح الخانات بعد الإضافة
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemQty').value = '';
-            document.getElementById('itemPrice').value = '';
-        } else {
-            alert("يرجى ملء كافة الخانات");
-        }
-    }
-</script>
-
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="inventory.js"></script>
 </body>
 </html>
