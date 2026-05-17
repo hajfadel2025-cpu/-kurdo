@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // الإعدادات الحقيقية الخاصة بمشروعك
 const firebaseConfig = {
-    apiKey: "AIzaSyBYYTuw5by2RZM27mZynVuvmmWxQNvomKQ",
+    apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
     authDomain: "haj-fadel-accounting.firebaseapp.com",
     projectId: "haj-fadel-accounting",
     storageBucket: "haj-fadel-accounting.firebasestorage.app",
