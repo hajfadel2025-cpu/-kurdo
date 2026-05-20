@@ -22,7 +22,6 @@ if (addCustomerBtn) {
                 createdAt: new Date()
             });
             alert(`تمت إضافة العميل ${name} بنجاح!`);
-            // تفريغ الحقول
             document.getElementById('custName').value = '';
             document.getElementById('custPhone').value = '';
             document.getElementById('custInitialDebt').value = '0';
@@ -43,16 +42,32 @@ if (customersTable) {
                 const cust = docSnap.data();
                 const id = docSnap.id;
 
-                // تحديد شكل شارة الدين (أخضر إذا صفر، أحمر إذا عليه ديون)
-                const badgeClass = cust.totalDebt <= 0 ? 'debt-badge debt-clean' : 'debt-badge debt-active';
-                const badgeText = cust.totalDebt <= 0 ? 'خالص الحساب' : `مطلوب $${cust.totalDebt.toFixed(2)}`;
+                let badgeClass = '';
+                let badgeText = '';
+                let statusIcon = '';
+
+                // فحص حالة الحساب (دين، خالص، أو دفعة مقدمة بالسالب)
+                if (cust.totalDebt === 0) {
+                    badgeClass = 'debt-badge debt-clean';
+                    badgeText = 'خالص الحساب';
+                    statusIcon = '✅';
+                } else if (cust.totalDebt > 0) {
+                    badgeClass = 'debt-badge debt-active';
+                    badgeText = `مطلوب $${cust.totalDebt.toFixed(2)}`;
+                    statusIcon = '⚠️';
+                } else {
+                    // إذا كان الحساب أصغر من صفر (بالسالب) يعني دفعة مقدمة للزبون
+                    badgeClass = 'debt-badge';
+                    badgeText = `له رصيد مدور $${Math.abs(cust.totalDebt).toFixed(2)}`;
+                    statusIcon = '💰';
+                }
 
                 const row = `
                     <tr>
                         <td><strong>${cust.customerName}</strong></td>
                         <td>${cust.phone || 'غير مسجل'}</td>
-                        <td><span class="${badgeClass}">${badgeText}</span></td>
-                        <td>${cust.totalDebt <= 0 ? '✅' : '⚠️'}</td>
+                        <td><span class="${badgeClass}" style="${cust.totalDebt < 0 ? 'background: #e3f2fd; color: #0d47a1;' : ''}">${badgeText}</span></td>
+                        <td>${statusIcon}</td>
                         <td>
                             <button class="btn-pay" onclick="payDebt('${id}', ${cust.totalDebt})">💸 قبض دفعة</button>
                         </td>
@@ -66,26 +81,22 @@ if (customersTable) {
     });
 }
 
-// 3. دالة سداد وقبض الدفعات المادية من العملاء لتحديث الحساب سحابياً
+// 3. دالة سداد وقبض الدفعات المادية (تقبل الدفعات الزائدة الآن)
 window.payDebt = async function(id, currentDebt) {
-    const amount = parseFloat(prompt(`الدين الحالي هو $${currentDebt.toFixed(2)}\nأدخل المبلغ الواصل المراد قبضه من الزبون ($):`));
+    const amount = parseFloat(prompt(`الحساب الحالي للعميل هو $${currentDebt.toFixed(2)}\nأدخل المبلغ المقبوض ($):`));
     
     if (isNaN(amount) || amount <= 0) {
         alert("الرجاء إدخال مبلغ صحيح!");
         return;
     }
 
-    if (amount > currentDebt) {
-        alert("المبلغ المدفوع أكبر من الدين المترتب على العميل!");
-        return;
-    }
-
     try {
         const customerRef = doc(db, "customers", id);
+        // خصم المبلغ مباشرة حتى لو أصبح الناتج بالسالب
         await updateDoc(customerRef, {
             totalDebt: currentDebt - amount
         });
-        alert("تم تسجيل الدفعة وتحديث حساب العميل بنجاح!");
+        alert("تم تسجيل الدفعة بنجاح وتحديث الحساب السحابي!");
     } catch (error) {
         console.error("خطأ في تحديث الدفعة:", error);
     }
