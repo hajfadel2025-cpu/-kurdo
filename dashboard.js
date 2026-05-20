@@ -1,67 +1,85 @@
 import { db } from './firebase-config.js';
-import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 1. تفعيل زر حفظ مستخدم جديد في قاعدة البيانات
-document.getElementById('saveUserBtn').addEventListener('click', async function() {
-    const name = document.getElementById('employeeName').value;
-    const type = document.getElementById('accountType').value;
-    
-    // قراءة الصلاحيات التي تم تحديدها بعلامة صح
-    const viewProfits = document.getElementById('c1').checked;
-    const editInventory = document.getElementById('c2').checked;
-    const deleteInvoices = document.getElementById('c3').checked;
-
-    if (!name) {
-        alert("الرجاء إدخال اسم الموظف أولاً!");
-        return;
-    }
-
-    try {
-        // حفظ البيانات في جدول "users" داخل Firestore
-        await addDoc(collection(db, "users"), {
-            employeeName: name,
-            accountType: type,
-            permissions: {
-                viewProfits: viewProfits,
-                editInventory: editInventory,
-                deleteInvoices: deleteInvoices
-            },
-            createdAt: new Date()
-        });
-
-        alert(`تم حفظ الموظف (${name}) وصلاحياته بنجاح في قاعدة البيانات!`);
+// ==========================================
+// 1. كود إدارة الموظفين والصلاحيات (الحالي عندك)
+// ==========================================
+const userForm = document.getElementById('userForm'); // أو المعرف الموجود لديك للفورم
+if (userForm) {
+    userForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        // تفريغ الخانات بعد الحفظ
-        document.getElementById('employeeName').value = "";
-        document.getElementById('c1').checked = false;
-        document.getElementById('c2').checked = false;
-        document.getElementById('c3').checked = false;
+        const employeeName = document.getElementById('employeeName').value.trim();
+        const accountType = document.getElementById('accountType').value;
+        const viewProfits = document.getElementById('viewProfits').checked;
+        const editInventory = document.getElementById('editInventory').checked;
+        const deleteInvoices = document.getElementById('deleteInvoices').checked;
 
-    } catch (error) {
-        console.error("خطأ أثناء الحفظ: ", error);
-        alert("حدث خطأ أثناء الاتصال بالسيرفر: " + error.message);
-    }
-});
+        if (!employeeName) {
+            alert("الرجاء إدخال اسم الموظف!");
+            return;
+        }
 
-// 2. كود جلب وقراءة إجمالي كميات المخزن تلقائياً من جدول الـ "inventory"
-async function fetchTotalInventory() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "inventory"));
-        let total = 0;
-        
-        querySnapshot.forEach((doc) => {
-            // يفترض وجود حقل اسمه quantity داخل جدول المخزن الخاص بك
-            const data = doc.data();
-            total += Number(data.quantity || 0);
-        });
-
-        // عرض الرقم الحقيقي المستورد من السيرفر على الشاشة
-        document.getElementById('totalItemsCount').innerText = total.toLocaleString('ar-EG');
-    } catch (error) {
-        console.error("خطأ في قراءة بيانات المخزن: ", error);
-        document.getElementById('totalItemsCount').innerText = "خطأ";
-    }
+        try {
+            await addDoc(collection(db, "users"), {
+                employeeName: employeeName,
+                accountType: accountType,
+                permissions: {
+                    viewProfits: viewProfits,
+                    editInventory: editInventory,
+                    deleteInvoices: deleteInvoices
+                },
+                createdAt: new Date()
+            });
+            alert("تم حفظ المستخدم وصلاحياته بنجاح!");
+            userForm.reset();
+        } catch (error) {
+            console.error("خطأ في حفظ المستخدم: ", error);
+            alert("حدث خطأ أثناء الحفظ: " + error.message);
+        }
+    });
 }
 
-// تشغيل جلب المخزن بمجرد فتح الصفحة
-fetchTotalInventory();
+// ==========================================
+// 2. الكود الجديد المطور: جرد كميات المواد تفصيلياً
+// ==========================================
+const detailedList = document.getElementById('detailedInventoryList');
+
+if (detailedList) {
+    // الاستماع اللحظي للتغيرات في جدول الـ inventory داخل Firestore
+    onSnapshot(collection(db, "inventory"), (snapshot) => {
+        detailedList.innerHTML = ''; // تنظيف الجدول قبل تعبئته من جديد
+
+        if (!snapshot.empty) {
+            snapshot.forEach((docSnap) => {
+                const item = docSnap.data();
+                
+                // تحديد لون وتصميم الكمية حسب توفرها
+                let qtyStyle = "font-weight: bold; color: #2c3e50;";
+                let qtyDisplay = Number(item.quantity).toLocaleString('ar-EG');
+
+                if (item.quantity === 0) {
+                    qtyStyle = "font-weight: bold; color: #c62828; background: #ffebee; padding: 2px 8px; border-radius: 4px; font-size: 13px;";
+                    qtyDisplay = "نفذت";
+                } else if (item.quantity <= 5) {
+                    qtyStyle = "font-weight: bold; color: #ef6c00; background: #fff3e0; padding: 2px 8px; border-radius: 4px; font-size: 13px;";
+                }
+
+                // بناء السطر وإضافته للجدول الرئيسي
+                const row = `
+                    <tr style="border-bottom: 1px solid #f8f9fa;">
+                        <td style="padding: 10px 6px; text-align: right; font-weight: 500; color: #333;">
+                            <i class="fas fa-box-open text-muted ms-1" style="font-size: 12px;"></i> ${item.itemName}
+                        </td>
+                        <td style="padding: 10px 6px; text-align: center; ${qtyStyle}">
+                            ${qtyDisplay}
+                        </td>
+                    </tr>
+                `;
+                detailedList.innerHTML += row;
+            });
+        } else {
+            detailedList.innerHTML = '<tr><td colspan="2" class="text-center text-muted" style="padding: 15px;">المخزن فارغ حالياً، قم بإضافة مواد</td></tr>';
+        }
+    });
+}
