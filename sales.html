@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء فاتورة مبيعات - مكتب حاج فاضل</title>
+    <style>
+        :root { --main-purple: #800080; --light-purple: #f3e5f5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-right: 8px solid var(--main-purple); }
+        h2 { color: var(--main-purple); text-align: center; margin-bottom: 25px; }
+        .invoice-header { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+        select, input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; flex: 1; min-width: 180px; }
+        .product-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; background: var(--light-purple); padding: 10px; border-radius: 8px; }
+        .btn-action { background: var(--main-purple); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; font-size: 15px; }
+        .btn-action:hover { background: #600060; }
+        .btn-print { background: #27ae60; }
+        .btn-print:hover { background: #219150; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--main-purple); color: white; padding: 12px; text-align: center; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 15px; }
+        .total-box { margin-top: 20px; text-align: left; font-size: 18px; font-weight: bold; color: var(--main-purple); background: #f9f9f9; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🧾 إنشاء فاتورة مبيعات جديدة</h2>
+
+    <div class="invoice-header">
+        <div>
+            <label>اختيار المندوب:</label>
+            <select id="invoiceMandub"><option value="">جاري تحميل المندوبين...</option></select>
+        </div>
+        <div>
+            <label>اسم العميل / المحل:</label>
+            <input type="text" id="customerName" placeholder="اسم الزبون أو المحل">
+        </div>
+        <div>
+            <label>رقم الفاتورة:</label>
+            <input type="text" id="invoiceNumber" readonly style="background: #eee; font-weight: bold; text-align: center;">
+        </div>
+    </div>
+
+    <div class="product-row">
+        <select id="productSelect" onchange="updateMaxQty()"><option value="">جاري تحميل بضاعة المخزن...</option></select>
+        <input type="number" id="saleQty" placeholder="الكمية المطلوبة" min="1">
+        <input type="number" id="salePrice" placeholder="سعر البيع المعتمد ($)">
+        <span id="availableQtyHint" style="font-size: 13px; color: #666; min-width: 100px;">المتوفر: 0</span>
+        <button class="btn-action" id="addItemToInvoiceBtn">أضف للفاتورة</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>المادة</th>
+                <th>الكمية</th>
+                <th>سعر المفرد</th>
+                <th>الإجمالي</th>
+                <th>إجراء</th>
+            </tr>
+        </thead>
+        <tbody id="invoiceItemsTable">
+            <tr><td colspan="5" style="color: #999;">لم يتم إضافة أي مواد للفاتورة بعد</td></tr>
+        </tbody>
+    </table>
+
+    <div class="total-box">
+        إجمالي الفاتورة النهائي: $<span id="invoiceTotalText">0.00</span>
+    </div>
+
+    <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: flex-end;">
+        <button class="btn-action btn-print" id="saveAndPrintBtn">💾 حفظ وطباعة الفاتورة</button>
+    </div>
+</div>
+
+    <script type="module" src="sales.js"></script>
+</body>
+</html>
