@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المندوبين - Haj Fadel Office</title>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+        // إعدادات مشروعك الحقيقية المستخرجة من حسابك
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+            authDomain: "haj-fadel-accounting.firebaseapp.com",
+            projectId: "haj-fadel-accounting",
+            storageBucket: "haj-fadel-accounting.firebasestorage.app",
+            messagingSenderId: "449205985318",
+            appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+        };
+
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const mandubsRef = ref(database, "mandubs");
+
+        // جعل الوظائف متاحة في واجهة المستخدم
+        window.saveMandub = function() {
+            const name = document.getElementById('mandubName').value;
+            const phone = document.getElementById('mandubPhone').value;
+            const region = document.getElementById('mandubRegion').value;
+
+            if(name && phone) {
+                // إرسال البيانات إلى السحابة
+                push(mandubsRef, {
+                    name: name,
+                    phone: phone,
+                    region: region,
+                    date: new Date().toLocaleDateString('ar-EG')
+                }).then(() => {
+                    // تفريغ الحقول بعد الحفظ بنجاح
+                    document.getElementById('mandubForm').reset();
+                    alert('تم حفظ المندوب بنجاح في السحابة!');
+                }).catch((error) => {
+                    console.error("خطأ في الحفظ: ", error);
+                });
+            } else {
+                alert('الرجاء ملء الحقول الأساسية!');
+            }
+        }
+
+        // الاستماع اللحظي للبيانات وجلبها فوراً في الجدول
+        onValue(mandubsRef, (snapshot) => {
+            const tableBody = document.getElementById('mandubsTableBody');
+            tableBody.innerHTML = ''; // تنظيف الجدول قبل التحديث
+            
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                for (let id in data) {
+                    const mandub = data[id];
+                    const row = `
+                        <tr>
+                            <td>${mandub.name}</td>
+                            <td>${mandub.phone}</td>
+                            <td>${mandub.region || 'غير محدد'}</td>
+                            <td>${mandub.date}</td>
+                            <td>
+                                <button class="btn-delete" onclick="deleteMandub('${id}')">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                }
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد مندوبين مسجلين حالياً</td></tr>';
+            }
+        });
+
+        // وظيفة الحذف من السحابة
+        window.deleteMandub = function(id) {
+            if(confirm('هل أنت متأكد من حذف هذا المندوب؟')) {
+                const specificMandubRef = ref(database, `mandubs/${id}`);
+                remove(specificMandubRef);
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .form-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            min-width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #219150;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .btn-delete {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>نظام إدارة المندوبين (Mandubs System)</h2>
+    
+    <form id="mandubForm" onsubmit="event.preventDefault(); saveMandub();">
+        <div class="form-group">
+            <input type="text" id="mandubName" placeholder="اسم المندوب" required>
+            <input type="tel" id="mandubPhone" placeholder="رقم الهاتف" required>
+            <input type="text" id="mandubRegion" placeholder="المنطقة / المحافظة">
+            <button type="submit">إضافة مندوب</button>
+        </div>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>رقم الهاتف</th>
+                <th>المنطقة</th>
+                <th>تاريخ الإضافة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="mandubsTableBody">
+            </tbody>
+    </table>
+</div>
+
+</body>
+</html>
