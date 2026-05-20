@@ -22,7 +22,6 @@ if (addCustomerBtn) {
                 createdAt: new Date()
             });
             alert(`تمت إضافة العميل ${name} بنجاح!`);
-            // تفريغ الحقول بعد الإضافة الناجحة
             document.getElementById('custName').value = '';
             document.getElementById('custPhone').value = '';
             document.getElementById('custInitialDebt').value = '0';
@@ -32,7 +31,7 @@ if (addCustomerBtn) {
     });
 }
 
-let allCustomers = []; // مصفوفة لتخزين البيانات محلياً لتسريع عملية البحث الفوري
+let allCustomers = []; 
 
 // 2. الاستماع اللحظي وحساب الإحصائيات الفوقية لـ مكتب حاج فاضل
 onSnapshot(collection(db, "customers"), (snapshot) => {
@@ -45,7 +44,6 @@ onSnapshot(collection(db, "customers"), (snapshot) => {
             const data = docSnap.data();
             allCustomers.push({ id: docSnap.id, ...data });
             
-            // حساب الإحصائيات بناءً على حالة الحساب المالي
             if (data.totalDebt > 0) {
                 globalDebts += data.totalDebt;
             } else if (data.totalDebt < 0) {
@@ -54,16 +52,14 @@ onSnapshot(collection(db, "customers"), (snapshot) => {
         });
     }
     
-    // تحديث الصناديق الإحصائية العلوية في الواجهة مباشرة
     document.getElementById('totalGlobalDebts').innerText = `$${globalDebts.toFixed(2)}`;
     document.getElementById('totalGlobalCredits').innerText = `$${globalCredits.toFixed(2)}`;
     document.getElementById('totalCustomersCount').innerText = allCustomers.length;
     
-    // عرض جدول العملاء المحدث
     renderTable(allCustomers);
 });
 
-// دالة بناء ورسم الجدول مع أزرار الإجراءات، التعديل والحذف
+// دالة بناء ورسم الجدول مع ربط كامل لأزرار العمليات
 function renderTable(customersList) {
     const customersTable = document.getElementById('customersTable');
     if (!customersTable) return;
@@ -80,7 +76,6 @@ function renderTable(customersList) {
         let badgeText = '';
         let statusIcon = '';
 
-        // تحديد نمط الشارة والأيقونة حسب حالة حساب الزبون
         if (cust.totalDebt === 0) {
             badgeClass = 'badge-custom badge-clean';
             badgeText = 'خالص الحساب';
@@ -135,18 +130,16 @@ if (searchInput) {
     });
 }
 
-// 4. دالة قبض الدفعات (مع حماية صارمة لمنع إدخل 0 أو قيم فارغة أو نصوص خاطئة)
+// 4. دالة قبض الدفعات (مع حماية صارمة تمنع الفراغ، الصفر، القيم غير العددية)
 window.payDebt = async function(id, currentDebt) {
     const input = prompt(`الحساب الجاري للعميل هو: $${currentDebt.toFixed(2)}\nأدخل المبلغ المستلم لتنزيله من حسابه ($):`);
     
-    // في حال قام المستخدم بالضغط على إلغاء الأمر (Cancel)
-    if (input === null) return;
+    if (input === null) return; // عند الضغط على إلغاء
 
     const amount = parseFloat(input);
     
-    // التحقق الصارم من صحة المدخلات (تمنع الصفر، الفراغ، والنصوص العشوائية)
     if (isNaN(amount) || amount <= 0) {
-        alert("❌ خطأ: يجب إدخل مبلغ صحيح أكبر من صفر لإتمام عملية القبض المالي!");
+        alert("❌ خطأ: يجب إدخال مبلغ صحيح أكبر من صفر لإتمام عملية القبض المالي!");
         return;
     }
 
@@ -164,13 +157,14 @@ window.payDebt = async function(id, currentDebt) {
 // 5. دالة تعديل بيانات العميل الأساسية (الاسم ورقم الهاتف)
 window.editCustomer = async function(id, currentName, currentPhone) {
     const newName = prompt("تعديل اسم العميل / المحل الجاري:", currentName);
-    if (!newName || newName.trim() === "") {
-        if (newName !== null) alert("لا يمكن ترك اسم العميل فارغاً!");
+    if (newName === null) return; // عند الضغط على إلغاء
+    if (newName.trim() === "") {
+        alert("لا يمكن ترك اسم العميل فارغاً!");
         return;
     }
     
     const newPhone = prompt("تعديل رقم الهاتف الجاري:", currentPhone);
-    if (newPhone === null) return; // إلغاء عملية التعديل بالكامل
+    if (newPhone === null) return; 
 
     try {
         const customerRef = doc(db, "customers", id);
