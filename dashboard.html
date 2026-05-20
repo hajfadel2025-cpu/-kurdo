@@ -81,14 +81,30 @@
             </div>
 
             <div class="col-md-5">
-                <div class="card-custom text-center">
-                    <h6 class="text-muted mb-2">إجمالي المواد بالمخزن</h6>
-                    <h1 class="display-4 fw-bold" id="totalItemsCount" style="color: var(--purple-main);">0</h1>
-                    <p class="text-success fw-bold mt-2">تحديث مباشر أونلاين</p>
-                </div>
-            </div>
+    <div class="card-custom p-4 text-center shadow-sm" style="background: white; border-radius: 15px;">
+        <h6 class="text-muted mb-3" style="font-weight: bold;">📦 جرد بضاعة المخزن الحالي</h6>
+        
+        <div style="max-height: 200px; overflow-y: auto;">
+            <table class="table table-sm text-end" dir="rtl" style="font-size: 15px; width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="color: var(--purple-main); border-bottom: 2px solid #f3e5f5;">
+                        <th style="padding: 6px; text-align: right;">المادة</th>
+                        <th style="padding: 6px; text-align: center;">الكمية</th>
+                    </tr>
+                </thead>
+                <tbody id="detailedInventoryList">
+                    <tr>
+                        <td colspan="2" class="text-center text-muted" style="padding: 10px;">جاري تحميل جرد المواد...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+
+        <p class="text-success fw-bold mt-3 mb-0">
+            <i class="fas fa-sync-alt fa-spin ms-1" style="font-size: 12px;"></i> تحديث مباشر أونلاين
+        </p>
     </div>
+</div>
 
     <script type="module" src="firebase-config.js"></script>
     <script type="module" src="dashboard.js"></script>
