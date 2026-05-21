@@ -3,259 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم الرئيسية - مكتب حاج فاضل</title>
-    
+    <title>الرئيسية - مكتب حاج فاضل</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
+            font-family: 'Tahoma', sans-serif;
+            background: #f0f2f5;
             padding: 20px;
         }
+        .container { max-width: 1300px; margin: auto; }
         
-        .container {
-            max-width: 1400px;
-            margin: auto;
-        }
-        
-        /* الهيدر */
+        /* الهيدر بسيط */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .header h1 {
-            font-size: 24px;
-        }
-        
-        .header .date {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        /* بطاقات الإحصائيات الرئيسية */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .stat-card {
             background: white;
-            border-radius: 15px;
             padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
         }
+        .header h1 { color: #2c3e50; font-size: 24px; }
         
-        .stat-card:hover {
-            transform: translateY(-5px);
+        /* بطاقات بسيطة */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
         }
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat .num { font-size: 28px; font-weight: bold; color: #2980b9; }
+        .stat .txt { color: #7f8c8d; font-size: 13px; margin-top: 5px; }
         
-        .stat-card .icon {
-            font-size: 40px;
+        /* صفين */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .box {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .box h3 {
+            color: #2c3e50;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
             margin-bottom: 10px;
         }
         
-        .stat-card .value {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        
-        .stat-card .label {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .stat-card.blue { border-top: 4px solid #3498db; }
-        .stat-card.green { border-top: 4px solid #27ae60; }
-        .stat-card.orange { border-top: 4px solid #e67e22; }
-        .stat-card.red { border-top: 4px solid #e74c3c; }
-        .stat-card.purple { border-top: 4px solid #9b59b6; }
-        
-        /* قسمين متجاورين */
-        .two-columns {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-bottom: 25px;
-        }
-        
-        /* البطاقات العامة */
-        .card {
-            background: white;
+        /* الجداول */
+        table { width: 100%; font-size: 13px; border-collapse: collapse; }
+        td { padding: 8px; border-bottom: 1px solid #ecf0f1; }
+        .badge {
+            padding: 2px 8px;
             border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            font-weight: bold;
-        }
-        
-        .card-body {
-            padding: 15px;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-        
-        /* جداول صغيرة */
-        .mini-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        
-        .mini-table th, .mini-table td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .mini-table th {
-            background: #f8f9fa;
-            color: #333;
-        }
-        
-        .mini-table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
             font-size: 11px;
-            font-weight: bold;
         }
+        .badge.red { background: #fee; color: #e74c3c; }
+        .badge.orange { background: #ffeaa7; color: #e67e22; }
+        .badge.green { background: #e8f8f5; color: #27ae60; }
         
-        .status-good {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .status-warning {
-            background: #e67e22;
-            color: white;
-        }
-        
-        .status-danger {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .status-info {
-            background: #3498db;
-            color: white;
-        }
-        
-        .debt-positive {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        
-        .commission-cell {
-            color: #27ae60;
-            font-weight: bold;
-        }
-        
-        .low-stock {
-            color: #e67e22;
-            font-weight: bold;
-        }
-        
-        .critical-stock {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        
-        .btn-link {
-            background: none;
-            border: none;
-            color: #3498db;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .btn-link:hover {
-            text-decoration: underline;
-        }
-        
-        /* روابط سريعة */
-        .quick-links {
+        /* روابط */
+        .links {
             display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 25px;
-        }
-        
-        .quick-link {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #333;
-            display: flex;
-            align-items: center;
             gap: 10px;
-            transition: all 0.3s;
-            flex: 1;
-            min-width: 150px;
-            justify-content: center;
-        }
-        
-        .quick-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
+            flex-wrap: wrap;
             margin-top: 20px;
         }
-        
-        @media (max-width: 768px) {
-            .two-columns {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .header h1 {
-                font-size: 18px;
-            }
+        .link {
+            background: #2980b9;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        @media (max-width: 700px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .row { grid-template-columns: 1fr; }
         }
     </style>
-    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-
-        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
             authDomain: "haj-fadel-accounting.firebaseapp.com",
@@ -264,381 +111,86 @@
             messagingSenderId: "449205985318",
             appId: "1:449205985318:web:2dece1e1412165b01f46e7"
         };
-
-        // تهيئة Firebase
         const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        const db = getDatabase(app);
         
-        // ==================== تحميل جميع البيانات ====================
-        
-        async function loadAllData() {
-            try {
-                // تحميل البيانات بالتوازي
-                const [mandubsSnap, inventorySnap, customersSnap, salesSnap] = await Promise.all([
-                    get(ref(database, "mandubs")),
-                    get(ref(database, "inventory")),
-                    get(ref(database, "customers")),
-                    get(ref(database, "sales"))
-                ]);
-                
-                // معالجة المندوبين
-                const mandubs = [];
-                if (mandubsSnap.exists()) {
-                    const data = mandubsSnap.val();
-                    for (let id in data) {
-                        mandubs.push({ id, ...data[id] });
-                    }
-                }
-                
-                // معالجة المخزن
-                const products = [];
-                let lowStockCount = 0;
-                let criticalStockCount = 0;
-                let totalStockValue = 0;
-                
-                if (inventorySnap.exists()) {
-                    const data = inventorySnap.val();
-                    for (let id in data) {
-                        const p = data[id];
-                        products.push({ id, ...p });
-                        totalStockValue += (p.costPrice || 0) * (p.quantity || 0);
-                        if ((p.quantity || 0) <= 5) criticalStockCount++;
-                        else if ((p.quantity || 0) <= 20) lowStockCount++;
-                    }
-                }
-                
-                // معالجة العملاء
-                const customers = [];
-                let totalDebt = 0;
-                let overdueCount = 0;
-                
-                if (customersSnap.exists()) {
-                    const data = customersSnap.val();
-                    for (let id in data) {
-                        const c = data[id];
-                        customers.push({ id, ...c });
-                        const debt = c.currentDebt || 0;
-                        totalDebt += debt;
-                        if (debt > 100) overdueCount++;
-                    }
-                }
-                
-                // معالجة المبيعات
-                const sales = [];
-                let totalSales = 0;
-                let totalCommission = 0;
-                
-                if (salesSnap.exists()) {
-                    const data = salesSnap.val();
-                    for (let id in data) {
-                        const s = data[id];
-                        sales.push({ id, ...s });
-                        totalSales += s.total || 0;
-                        totalCommission += s.commission || 0;
-                    }
-                    // ترتيب المبيعات حسب التاريخ (الأحدث أولاً)
-                    sales.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                }
-                
-                // تحديث واجهة المستخدم
-                updateMainStats(mandubs.length, products.length, customers.length, sales.length);
-                updateFinancialStats(totalSales, totalCommission, totalDebt, totalStockValue);
-                updateTopMandubs(mandubs);
-                updateLowStockProducts(products, lowStockCount, criticalStockCount);
-                updateOverdueCustomers(customers, overdueCount);
-                updateRecentSales(sales);
-                updateDate();
-                
-            } catch (error) {
-                console.error("خطأ في تحميل البيانات:", error);
-            }
+        async function load() {
+            const [m, inv, c, s] = await Promise.all([
+                get(ref(db, "mandubs")), get(ref(db, "inventory")),
+                get(ref(db, "customers")), get(ref(db, "sales"))
+            ]);
+            let mandubs = m.exists() ? Object.values(m.val()) : [];
+            let products = inv.exists() ? Object.values(inv.val()) : [];
+            let customers = c.exists() ? Object.values(c.val()) : [];
+            let sales = s.exists() ? Object.values(s.val()) : [];
+            
+            document.getElementById('mandubsCount').innerText = mandubs.length;
+            document.getElementById('productsCount').innerText = products.length;
+            document.getElementById('customersCount').innerText = customers.length;
+            document.getElementById('salesCount').innerText = sales.length;
+            
+            let totalSales = sales.reduce((sum, i) => sum + (i.total || 0), 0);
+            let totalDebt = customers.reduce((sum, i) => sum + (i.currentDebt || 0), 0);
+            document.getElementById('totalSales').innerText = totalSales.toFixed(0);
+            document.getElementById('totalDebt').innerText = totalDebt.toFixed(0);
+            
+            // أفضل مندوب
+            let topMandub = mandubs.sort((a,b) => (b.totalSales||0) - (a.totalSales||0))[0];
+            document.getElementById('topMandub').innerHTML = topMandub ? `${topMandub.name} (${(topMandub.totalSales||0).toFixed(0)} د)` : 'لا يوجد';
+            
+            // منتجات منخفضة
+            let low = products.filter(p => (p.quantity||0) <= 20).slice(0,5);
+            let lowHtml = '';
+            low.forEach(p => lowHtml += `<tr><td>${p.name}</td><td>${p.quantity||0}</td><td><span class="badge orange">منخفض</span></td></tr>`);
+            document.getElementById('lowStockList').innerHTML = lowHtml || '<tr><td colspan="3">لا توجد</td></tr>';
+            
+            // عملاء متأخرون
+            let overdue = customers.filter(c => (c.currentDebt||0) > 100).slice(0,5);
+            let overHtml = '';
+            overdue.forEach(c => overHtml += `<tr><td>${c.name}</td><td>${(c.currentDebt||0).toFixed(0)} د</td><td><span class="badge red">متأخر</span></td></tr>`);
+            document.getElementById('overdueList').innerHTML = overHtml || '<tr><td colspan="3">لا يوجد</td></tr>';
+            
+            // آخر 5 فواتير
+            let recent = sales.sort((a,b) => (b.timestamp||0) - (a.timestamp||0)).slice(0,5);
+            let recentHtml = '';
+            recent.forEach(s => recentHtml += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.mandubName || '-'}</td><td>${(s.total||0).toFixed(0)} د</td></tr>`);
+            document.getElementById('recentSales').innerHTML = recentHtml || '<tr><td colspan="3">لا توجد</td></tr>';
         }
-        
-        // ==================== تحديث الإحصائيات الرئيسية ====================
-        
-        function updateMainStats(mandubsCount, productsCount, customersCount, salesCount) {
-            document.getElementById('mandubsCount').textContent = mandubsCount;
-            document.getElementById('productsCount').textContent = productsCount;
-            document.getElementById('customersCount').textContent = customersCount;
-            document.getElementById('salesCount').textContent = salesCount;
-        }
-        
-        function updateFinancialStats(totalSales, totalCommission, totalDebt, totalStockValue) {
-            document.getElementById('totalSales').textContent = totalSales.toFixed(2) + ' د';
-            document.getElementById('totalCommission').textContent = totalCommission.toFixed(2) + ' د';
-            document.getElementById('totalDebt').textContent = totalDebt.toFixed(2) + ' د';
-            document.getElementById('stockValue').textContent = totalStockValue.toFixed(2) + ' د';
-            
-            // تقدير الأرباح (40% من قيمة المخزن تقريباً)
-            const estimatedProfit = totalStockValue * 0.4;
-            document.getElementById('estimatedProfit').textContent = estimatedProfit.toFixed(2) + ' د';
-        }
-        
-        // ==================== أفضل المندوبين ====================
-        
-        function updateTopMandubs(mandubs) {
-            const container = document.getElementById('topMandubsList');
-            if (!mandubs.length) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">لا يوجد مندوبين</div>';
-                return;
-            }
-            
-            // ترتيب حسب إجمالي المبيعات
-            const sorted = [...mandubs].sort((a, b) => (b.totalSales || 0) - (a.totalSales || 0)).slice(0, 5);
-            
-            let html = '<table class="mini-table"><thead><tr><th>#</th><th>المندوب</th><th>المبيعات</th><th>العمولة</th></tr></thead><tbody>';
-            sorted.forEach((m, index) => {
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${m.name}</td>
-                        <td>${(m.totalSales || 0).toFixed(2)} د</td>
-                        <td class="commission-cell">${(m.totalCommission || 0).toFixed(2)} د</td>
-                    </tr>
-                `;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-        
-        // ==================== المنتجات منخفضة المخزون ====================
-        
-        function updateLowStockProducts(products, lowCount, criticalCount) {
-            const container = document.getElementById('lowStockList');
-            
-            // فلترة المنتجات منخفضة المخزون
-            const lowProducts = products.filter(p => (p.quantity || 0) <= 20).sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
-            
-            if (!lowProducts.length) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">✅ جميع المنتجات متوفرة</div>';
-                document.getElementById('lowStockBadge').innerHTML = '<span class="status-badge status-good">0</span>';
-                return;
-            }
-            
-            document.getElementById('lowStockBadge').innerHTML = `<span class="status-badge ${criticalCount > 0 ? 'status-danger' : 'status-warning'}">${lowProducts.length}</span>`;
-            
-            let html = '<table class="mini-table"><thead><tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead><tbody>';
-            lowProducts.slice(0, 5).forEach(p => {
-                const quantity = p.quantity || 0;
-                const status = quantity <= 5 ? 'حرج' : (quantity <= 20 ? 'منخفض' : 'جيد');
-                const statusClass = quantity <= 5 ? 'critical-stock' : 'low-stock';
-                html += `
-                    <tr>
-                        <td>${p.name}</td>
-                        <td class="${statusClass}">${quantity}</td>
-                        <td><span class="status-badge ${quantity <= 5 ? 'status-danger' : 'status-warning'}">${status}</span></td>
-                    </tr>
-                `;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-        
-        // ==================== العملاء المتأخرون ====================
-        
-        function updateOverdueCustomers(customers, overdueCount) {
-            const container = document.getElementById('overdueCustomersList');
-            
-            // فلترة العملاء المتأخرين (دين > 100)
-            const overdue = customers.filter(c => (c.currentDebt || 0) > 100).sort((a, b) => (b.currentDebt || 0) - (a.currentDebt || 0));
-            
-            if (!overdue.length) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">✅ لا يوجد عملاء متأخرون</div>';
-                document.getElementById('overdueBadge').innerHTML = '<span class="status-badge status-good">0</span>';
-                return;
-            }
-            
-            document.getElementById('overdueBadge').innerHTML = `<span class="status-badge status-danger">${overdue.length}</span>`;
-            
-            let html = '<table class="mini-table"><thead><tr><th>العميل</th><th>الهاتف</th><th>المديونية</th></tr></thead><tbody>';
-            overdue.slice(0, 5).forEach(c => {
-                html += `
-                    <tr>
-                        <td>${c.name}</td>
-                        <td>${c.phone}</td>
-                        <td class="debt-positive">${(c.currentDebt || 0).toFixed(2)} د</td>
-                    </tr>
-                `;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-        
-        // ==================== آخر الفواتير ====================
-        
-        function updateRecentSales(sales) {
-            const container = document.getElementById('recentSalesList');
-            
-            if (!sales.length) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">لا توجد فواتير بعد</div>';
-                return;
-            }
-            
-            let html = '<table class="mini-table"><thead><tr><th>رقم الفاتورة</th><th>المندوب</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody>';
-            sales.slice(0, 10).forEach(s => {
-                html += `
-                    <tr>
-                        <td>${s.invoiceNumber || s.id?.slice(-6) || '-'}</td>
-                        <td>${s.mandubName || '-'}</td>
-                        <td>${s.customerName || 'نقدي'}</td>
-                        <td>${(s.total || 0).toFixed(2)} د</td>
-                    </tr>
-                `;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-        
-        // ==================== التاريخ ====================
-        
-        function updateDate() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-EG', options);
-        }
-        
-        // ==================== تحديث تلقائي ====================
-        
-        // تحميل البيانات أول مرة
-        loadAllData();
-        
-        // تحديث تلقائي كل 10 ثوانٍ
-        setInterval(loadAllData, 10000);
-        
+        load();
+        setInterval(load, 15000);
     </script>
 </head>
 <body>
-
 <div class="container">
-    <!-- الهيدر -->
-    <div class="header">
-        <div>
-            <h1>🏢 مكتب حاج فاضل - النظام المحاسبي المتكامل</h1>
-            <p>نظام إدارة المندوبين | المخزن | العملاء | المبيعات</p>
-        </div>
-        <div class="date" id="currentDate"></div>
+    <div class="header"><h1>📊 مكتب حاج فاضل - الرئيسية</h1></div>
+    
+    <div class="stats">
+        <div class="stat"><div class="num" id="mandubsCount">0</div><div class="txt">المندوبين</div></div>
+        <div class="stat"><div class="num" id="productsCount">0</div><div class="txt">المنتجات</div></div>
+        <div class="stat"><div class="num" id="customersCount">0</div><div class="txt">العملاء</div></div>
+        <div class="stat"><div class="num" id="salesCount">0</div><div class="txt">الفواتير</div></div>
+        <div class="stat"><div class="num" id="totalSales">0</div><div class="txt">إجمالي المبيعات</div></div>
+        <div class="stat"><div class="num" id="totalDebt">0</div><div class="txt">إجمالي الديون</div></div>
+        <div class="stat"><div class="num" id="topMandub">0</div><div class="txt">أفضل مندوب</div></div>
     </div>
     
-    <!-- بطاقات الإحصائيات الرئيسية (الأعداد) -->
-    <div class="stats-grid">
-        <div class="stat-card blue">
-            <div class="icon">👥</div>
-            <div class="value" id="mandubsCount">0</div>
-            <div class="label">المندوبين</div>
-        </div>
-        <div class="stat-card green">
-            <div class="icon">📦</div>
-            <div class="value" id="productsCount">0</div>
-            <div class="label">المنتجات</div>
-        </div>
-        <div class="stat-card orange">
-            <div class="icon">👤</div>
-            <div class="value" id="customersCount">0</div>
-            <div class="label">العملاء</div>
-        </div>
-        <div class="stat-card purple">
-            <div class="icon">🧾</div>
-            <div class="value" id="salesCount">0</div>
-            <div class="label">الفواتير</div>
-        </div>
+    <div class="row">
+        <div class="box"><h3>⚠️ منتجات منخفضة المخزون</h3><table><tbody id="lowStockList"></tbody></table></div>
+        <div class="box"><h3>⚠️ عملاء متأخرون</h3><table><tbody id="overdueList"></tbody></table></div>
     </div>
     
-    <!-- بطاقات الإحصائيات المالية -->
-    <div class="stats-grid">
-        <div class="stat-card green">
-            <div class="icon">💰</div>
-            <div class="value" id="totalSales">0 د</div>
-            <div class="label">إجمالي المبيعات</div>
-        </div>
-        <div class="stat-card purple">
-            <div class="icon">⭐</div>
-            <div class="value" id="totalCommission">0 د</div>
-            <div class="label">إجمالي العمولات</div>
-        </div>
-        <div class="stat-card red">
-            <div class="icon">📉</div>
-            <div class="value" id="totalDebt">0 د</div>
-            <div class="label">إجمالي الديون</div>
-        </div>
-        <div class="stat-card blue">
-            <div class="icon">🏪</div>
-            <div class="value" id="stockValue">0 د</div>
-            <div class="label">قيمة المخزن</div>
-        </div>
-        <div class="stat-card orange">
-            <div class="icon">📈</div>
-            <div class="value" id="estimatedProfit">0 د</div>
-            <div class="label">الأرباح المتوقعة</div>
-        </div>
-    </div>
-    
-    <!-- قسمين متجاورين -->
-    <div class="two-columns">
-        <!-- أفضل المندوبين -->
-        <div class="card">
-            <div class="card-header">
-                🏆 أفضل المندوبين (حسب المبيعات)
-            </div>
-            <div class="card-body" id="topMandubsList">
-                <div style="text-align:center; padding:20px;">جاري التحميل...</div>
-            </div>
-        </div>
-        
-        <!-- المنتجات منخفضة المخزون -->
-        <div class="card">
-            <div class="card-header">
-                ⚠️ المنتجات منخفضة المخزون
-                <span id="lowStockBadge" style="float: left;"></span>
-            </div>
-            <div class="card-body" id="lowStockList">
-                <div style="text-align:center; padding:20px;">جاري التحميل...</div>
+    <div class="row">
+        <div class="box"><h3>🧾 آخر الفواتير</h3><table><thead><tr><th>رقم</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody id="recentSales"></tbody></table></div>
+        <div class="box"><h3>🔗 روابط سريعة</h3>
+            <div class="links">
+                <a href="mandubs.html" class="link">👥 مندوبين</a>
+                <a href="inventory.html" class="link">📦 مخزن</a>
+                <a href="customers.html" class="link">👤 عملاء</a>
+                <a href="sales.html" class="link">🧾 مبيعات</a>
             </div>
         </div>
     </div>
-    
-    <div class="two-columns">
-        <!-- العملاء المتأخرون -->
-        <div class="card">
-            <div class="card-header">
-                ⚠️ العملاء المتأخرون (ديون &gt; 100 د)
-                <span id="overdueBadge" style="float: left;"></span>
-            </div>
-            <div class="card-body" id="overdueCustomersList">
-                <div style="text-align:center; padding:20px;">جاري التحميل...</div>
-            </div>
-        </div>
-        
-        <!-- آخر الفواتير -->
-        <div class="card">
-            <div class="card-header">
-                🧾 آخر الفواتير المسجلة
-            </div>
-            <div class="card-body" id="recentSalesList">
-                <div style="text-align:center; padding:20px;">جاري التحميل...</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- روابط سريعة -->
-    <div class="quick-links">
-        <a href="mandubs.html" class="quick-link">
-            <span>👥</span> إدارة المندوبين
-        </a>
-        <a href="inventory.html" class="quick-link">
-            <span>📦</span> إدارة المخزن
-        </a>
-        <a href="customers.html" class="quick-link">
-            <span>👤</span> إدارة العملاء
-        </a>
-        <a href="sales.html" class="quick-link">
-            <span>🧾</span> فاتورة مبيعات
-        </a>
-    </div>
-    
-    <div class="footer">
-        نظام محاسبي متكامل | بيانات محدثة لحظياً | مكتب حاج فاضل
-    </div>
+    <div class="footer">تحديث تلقائي كل 15 ثانية</div>
 </div>
-
 </body>
 </html>
