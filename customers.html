@@ -3,143 +3,887 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة العملاء والديون - مكتب حاج فاضل</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <title>نظام العملاء والدين - مكتب حاج فاضل</title>
+    
     <style>
-        :root { --purple-main: #800080; --purple-light: #f3e5f5; --purple-dark: #600060; }
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
-        /* القائمة الجانبية والمحتوى */
-        .sidebar { width: 260px; background: var(--purple-main); min-height: 100vh; position: fixed; right: 0; top: 0; color: white; padding: 20px; z-index: 1000; }
-        .main-content { margin-right: 260px; padding: 30px; min-height: 100vh; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
         
-        .nav-link { color: rgba(255,255,255,0.8); padding: 12px; display: block; text-decoration: none; border-radius: 8px; margin-bottom: 5px; }
-        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: white; font-weight: bold; }
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
         
-        /* الكروت والإحصائيات */
-        .card-custom { background: white; border-radius: 15px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 25px; }
-        .stat-card { border-right: 5px solid var(--purple-main); }
-        .stat-title { color: #6c757d; font-size: 14px; font-weight: 600; }
-        .stat-value { font-size: 28px; font-weight: bold; color: var(--purple-main); margin-top: 5px; }
+        h1, h2 {
+            color: #1e3c72;
+            border-right: 4px solid #2a5298;
+            padding-right: 15px;
+            margin-bottom: 20px;
+        }
         
-        /* الجداول والفورم */
-        .table-custom { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .table-custom th { background: var(--purple-light); color: var(--purple-main); font-weight: bold; border: none; padding: 15px; text-align: center; }
-        .table-custom td { padding: 15px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f1f1f1; }
+        /* بطاقات الإحصائيات */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
         
-        .badge-custom { padding: 6px 12px; border-radius: 30px; font-weight: 600; font-size: 13px; display: inline-block; }
-        .badge-debt { background-color: #ffebee; color: #c62828; }
-        .badge-clean { background-color: #e8f5e9; color: #2e7d32; }
-        .badge-credit { background-color: #e3f2fd; color: #0d47a1; }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
         
-        .btn-purple { background-color: var(--purple-main); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; }
-        .btn-purple:hover { background-color: var(--purple-dark); color: white; }
-        .btn-pay { background-color: #27ae60; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 600; }
-        .btn-pay:hover { background-color: #219653; }
+        .stat-card.danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+        
+        .stat-card.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        /* نموذج الإضافة */
+        .form-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+        
+        .btn-primary {
+            background: #3498db;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+        }
+        
+        .btn-warning {
+            background: #e67e22;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        /* شريط البحث */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-bar input, .search-bar select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        /* الجدول */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px 8px;
+            text-align: center;
+        }
+        
+        th {
+            background: #1e3c72;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e8f4fd;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .status-good {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #e67e22;
+            color: white;
+        }
+        
+        .status-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .debt-amount {
+            font-weight: bold;
+        }
+        
+        .debt-positive {
+            color: #e74c3c;
+        }
+        
+        .debt-zero {
+            color: #27ae60;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        /* النوافذ المنبثقة */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .close-modal {
+            cursor: pointer;
+            font-size: 24px;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #e74c3c;
+        }
+        
+        .transactions-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        
+        .transaction-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .transaction-debt {
+            color: #e74c3c;
+        }
+        
+        .transaction-payment {
+            color: #27ae60;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            th, td {
+                font-size: 10px;
+                padding: 5px;
+            }
+        }
     </style>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, set, get, update, query, orderByChild } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+            authDomain: "haj-fadel-accounting.firebaseapp.com",
+            projectId: "haj-fadel-accounting",
+            storageBucket: "haj-fadel-accounting.firebasestorage.app",
+            messagingSenderId: "449205985318",
+            appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+        };
+
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const customersRef = ref(database, "customers");
+        const debtsRef = ref(database, "debts");
+
+        let editingCustomerId = null;
+        let allCustomers = [];
+
+        // ==================== الإحصائيات ====================
+        
+        function updateStats() {
+            let totalCustomers = allCustomers.length;
+            let totalDebt = 0;
+            let overdueCustomers = 0;
+            
+            allCustomers.forEach(c => {
+                totalDebt += c.currentDebt || 0;
+                if ((c.currentDebt || 0) > 0 && isOverdue(c)) {
+                    overdueCustomers++;
+                }
+            });
+            
+            document.getElementById('totalCustomers').textContent = totalCustomers;
+            document.getElementById('totalDebt').textContent = totalDebt.toFixed(2) + ' د';
+            document.getElementById('overdueCount').textContent = overdueCustomers;
+            document.getElementById('avgDebt').textContent = totalCustomers > 0 ? (totalDebt / totalCustomers).toFixed(2) + ' د' : '0 د';
+        }
+        
+        function isOverdue(customer) {
+            // إذا كان الدين موجوداً وأكبر من 0 يعتبر متأخر (يمكن تحسينه بإضافة تاريخ استحقاق)
+            return (customer.currentDebt || 0) > 30; // اعتبار أي دين فوق 30 دينار متأخر
+        }
+        
+        function getCustomerStatus(debt) {
+            if (debt === 0) return { text: 'ملتزم', class: 'status-good' };
+            if (debt < 100) return { text: 'تنبيه', class: 'status-warning' };
+            return { text: 'متأخر', class: 'status-danger' };
+        }
+        
+        // ==================== دوال العملاء ====================
+        
+        window.saveCustomer = async function() {
+            const name = document.getElementById('customerName').value;
+            const phone = document.getElementById('customerPhone').value;
+            const address = document.getElementById('customerAddress').value;
+            const creditLimit = parseFloat(document.getElementById('customerCreditLimit').value) || 0;
+            
+            if (!name || !phone) {
+                alert('الرجاء إدخال الاسم ورقم الهاتف');
+                return;
+            }
+            
+            const customerData = {
+                name: name,
+                phone: phone,
+                address: address || '',
+                creditLimit: creditLimit,
+                currentDebt: 0,
+                totalPurchases: 0,
+                totalPayments: 0,
+                lastUpdate: new Date().toISOString()
+            };
+            
+            try {
+                if (editingCustomerId) {
+                    // الحفاظ على currentDebt القديم
+                    const oldCustomer = allCustomers.find(c => c.id === editingCustomerId);
+                    if (oldCustomer) {
+                        customerData.currentDebt = oldCustomer.currentDebt || 0;
+                        customerData.totalPurchases = oldCustomer.totalPurchases || 0;
+                        customerData.totalPayments = oldCustomer.totalPayments || 0;
+                    }
+                    await update(ref(database, `customers/${editingCustomerId}`), customerData);
+                    alert('تم تحديث بيانات العميل بنجاح');
+                    editingCustomerId = null;
+                    document.getElementById('submitBtn').textContent = '➕ إضافة عميل';
+                    document.getElementById('cancelEditBtn').style.display = 'none';
+                } else {
+                    await push(customersRef, {
+                        ...customerData,
+                        createdAt: new Date().toISOString()
+                    });
+                    alert('تم إضافة العميل بنجاح');
+                }
+                
+                clearCustomerForm();
+                
+            } catch (error) {
+                console.error("خطأ:", error);
+                alert('حدث خطأ، حاول مرة أخرى');
+            }
+        }
+        
+        window.deleteCustomer = async function(id) {
+            if (!confirm('⚠️ هل أنت متأكد من حذف هذا العميل؟ سيتم حذف جميع ديونه!')) return;
+            
+            try {
+                // حذف جميع ديون العميل
+                const debtsSnapshot = await get(ref(database, `debts/${id}`));
+                if (debtsSnapshot.exists()) {
+                    const debts = debtsSnapshot.val();
+                    for (let debtId in debts) {
+                        await remove(ref(database, `debts/${id}/${debtId}`));
+                    }
+                }
+                await remove(ref(database, `customers/${id}`));
+                alert('تم حذف العميل وجميع ديونه');
+            } catch (error) {
+                console.error("خطأ:", error);
+            }
+        }
+        
+        window.editCustomer = function(id) {
+            const customer = allCustomers.find(c => c.id === id);
+            if (!customer) return;
+            
+            editingCustomerId = id;
+            document.getElementById('customerName').value = customer.name;
+            document.getElementById('customerPhone').value = customer.phone;
+            document.getElementById('customerAddress').value = customer.address || '';
+            document.getElementById('customerCreditLimit').value = customer.creditLimit || 0;
+            document.getElementById('submitBtn').textContent = '✏️ تحديث عميل';
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            
+            document.getElementById('customerName').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        window.cancelEdit = function() {
+            editingCustomerId = null;
+            clearCustomerForm();
+            document.getElementById('submitBtn').textContent = '➕ إضافة عميل';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+        
+        function clearCustomerForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+            document.getElementById('customerCreditLimit').value = '';
+        }
+        
+        // ==================== دوال الديون ====================
+        
+        window.openDebtModal = function(customerId, customerName, currentDebt) {
+            document.getElementById('debtCustomerId').value = customerId;
+            document.getElementById('debtCustomerName').textContent = customerName;
+            document.getElementById('currentDebtDisplay').textContent = currentDebt.toFixed(2) + ' دينار';
+            document.getElementById('debtModal').style.display = 'flex';
+            loadDebtsList(customerId);
+        }
+        
+        window.closeDebtModal = function() {
+            document.getElementById('debtModal').style.display = 'none';
+            document.getElementById('debtAmount').value = '';
+            document.getElementById('debtNote').value = '';
+            document.getElementById('debtType').value = 'debt';
+        }
+        
+        window.saveDebtTransaction = async function() {
+            const customerId = document.getElementById('debtCustomerId').value;
+            const amount = parseFloat(document.getElementById('debtAmount').value);
+            const note = document.getElementById('debtNote').value || '';
+            const type = document.getElementById('debtType').value; // 'debt' or 'payment'
+            
+            if (!amount || amount <= 0) {
+                alert('الرجاء إدخال مبلغ صحيح');
+                return;
+            }
+            
+            try {
+                // جلب بيانات العميل الحالية
+                const customerSnapshot = await get(ref(database, `customers/${customerId}`));
+                if (!customerSnapshot.exists()) {
+                    alert('العميل غير موجود');
+                    return;
+                }
+                
+                const customer = customerSnapshot.val();
+                let newDebt = customer.currentDebt || 0;
+                let newTotalPurchases = customer.totalPurchases || 0;
+                let newTotalPayments = customer.totalPayments || 0;
+                
+                if (type === 'debt') {
+                    newDebt += amount;
+                    newTotalPurchases += amount;
+                } else {
+                    newDebt -= amount;
+                    newTotalPayments += amount;
+                }
+                
+                // تحديث رصيد العميل
+                await update(ref(database, `customers/${customerId}`), {
+                    currentDebt: newDebt,
+                    totalPurchases: newTotalPurchases,
+                    totalPayments: newTotalPayments,
+                    lastUpdate: new Date().toISOString()
+                });
+                
+                // تسجيل المعاملة
+                await push(ref(database, `debts/${customerId}`), {
+                    type: type,
+                    amount: amount,
+                    note: note,
+                    date: new Date().toLocaleDateString('ar-EG'),
+                    timestamp: Date.now()
+                });
+                
+                alert(type === 'debt' ? 'تم تسجيل الدين بنجاح' : 'تم تسجيل السداد بنجاح');
+                document.getElementById('debtAmount').value = '';
+                document.getElementById('debtNote').value = '';
+                loadDebtsList(customerId);
+                loadCustomersList();
+                
+            } catch (error) {
+                console.error("خطأ:", error);
+                alert('حدث خطأ');
+            }
+        }
+        
+        async function loadDebtsList(customerId) {
+            const container = document.getElementById('debtsList');
+            container.innerHTML = '<div class="loading">جاري التحميل...</div>';
+            
+            try {
+                const snapshot = await get(ref(database, `debts/${customerId}`));
+                if (!snapshot.exists()) {
+                    container.innerHTML = '<div class="empty-list">لا توجد معاملات مسجلة</div>';
+                    return;
+                }
+                
+                const debts = snapshot.val();
+                let html = '<div class="transactions-list">';
+                let totalDebt = 0;
+                let totalPayment = 0;
+                
+                // تحويل إلى array وترتيب حسب التاريخ
+                const transactions = [];
+                for (let id in debts) {
+                    transactions.push({ id, ...debts[id] });
+                }
+                transactions.reverse(); // الأحدث أولاً
+                
+                for (const t of transactions) {
+                    if (t.type === 'debt') {
+                        totalDebt += t.amount;
+                        html += `
+                            <div class="transaction-item">
+                                <span>🧾 دين</span>
+                                <span class="transaction-debt">+${t.amount.toFixed(2)} د</span>
+                                <span>${t.note || ''}</span>
+                                <span>${t.date}</span>
+                            </div>
+                        `;
+                    } else {
+                        totalPayment += t.amount;
+                        html += `
+                            <div class="transaction-item">
+                                <span>💰 سداد</span>
+                                <span class="transaction-payment">-${t.amount.toFixed(2)} د</span>
+                                <span>${t.note || ''}</span>
+                                <span>${t.date}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += `</div>
+                    <div class="summary-row"><strong>إجمالي المشتريات بالدين:</strong><span class="transaction-debt">${totalDebt.toFixed(2)} د</span></div>
+                    <div class="summary-row"><strong>إجمالي المدفوعات:</strong><span class="transaction-payment">${totalPayment.toFixed(2)} د</span></div>
+                    <div class="summary-row"><strong>الرصيد المتبقي:</strong><span class="${(totalDebt - totalPayment) > 0 ? 'transaction-debt' : 'transaction-payment'}">${(totalDebt - totalPayment).toFixed(2)} د</span></div>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                container.innerHTML = '<div class="error">خطأ في التحميل</div>';
+            }
+        }
+        
+        // ==================== تقرير المتأخرين ====================
+        
+        window.showOverdueReport = function() {
+            const overdueCustomers = allCustomers.filter(c => (c.currentDebt || 0) > 100);
+            
+            if (overdueCustomers.length === 0) {
+                alert('لا يوجد عملاء متأخرين حالياً');
+                return;
+            }
+            
+            let reportHtml = '<div class="report-card"><h4>⚠️ العملاء المتأخرون</h4>';
+            overdueCustomers.forEach(c => {
+                reportHtml += `
+                    <div class="summary-row">
+                        <span><strong>${c.name}</strong> - ${c.phone}</span>
+                        <span class="transaction-debt">${(c.currentDebt || 0).toFixed(2)} دينار</span>
+                    </div>
+                `;
+            });
+            reportHtml += '<button onclick="closeReport()" class="btn-sm" style="margin-top:15px">إغلاق</button></div>';
+            
+            document.getElementById('reportContent').innerHTML = reportHtml;
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+        
+        window.exportToExcel = function() {
+            let csvContent = "اسم العميل,رقم الهاتف,العنوان,الرصيد الحالي,إجمالي المشتريات,إجمالي المدفوعات\n";
+            
+            allCustomers.forEach(c => {
+                csvContent += `"${c.name}",${c.phone},"${c.address || ''}",${(c.currentDebt || 0).toFixed(2)},${(c.totalPurchases || 0).toFixed(2)},${(c.totalPayments || 0).toFixed(2)}\n`;
+            });
+            
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'customers_report.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert('تم تصدير التقرير بنجاح');
+        }
+        
+        window.closeReport = function() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+        
+        // ==================== عرض العملاء في الجدول ====================
+        
+        function displayCustomers(customers) {
+            const tbody = document.getElementById('customersTableBody');
+            tbody.innerHTML = '';
+            
+            if (!customers.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا يوجد عملاء<td></tr>';
+                return;
+            }
+            
+            customers.forEach(c => {
+                const debt = c.currentDebt || 0;
+                const status = getCustomerStatus(debt);
+                
+                const row = `
+                    <tr>
+                        <td><strong>${c.name}</strong></td>
+                        <td>${c.phone}</td>
+                        <td>${c.address || '-'}</td>
+                        <td class="${debt > 0 ? 'debt-positive' : 'debt-zero'} debt-amount">${debt.toFixed(2)} د</td>
+                        <td><span class="status-badge ${status.class}">${status.text}</span></td>
+                        <td>${(c.creditLimit || 0).toFixed(2)} د</td>
+                        <td>${(c.totalPurchases || 0).toFixed(2)}</td>
+                        <td>${(c.totalPayments || 0).toFixed(2)}</td>
+                        <td class="actions">
+                            <button class="btn-sm" onclick='editCustomer("${c.id}")' style="background:#3498db">✏️</button>
+                            <button class="btn-sm btn-warning" onclick='openDebtModal("${c.id}", "${c.name.replace(/'/g, "\\'")}", ${debt})'>💰</button>
+                            <button class="btn-sm btn-danger" onclick='deleteCustomer("${c.id}")'>🗑️</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+        
+        function filterCustomers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            let filtered = allCustomers;
+            
+            if (searchTerm) {
+                filtered = filtered.filter(c => 
+                    c.name.toLowerCase().includes(searchTerm) || 
+                    c.phone.includes(searchTerm)
+                );
+            }
+            
+            if (statusFilter === 'has_debt') {
+                filtered = filtered.filter(c => (c.currentDebt || 0) > 0);
+            } else if (statusFilter === 'no_debt') {
+                filtered = filtered.filter(c => (c.currentDebt || 0) === 0);
+            } else if (statusFilter === 'overdue') {
+                filtered = filtered.filter(c => (c.currentDebt || 0) > 100);
+            }
+            
+            displayCustomers(filtered);
+        }
+        
+        // ==================== تحميل البيانات ====================
+        
+        async function loadCustomersList() {
+            try {
+                const snapshot = await get(customersRef);
+                if (!snapshot.exists()) {
+                    allCustomers = [];
+                    displayCustomers([]);
+                    updateStats();
+                    return;
+                }
+                
+                const data = snapshot.val();
+                allCustomers = [];
+                for (let id in data) {
+                    allCustomers.push({ id, ...data[id] });
+                }
+                
+                // ترتيب حسب الاسم
+                allCustomers.sort((a, b) => a.name.localeCompare(b.name));
+                
+                displayCustomers(allCustomers);
+                updateStats();
+                
+            } catch (error) {
+                console.error("خطأ في تحميل العملاء:", error);
+            }
+        }
+        
+        // الاستماع للتغييرات اللحظية
+        onValue(customersRef, () => {
+            loadCustomersList();
+        });
+        
+        // بدء التشغيل
+        loadCustomersList();
+        
+        // ربط أحداث البحث
+        window.onload = function() {
+            document.getElementById('searchInput')?.addEventListener('input', filterCustomers);
+            document.getElementById('statusFilter')?.addEventListener('change', filterCustomers);
+        }
+        
+    </script>
 </head>
 <body>
 
-    <div class="sidebar shadow">
-        <div class="text-center mb-4">
-            <h4 class="fw-bold">مكتب حاج فاضل</h4>
-            <small class="opacity-75">نظام المندوب الكامل</small>
+<div class="container">
+    <h1>👥 نظام العملاء والدين - مكتب حاج فاضل</h1>
+    
+    <!-- بطاقات الإحصائيات -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="number" id="totalCustomers">0</div>
+            <div class="label">عدد العملاء</div>
         </div>
-        <hr class="opacity-25">
-        <nav>
-            <a href="dashboard.html" class="nav-link"><i class="fas fa-home ms-2"></i> الرئيسية</a>
-            <a href="inventory.html" class="nav-link"><i class="fas fa-box ms-2"></i> المخزن</a>
-            <a href="sales.html" class="nav-link"><i class="fas fa-shopping-cart ms-2"></i> المبيعات (فاتورة)</a>
-            <a href="mandubs.html" class="nav-link"><i class="fas fa-users ms-2"></i> المندوبين</a>
-            <a href="customers.html" class="nav-link active"><i class="fas fa-user-friends ms-2"></i> العملاء والديون</a>
-            <a href="#" class="nav-link"><i class="fas fa-user-shield ms-2"></i> الصلاحيات</a>
-            <a href="index.html" class="nav-link text-warning mt-5"><i class="fas fa-power-off ms-2"></i> تسجيل خروج</a>
-        </nav>
-    </div>
-
-    <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-3 shadow-sm">
-            <h4 class="fw-bold mb-0 text-dark"><i class="fas fa-user-friends text-purple me-2"></i> إدارة العملاء وحسابات الديون</h4>
-            <div class="text-success fw-bold"><i class="fas fa-circle shadow-sm me-1"></i> النظام متصل أونلاين</div>
+        <div class="stat-card danger">
+            <div class="number" id="totalDebt">0 د</div>
+            <div class="label">إجمالي الديون</div>
         </div>
-
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card-custom stat-card d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="stat-title">إجمالي الديون المطلوبة لك</div>
-                        <div class="stat-value" id="totalGlobalDebts">$0.00</div>
-                    </div>
-                    <i class="fas fa-hand-holding-usd fa-2x text-danger opacity-50"></i>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card-custom stat-card d-flex align-items-center justify-content-between" style="border-right-color: #0d47a1;">
-                    <div>
-                        <div class="stat-title">إجمالي الأرصدة المدورة (للزبائن)</div>
-                        <div class="stat-value text-primary" id="totalGlobalCredits">$0.00</div>
-                    </div>
-                    <i class="fas fa-wallet fa-2x text-primary opacity-50"></i>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card-custom stat-card d-flex align-items-center justify-content-between" style="border-right-color: #27ae60;">
-                    <div>
-                        <div class="stat-title">عدد العملاء المسجلين</div>
-                        <div class="stat-value text-success" id="totalCustomersCount">0</div>
-                    </div>
-                    <i class="fas fa-users-cog fa-2x text-success opacity-50"></i>
-                </div>
-            </div>
+        <div class="stat-card warning">
+            <div class="number" id="overdueCount">0</div>
+            <div class="label">عملاء متأخرون</div>
         </div>
-
-        <div class="card-custom">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-3">
-                    <input type="text" id="custName" class="form-control" placeholder="اسم العميل / المحل الجديد">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" id="custPhone" class="form-control" placeholder="رقم الهاتف">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" id="custInitialDebt" class="form-control" placeholder="دين سابق إن وجد ($)" value="0">
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-purple w-100" id="addCustomerBtn"><i class="fas fa-plus-circle me-1"></i> إضافة عميل</button>
-                </div>
-                <div class="col-md-2">
-                    <input type="text" id="searchCustomer" class="form-control border-purple" placeholder="🔍 بحث سريع عن زبون...">
-                </div>
-            </div>
-        </div>
-
-        <div class="table-custom table-responsive">
-            <table class="table mb-0">
-                <thead>
-                    <tr>
-                        <th>اسم العميل / المحل</th>
-                        <th>رقم الهاتف</th>
-                        <th>الحالة المالية</th>
-                        <th>حالة الحساب</th>
-                        <th>إجراءات الحساب</th>
-                        <th>تعديل بيانات</th>
-                        <th>إجراء الإدارة</th>
-                    </tr>
-                </thead>
-                <tbody id="customersTable">
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            <div class="spinner-border text-purple spinner-border-sm me-2" role="status"></div>
-                            جاري تحميل حسابات العملاء من السحابة...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="stat-card success">
+            <div class="number" id="avgDebt">0 د</div>
+            <div class="label">متوسط الدين</div>
         </div>
     </div>
+    
+    <!-- نموذج إضافة / تعديل عميل -->
+    <div class="form-card">
+        <h2>➕ إضافة / تعديل عميل</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>👤 اسم العميل *</label>
+                <input type="text" id="customerName" placeholder="الاسم الكامل">
+            </div>
+            <div class="form-group">
+                <label>📞 رقم الهاتف *</label>
+                <input type="tel" id="customerPhone" placeholder="رقم الهاتف">
+            </div>
+            <div class="form-group">
+                <label>📍 العنوان</label>
+                <input type="text" id="customerAddress" placeholder="العنوان">
+            </div>
+            <div class="form-group">
+                <label>💳 الحد الائتماني</label>
+                <input type="number" id="customerCreditLimit" placeholder="الحد الأقصى للدين" value="0" step="0.01">
+            </div>
+        </div>
+        <div style="margin-top: 15px;">
+            <button id="submitBtn" onclick="saveCustomer()">➕ إضافة عميل</button>
+            <button id="cancelEditBtn" onclick="cancelEdit()" style="background:#95a5a6; display:none;">❌ إلغاء التعديل</button>
+        </div>
+    </div>
+    
+    <!-- شريط البحث والفلترة -->
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 بحث عن عميل (اسم أو هاتف)...">
+        <select id="statusFilter">
+            <option value="all">جميع العملاء</option>
+            <option value="has_debt">لديهم دين</option>
+            <option value="no_debt">لا يوجد عليهم دين</option>
+            <option value="overdue">متأخرون (أكثر من 100 د)</option>
+        </select>
+        <button onclick="showOverdueReport()" style="background:#e67e22">⚠️ تقرير المتأخرين</button>
+        <button onclick="exportToExcel()" style="background:#1abc9c">📊 تصدير Excel</button>
+    </div>
+    
+    <!-- جدول العملاء -->
+    </table>
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>الهاتف</th>
+                <th>العنوان</th>
+                <th>الرصيد الحالي</th>
+                <th>الحالة</th>
+                <th>الحد الائتماني</th>
+                <th>إجمالي المشتريات</th>
+                <th>إجمالي المدفوعات</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="customersTableBody">
+            <tr><td colspan="9" style="text-align:center;">جاري التحميل...</td></tr>
+        </tbody>
+    </table>
+</div>
 
-    <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="customers.js"></script>
+<!-- نافذة إدارة الديون -->
+<div id="debtModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💰 إدارة ديون العميل</h3>
+            <span class="close-modal" onclick="closeDebtModal()">&times;</span>
+        </div>
+        <input type="hidden" id="debtCustomerId">
+        <p><strong>العميل:</strong> <span id="debtCustomerName"></span></p>
+        <p><strong>الرصيد الحالي:</strong> <span id="currentDebtDisplay" class="debt-positive"></span></p>
+        
+        <div class="form-grid" style="margin: 15px 0;">
+            <div class="form-group">
+                <label>نوع المعاملة</label>
+                <select id="debtType">
+                    <option value="debt">🧾 دين جديد (شراء بالدين)</option>
+                    <option value="payment">💰 سداد دفعة</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>المبلغ</label>
+                <input type="number" id="debtAmount" placeholder="المبلغ" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>ملاحظات</label>
+                <input type="text" id="debtNote" placeholder="سبب الدين / رقم الفاتورة">
+            </div>
+        </div>
+        <button onclick="saveDebtTransaction()" style="width:100%">💾 تسجيل المعاملة</button>
+        
+        <div style="margin-top: 20px;">
+            <h4>📋 سجل المعاملات</h4>
+            <div id="debtsList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة التقرير -->
+<div id="reportModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3>📊 تقرير العملاء</h3>
+            <span class="close-modal" onclick="closeReport()">&times;</span>
+        </div>
+        <div id="reportContent"></div>
+    </div>
+</div>
+
 </body>
 </html>
