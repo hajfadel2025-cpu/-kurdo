@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المندوبين - Haj Fadel Office</title>
+    <title>نظام إدارة المندوبين المتكامل - مكتب حاج فاضل</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove, set, get, update } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-        // إعدادات مشروعك الحقيقية المستخرجة من حسابك
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
             authDomain: "haj-fadel-accounting.firebaseapp.com",
@@ -23,168 +23,890 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const mandubsRef = ref(database, "mandubs");
+        const salesRef = ref(database, "sales");
+        const advancesRef = ref(database, "advances");
 
-        // جعل الوظائف متاحة في واجهة المستخدم
-        window.saveMandub = function() {
+        // متغير لتخزين ID المندوب الجاري تعديله
+        let editingMandubId = null;
+
+        // ==================== دوال المندوبين ====================
+        
+        // حفظ مندوب (جديد أو تعديل)
+        window.saveMandub = async function() {
             const name = document.getElementById('mandubName').value;
             const phone = document.getElementById('mandubPhone').value;
             const region = document.getElementById('mandubRegion').value;
+            const commissionRate = parseFloat(document.getElementById('mandubCommission').value) || 0;
 
-            if(name && phone) {
-                // إرسال البيانات إلى السحابة
-                push(mandubsRef, {
-                    name: name,
-                    phone: phone,
-                    region: region,
-                    date: new Date().toLocaleDateString('ar-EG')
-                }).then(() => {
-                    // تفريغ الحقول بعد الحفظ بنجاح
-                    document.getElementById('mandubForm').reset();
-                    alert('تم حفظ المندوب بنجاح في السحابة!');
-                }).catch((error) => {
-                    console.error("خطأ في الحفظ: ", error);
-                });
-            } else {
-                alert('الرجاء ملء الحقول الأساسية!');
+            if(!name || !phone) {
+                alert('الرجاء ملء الاسم ورقم الهاتف!');
+                return;
+            }
+
+            const mandubData = {
+                name: name,
+                phone: phone,
+                region: region || 'غير محدد',
+                commissionRate: commissionRate,
+                totalSales: 0,
+                totalCommission: 0,
+                totalPaid: 0,
+                balance: 0,
+                lastUpdate: new Date().toISOString()
+            };
+
+            try {
+                if (editingMandubId) {
+                    // تحديث مندوب موجود
+                    await update(ref(database, `mandubs/${editingMandubId}`), mandubData);
+                    alert('تم تحديث بيانات المندوب بنجاح!');
+                    editingMandubId = null;
+                    document.getElementById('submitBtn').textContent = 'إضافة مندوب';
+                } else {
+                    // إضافة مندوب جديد
+                    await push(mandubsRef, {
+                        ...mandubData,
+                        date: new Date().toLocaleDateString('ar-EG')
+                    });
+                    alert('تم إضافة المندوب بنجاح!');
+                }
+                
+                // تفريغ النموذج
+                document.getElementById('mandubForm').reset();
+                document.getElementById('mandubCommission').value = '0';
+                
+            } catch (error) {
+                console.error("خطأ:", error);
+                alert('حدث خطأ، حاول مرة أخرى');
             }
         }
 
-        // الاستماع اللحظي للبيانات وجلبها فوراً في الجدول
-        onValue(mandubsRef, (snapshot) => {
-            const tableBody = document.getElementById('mandubsTableBody');
-            tableBody.innerHTML = ''; // تنظيف الجدول قبل التحديث
+        // حذف مندوب
+        window.deleteMandub = async function(id) {
+            if(confirm('⚠️ هل أنت متأكد من حذف هذا المندوب؟ سيتم حذف جميع بياناته وسلفه ومبيعاته!')) {
+                try {
+                    // حذف المندوب
+                    await remove(ref(database, `mandubs/${id}`));
+                    // حذف سلفه
+                    await remove(ref(database, `advances/${id}`));
+                    // حذف مبيعاته
+                    const salesSnapshot = await get(ref(database, 'sales'));
+                    if (salesSnapshot.exists()) {
+                        const sales = salesSnapshot.val();
+                        for (let saleId in sales) {
+                            if (sales[saleId].mandubId === id) {
+                                await remove(ref(database, `sales/${saleId}`));
+                            }
+                        }
+                    }
+                    alert('تم حذف المندوب وجميع بياناته');
+                } catch (error) {
+                    console.error("خطأ في الحذف:", error);
+                }
+            }
+        }
+
+        // تجهيز نموذج التعديل
+        window.editMandub = function(id, name, phone, region, commissionRate) {
+            editingMandubId = id;
+            document.getElementById('mandubName').value = name;
+            document.getElementById('mandubPhone').value = phone;
+            document.getElementById('mandubRegion').value = region;
+            document.getElementById('mandubCommission').value = commissionRate;
+            document.getElementById('submitBtn').textContent = 'تحديث المندوب';
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
             
-            if (snapshot.exists()) {
+            // تمرير للقمة النموذج
+            document.getElementById('mandubName').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // إلغاء التعديل
+        window.cancelEdit = function() {
+            editingMandubId = null;
+            document.getElementById('mandubForm').reset();
+            document.getElementById('mandubCommission').value = '0';
+            document.getElementById('submitBtn').textContent = 'إضافة مندوب';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+
+        // ==================== دوال السلف والدفعات ====================
+        
+        // فتح نافذة السلف
+        window.showAdvancesModal = function(mandubId, mandubName) {
+            document.getElementById('advanceMandubId').value = mandubId;
+            document.getElementById('advanceMandubName').textContent = mandubName;
+            document.getElementById('advanceModal').style.display = 'flex';
+            loadAdvancesList(mandubId);
+        }
+
+        // إغلاق نافذة السلف
+        window.closeAdvancesModal = function() {
+            document.getElementById('advanceModal').style.display = 'none';
+            document.getElementById('advanceAmount').value = '';
+            document.getElementById('advanceNote').value = '';
+        }
+
+        // حفظ سلفة جديدة
+        window.saveAdvance = async function() {
+            const mandubId = document.getElementById('advanceMandubId').value;
+            const amount = parseFloat(document.getElementById('advanceAmount').value);
+            const note = document.getElementById('advanceNote').value || 'بدون ملاحظات';
+            
+            if (!amount || amount <= 0) {
+                alert('الرجاء إدخال مبلغ صحيح');
+                return;
+            }
+            
+            try {
+                // إضافة السلفة
+                await push(ref(database, `advances/${mandubId}`), {
+                    amount: amount,
+                    note: note,
+                    date: new Date().toLocaleDateString('ar-EG'),
+                    timestamp: Date.now()
+                });
+                
+                // تحديث رصيد المندوب
+                const mandubRef = ref(database, `mandubs/${mandubId}`);
+                const snapshot = await get(mandubRef);
+                if (snapshot.exists()) {
+                    const mandub = snapshot.val();
+                    const newTotalPaid = (mandub.totalPaid || 0) + amount;
+                    const newBalance = (mandub.totalCommission || 0) - newTotalPaid;
+                    
+                    await update(mandubRef, {
+                        totalPaid: newTotalPaid,
+                        balance: newBalance,
+                        lastUpdate: new Date().toISOString()
+                    });
+                }
+                
+                alert('تم تسجيل السلفة بنجاح');
+                document.getElementById('advanceAmount').value = '';
+                document.getElementById('advanceNote').value = '';
+                loadAdvancesList(mandubId);
+                loadMandubsList(); // تحديث الجدول الرئيسي
+                
+            } catch (error) {
+                console.error("خطأ:", error);
+            }
+        }
+        
+        // تحميل قائمة السلف
+        async function loadAdvancesList(mandubId) {
+            const advancesList = document.getElementById('advancesList');
+            advancesList.innerHTML = '<div class="loading">جاري التحميل...</div>';
+            
+            try {
+                const snapshot = await get(ref(database, `advances/${mandubId}`));
+                if (!snapshot.exists()) {
+                    advancesList.innerHTML = '<div class="empty-list">لا توجد سلف مسجلة</div>';
+                    return;
+                }
+                
+                let html = '<table class="mini-table"><thead><tr><th>المبلغ</th><th>الملاحظات</th><th>التاريخ</th><th></th></tr></thead><tbody>';
+                const advances = snapshot.val();
+                let total = 0;
+                
+                for (let id in advances) {
+                    const adv = advances[id];
+                    total += adv.amount;
+                    html += `
+                        <tr>
+                            <td class="amount">${adv.amount.toFixed(2)} دينار</td>
+                            <td>${adv.note}</td>
+                            <td>${adv.date}</td>
+                            <td><button class="btn-small btn-danger" onclick="deleteAdvance('${mandubId}','${id}',${adv.amount})">✖</button></td>
+                        </tr>
+                    `;
+                }
+                html += `<tr class="total-row"><td colspan="3"><strong>إجمالي السلف:</strong></td><td><strong>${total.toFixed(2)} دينار</strong></td></tr>`;
+                html += '</tbody></table>';
+                advancesList.innerHTML = html;
+                
+            } catch (error) {
+                advancesList.innerHTML = '<div class="error">خطأ في التحميل</div>';
+            }
+        }
+        
+        // حذف سلفة
+        window.deleteAdvance = async function(mandubId, advanceId, amount) {
+            if (!confirm('هل تريد حذف هذه السلفة؟')) return;
+            
+            try {
+                await remove(ref(database, `advances/${mandubId}/${advanceId}`));
+                
+                // تحديث رصيد المندوب (إضافة المبلغ مرة أخرى)
+                const mandubRef = ref(database, `mandubs/${mandubId}`);
+                const snapshot = await get(mandubRef);
+                if (snapshot.exists()) {
+                    const mandub = snapshot.val();
+                    const newTotalPaid = (mandub.totalPaid || 0) - amount;
+                    const newBalance = (mandub.totalCommission || 0) - newTotalPaid;
+                    
+                    await update(mandubRef, {
+                        totalPaid: newTotalPaid,
+                        balance: newBalance
+                    });
+                }
+                
+                loadAdvancesList(mandubId);
+                loadMandubsList();
+                alert('تم حذف السلفة');
+            } catch (error) {
+                console.error("خطأ:", error);
+            }
+        }
+
+        // ==================== فتح نافذة إضافة فاتورة ====================
+        
+        window.showSalesModal = function(mandubId, mandubName, commissionRate) {
+            document.getElementById('saleMandubId').value = mandubId;
+            document.getElementById('saleMandubName').textContent = mandubName;
+            document.getElementById('commissionRateDisplay').textContent = commissionRate + '%';
+            document.getElementById('saleModal').style.display = 'flex';
+            updateCommissionPreview();
+        }
+        
+        window.closeSalesModal = function() {
+            document.getElementById('saleModal').style.display = 'none';
+            document.getElementById('saleAmount').value = '';
+            document.getElementById('saleCustomer').value = '';
+            document.getElementById('saleProduct').value = '';
+        }
+        
+        // معاينة العمولة قبل الحفظ
+        window.updateCommissionPreview = function() {
+            const amount = parseFloat(document.getElementById('saleAmount').value) || 0;
+            const rate = parseFloat(document.getElementById('commissionRateDisplay').textContent) || 0;
+            const commission = amount * (rate / 100);
+            document.getElementById('commissionPreview').textContent = commission.toFixed(2) + ' دينار';
+        }
+        
+        // حفظ فاتورة جديدة
+        window.saveSale = async function() {
+            const mandubId = document.getElementById('saleMandubId').value;
+            const amount = parseFloat(document.getElementById('saleAmount').value);
+            const customer = document.getElementById('saleCustomer').value || 'عميل نقدي';
+            const product = document.getElementById('saleProduct').value || 'منتج غير محدد';
+            
+            if (!amount || amount <= 0) {
+                alert('الرجاء إدخال مبلغ الفاتورة');
+                return;
+            }
+            
+            // جلب نسبة العمولة الحالية للمندوب
+            const mandubSnapshot = await get(ref(database, `mandubs/${mandubId}`));
+            if (!mandubSnapshot.exists()) {
+                alert('المندوب غير موجود');
+                return;
+            }
+            
+            const mandub = mandubSnapshot.val();
+            const commissionRate = mandub.commissionRate || 0;
+            const commission = amount * (commissionRate / 100);
+            
+            try {
+                // إضافة الفاتورة
+                await push(salesRef, {
+                    mandubId: mandubId,
+                    amount: amount,
+                    customer: customer,
+                    product: product,
+                    commission: commission,
+                    commissionRate: commissionRate,
+                    date: new Date().toLocaleDateString('ar-EG'),
+                    timestamp: Date.now()
+                });
+                
+                // تحديث إحصائيات المندوب
+                const newTotalSales = (mandub.totalSales || 0) + amount;
+                const newTotalCommission = (mandub.totalCommission || 0) + commission;
+                const newBalance = newTotalCommission - (mandub.totalPaid || 0);
+                
+                await update(ref(database, `mandubs/${mandubId}`), {
+                    totalSales: newTotalSales,
+                    totalCommission: newTotalCommission,
+                    balance: newBalance,
+                    lastUpdate: new Date().toISOString()
+                });
+                
+                alert('تم تسجيل الفاتورة بنجاح!');
+                closeSalesModal();
+                loadMandubsList();
+                
+            } catch (error) {
+                console.error("خطأ:", error);
+                alert('حدث خطأ في تسجيل الفاتورة');
+            }
+        }
+        
+        // ==================== عرض تقرير العمليات ====================
+        
+        window.showTransactionsReport = async function(mandubId, mandubName) {
+            document.getElementById('reportModal').style.display = 'flex';
+            document.getElementById('reportTitle').textContent = `تقرير عمليات ${mandubName}`;
+            
+            const content = document.getElementById('reportContent');
+            content.innerHTML = '<div class="loading">جاري التحميل...</div>';
+            
+            try {
+                // جلب المبيعات
+                const salesSnapshot = await get(salesRef);
+                let salesHtml = '<h4>🧾 فواتير المبيعات</h4><table class="mini-table"><thead><tr><th>العميل</th><th>المنتج</th><th>المبلغ</th><th>العمولة</th><th>التاريخ</th></tr></thead><tbody>';
+                let totalSales = 0;
+                let totalCommission = 0;
+                
+                if (salesSnapshot.exists()) {
+                    const sales = salesSnapshot.val();
+                    for (let id in sales) {
+                        if (sales[id].mandubId === mandubId) {
+                            const sale = sales[id];
+                            totalSales += sale.amount;
+                            totalCommission += sale.commission;
+                            salesHtml += `<tr>
+                                <td>${sale.customer}</td>
+                                <td>${sale.product}</td>
+                                <td>${sale.amount.toFixed(2)} د</td>
+                                <td>${sale.commission.toFixed(2)} د</td>
+                                <td>${sale.date}</td>
+                            </tr>`;
+                        }
+                    }
+                }
+                salesHtml += `<tr class="total-row"><td colspan="2"><strong>الإجمالي</strong></td><td><strong>${totalSales.toFixed(2)} د</strong></td><td><strong>${totalCommission.toFixed(2)} د</strong></td><td></td></tr>`;
+                salesHtml += '</tbody></table>';
+                
+                // جلب السلف
+                const advancesSnapshot = await get(ref(database, `advances/${mandubId}`));
+                let advancesHtml = '<h4>💰 السلف والمدفوعات</h4><table class="mini-table"><thead><tr><th>المبلغ</th><th>الملاحظات</th><th>التاريخ</th></tr></thead><tbody>';
+                let totalAdvances = 0;
+                
+                if (advancesSnapshot.exists()) {
+                    const advances = advancesSnapshot.val();
+                    for (let id in advances) {
+                        totalAdvances += advances[id].amount;
+                        advancesHtml += `<tr>
+                            <td class="amount">${advances[id].amount.toFixed(2)} د</td>
+                            <td>${advances[id].note}</td>
+                            <td>${advances[id].date}</td>
+                        </tr>`;
+                    }
+                }
+                advancesHtml += `<tr class="total-row"><td colspan="2"><strong>إجمالي السلف</strong></td><td><strong>${totalAdvances.toFixed(2)} د</strong></td></tr>`;
+                advancesHtml += '</tbody></table>';
+                
+                // الملخص النهائي
+                const balance = totalCommission - totalAdvances;
+                const summaryHtml = `
+                    <div class="summary-card">
+                        <h4>📊 الملخص النهائي</h4>
+                        <div class="summary-row"><span>إجمالي المبيعات:</span><span>${totalSales.toFixed(2)} دينار</span></div>
+                        <div class="summary-row"><span>إجمالي العمولة المستحقة:</span><span class="positive">${totalCommission.toFixed(2)} دينار</span></div>
+                        <div class="summary-row"><span>إجمالي السلف المدفوعة:</span><span class="negative">${totalAdvances.toFixed(2)} دينار</span></div>
+                        <div class="summary-row total"><span>الرصيد المتبقي:</span><span class="${balance >= 0 ? 'positive' : 'negative'}">${balance.toFixed(2)} دينار</span></div>
+                    </div>
+                `;
+                
+                content.innerHTML = summaryHtml + salesHtml + advancesHtml;
+                
+            } catch (error) {
+                content.innerHTML = '<div class="error">خطأ في تحميل التقرير</div>';
+            }
+        }
+        
+        window.closeReportModal = function() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+        
+        // ==================== تحميل وعرض المندوبين ====================
+        
+        async function loadMandubsList() {
+            const tableBody = document.getElementById('mandubsTableBody');
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">جاري التحميل...</td></tr>';
+            
+            try {
+                const snapshot = await get(mandubsRef);
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">لا يوجد مندوبين مسجلين حالياً</td></tr>';
+                    return;
+                }
+                
                 const data = snapshot.val();
+                tableBody.innerHTML = '';
+                
                 for (let id in data) {
-                    const mandub = data[id];
+                    const m = data[id];
+                    const balance = m.balance || 0;
+                    const balanceClass = balance >= 0 ? 'balance-positive' : 'balance-negative';
+                    const balanceText = balance >= 0 ? `${balance.toFixed(2)} دينار (له)` : `${Math.abs(balance).toFixed(2)} دينار (عليه)`;
+                    
                     const row = `
                         <tr>
-                            <td>${mandub.name}</td>
-                            <td>${mandub.phone}</td>
-                            <td>${mandub.region || 'غير محدد'}</td>
-                            <td>${mandub.date}</td>
-                            <td>
-                                <button class="btn-delete" onclick="deleteMandub('${id}')">حذف</button>
+                            <td><strong>${m.name}</strong></td>
+                            <td>${m.phone}</td>
+                            <td>${m.region || 'غير محدد'}</td>
+                            <td class="commission-rate">${(m.commissionRate || 0)}%</td>
+                            <td>${(m.totalSales || 0).toFixed(2)}</td>
+                            <td>${(m.totalCommission || 0).toFixed(2)}</td>
+                            <td>${(m.totalPaid || 0).toFixed(2)}</td>
+                            <td class="${balanceClass}">${balanceText}</td>
+                            <td class="actions">
+                                <button class="btn-edit" onclick='editMandub("${id}", "${m.name.replace(/'/g, "\\'")}", "${m.phone}", "${m.region || ''}", ${m.commissionRate || 0})'>✏️ تعديل</button>
+                                <button class="btn-money" onclick='showAdvancesModal("${id}", "${m.name.replace(/'/g, "\\'")}")'>💰 سلفة</button>
+                                <button class="btn-sale" onclick='showSalesModal("${id}", "${m.name.replace(/'/g, "\\'")}", ${m.commissionRate || 0})'>🧾 فاتورة</button>
+                                <button class="btn-report" onclick='showTransactionsReport("${id}", "${m.name.replace(/'/g, "\\'")}")'>📊 تقرير</button>
+                                <button class="btn-delete" onclick='deleteMandub("${id}")'>🗑️ حذف</button>
                             </td>
                         </tr>
                     `;
                     tableBody.innerHTML += row;
                 }
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد مندوبين مسجلين حالياً</td></tr>';
-            }
-        });
-
-        // وظيفة الحذف من السحابة
-        window.deleteMandub = function(id) {
-            if(confirm('هل أنت متأكد من حذف هذا المندوب؟')) {
-                const specificMandubRef = ref(database, `mandubs/${id}`);
-                remove(specificMandubRef);
+            } catch (error) {
+                console.error("خطأ:", error);
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:red;">خطأ في تحميل البيانات</td></tr>';
             }
         }
+        
+        // الاستماع للتغييرات اللحظية
+        onValue(mandubsRef, () => {
+            loadMandubsList();
+        });
+        
+        // تحميل أولي
+        loadMandubsList();
+        
     </script>
 
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
         }
+        
         .container {
-            max-width: 900px;
+            max-width: 1400px;
             margin: auto;
             background: white;
             padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
+        
         h2 {
             color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            border-right: 4px solid #3498db;
+            padding-right: 15px;
+            margin-bottom: 20px;
         }
+        
+        /* نموذج الإضافة */
+        .form-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
         .form-group {
             display: flex;
             gap: 15px;
-            margin-bottom: 20px;
             flex-wrap: wrap;
+            align-items: flex-end;
         }
-        .form-group input {
+        
+        .form-group .field {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            min-width: 200px;
+            min-width: 150px;
         }
+        
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
         button {
             padding: 10px 20px;
-            background-color: #27ae60;
+            background: #27ae60;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
+            transition: all 0.3s;
         }
+        
         button:hover {
-            background-color: #219150;
+            transform: translateY(-2px);
+            filter: brightness(1.05);
         }
+        
+        #cancelEditBtn {
+            background: #95a5a6;
+            display: none;
+        }
+        
+        /* الجدول */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            font-size: 13px;
         }
+        
         th, td {
             border: 1px solid #ddd;
-            padding: 12px;
-            text-align: right;
+            padding: 10px 8px;
+            text-align: center;
         }
+        
         th {
-            background-color: #34495e;
+            background: #2c3e50;
             color: white;
+            font-weight: 600;
         }
+        
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background: #f8f9fa;
         }
+        
+        tr:hover {
+            background: #e8f4fd;
+        }
+        
+        /* أزرار العمليات */
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn-edit {
+            background: #3498db;
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+        
+        .btn-money {
+            background: #e67e22;
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+        
+        .btn-sale {
+            background: #27ae60;
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+        
+        .btn-report {
+            background: #1abc9c;
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+        
         .btn-delete {
-            background-color: #e74c3c;
-            padding: 5px 10px;
-            font-size: 14px;
+            background: #e74c3c;
+            padding: 5px 8px;
+            font-size: 11px;
         }
-        .btn-delete:hover {
-            background-color: #c0392b;
+        
+        .btn-small {
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+        }
+        
+        .commission-rate {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .balance-positive {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .balance-negative {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        /* النوافذ المنبثقة (مودال) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .modal-header h3 {
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            cursor: pointer;
+            font-size: 24px;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #e74c3c;
+        }
+        
+        .modal .form-group {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .modal .field {
+            width: 100%;
+        }
+        
+        .mini-table {
+            width: 100%;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+        
+        .mini-table th, .mini-table td {
+            padding: 6px;
+        }
+        
+        .total-row {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .amount {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .empty-list, .loading, .error {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card h4 {
+            margin-bottom: 15px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid white;
+        }
+        
+        .positive {
+            color: #2ecc71;
+        }
+        
+        .negative {
+            color: #e74c3c;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            th, td {
+                font-size: 10px;
+                padding: 5px;
+            }
+            
+            .actions button {
+                font-size: 9px;
+                padding: 3px 5px;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>نظام إدارة المندوبين (Mandubs System)</h2>
+    <h2>📋 نظام إدارة المندوبين المتكامل - مكتب حاج فاضل</h2>
     
-    <form id="mandubForm" onsubmit="event.preventDefault(); saveMandub();">
-        <div class="form-group">
-            <input type="text" id="mandubName" placeholder="اسم المندوب" required>
-            <input type="tel" id="mandubPhone" placeholder="رقم الهاتف" required>
-            <input type="text" id="mandubRegion" placeholder="المنطقة / المحافظة">
-            <button type="submit">إضافة مندوب</button>
-        </div>
-    </form>
-
+    <!-- نموذج إضافة / تعديل مندوب -->
+    <div class="form-card">
+        <form id="mandubForm" onsubmit="event.preventDefault(); saveMandub();">
+            <div class="form-group">
+                <div class="field">
+                    <label>👤 اسم المندوب *</label>
+                    <input type="text" id="mandubName" placeholder="الاسم الكامل" required>
+                </div>
+                <div class="field">
+                    <label>📞 رقم الهاتف *</label>
+                    <input type="tel" id="mandubPhone" placeholder="رقم الهاتف" required>
+                </div>
+                <div class="field">
+                    <label>📍 المنطقة</label>
+                    <input type="text" id="mandubRegion" placeholder="المحافظة / المنطقة">
+                </div>
+                <div class="field">
+                    <label>💰 نسبة العمولة (%)</label>
+                    <input type="number" id="mandubCommission" placeholder="مثال: 10" value="0" step="0.5">
+                </div>
+                <div class="field">
+                    <button type="submit" id="submitBtn">➕ إضافة مندوب</button>
+                    <button type="button" id="cancelEditBtn" onclick="cancelEdit()">❌ إلغاء التعديل</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- جدول عرض المندوبين -->
     <table>
         <thead>
             <tr>
                 <th>الاسم</th>
-                <th>رقم الهاتف</th>
+                <th>الهاتف</th>
                 <th>المنطقة</th>
-                <th>تاريخ الإضافة</th>
-                <th>إجراءات</th>
+                <th>نسبة العمولة</th>
+                <th>إجمالي المبيعات</th>
+                <th>العمولة المستحقة</th>
+                <th>المدفوع</th>
+                <th>الرصيد</th>
+                <th>الإجراءات</th>
             </tr>
         </thead>
         <tbody id="mandubsTableBody">
-            </tbody>
+            <tr><td colspan="9" style="text-align:center;">جاري التحميل...</td><tr>
+        </tbody>
     </table>
+</div>
+
+<!-- نافذة إضافة سلفة -->
+<div id="advanceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💰 تسجيل سلفة للمندوب</h3>
+            <span class="close-modal" onclick="closeAdvancesModal()">&times;</span>
+        </div>
+        <input type="hidden" id="advanceMandubId">
+        <p><strong>المندوب:</strong> <span id="advanceMandubName"></span></p>
+        <div class="form-group">
+            <div class="field">
+                <label>💵 المبلغ</label>
+                <input type="number" id="advanceAmount" placeholder="المبلغ بالدينار" step="0.01">
+            </div>
+            <div class="field">
+                <label>📝 ملاحظات</label>
+                <input type="text" id="advanceNote" placeholder="سبب السلفة">
+            </div>
+        </div>
+        <button onclick="saveAdvance()" style="width:100%; margin-top:15px;">💾 تسجيل السلفة</button>
+        <div id="advancesList"></div>
+    </div>
+</div>
+
+<!-- نافذة إضافة فاتورة -->
+<div id="saleModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🧾 تسجيل فاتورة مبيعات</h3>
+            <span class="close-modal" onclick="closeSalesModal()">&times;</span>
+        </div>
+        <input type="hidden" id="saleMandubId">
+        <p><strong>المندوب:</strong> <span id="saleMandubName"></span></p>
+        <p><strong>نسبة العمولة:</strong> <span id="commissionRateDisplay"></span></p>
+        <div class="form-group">
+            <div class="field">
+                <label>💰 مبلغ الفاتورة</label>
+                <input type="number" id="saleAmount" placeholder="المبلغ الإجمالي" step="0.01" oninput="updateCommissionPreview()">
+            </div>
+            <div class="field">
+                <label>👤 اسم العميل</label>
+                <input type="text" id="saleCustomer" placeholder="اسم العميل">
+            </div>
+            <div class="field">
+                <label>📦 المنتج / الخدمة</label>
+                <input type="text" id="saleProduct" placeholder="المنتج المباع">
+            </div>
+        </div>
+        <div style="background:#ecf0f1; padding:10px; border-radius:6px; margin:15px 0;">
+            💡 قيمة العمولة المتوقعة: <strong id="commissionPreview">0.00 دينار</strong>
+        </div>
+        <button onclick="saveSale()" style="width:100%;">💾 تسجيل الفاتورة</button>
+    </div>
+</div>
+
+<!-- نافذة التقرير -->
+<div id="reportModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 id="reportTitle">📊 تقرير العمليات</h3>
+            <span class="close-modal" onclick="closeReportModal()">&times;</span>
+        </div>
+        <div id="reportContent"></div>
+    </div>
 </div>
 
 </body>
