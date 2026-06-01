@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام المبيعات - مكتب حاج فاضل</title>
+    <title>نظام المبيعات المتكامل | مكتب حاج فاضل</title>
     <style>
         * {
             margin: 0;
@@ -19,13 +19,47 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
+        /* علامات التبويب */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* الإحصائيات */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -45,22 +79,25 @@
         }
 
         .stat-card .number {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             color: #667eea;
         }
 
+        /* المحتوى الرئيسي */
         .main-content {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
             gap: 25px;
         }
 
-        .sales-form, .cart-section {
+        .sales-form, .cart-section, .inventory-section, 
+        .reports-section, .search-section {
             background: white;
             border-radius: 20px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
         }
 
         .form-group {
@@ -87,7 +124,7 @@
             border-color: #667eea;
         }
 
-        .btn-add, .btn-save {
+        .btn-add, .btn-save, .btn-search, .btn-export {
             width: 100%;
             padding: 12px;
             color: white;
@@ -97,6 +134,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            margin-top: 10px;
         }
 
         .btn-add {
@@ -105,15 +143,19 @@
 
         .btn-save {
             background: linear-gradient(135deg, #00b09b, #96c93d);
-            margin-top: 10px;
         }
 
-        .btn-add:hover, .btn-save:hover {
-            transform: scale(1.02);
+        .btn-search {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
         }
 
+        .btn-export {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        /* سلة المشتريات */
         .cart-items {
-            max-height: 400px;
+            max-height: 300px;
             overflow-y: auto;
             margin-bottom: 20px;
         }
@@ -122,21 +164,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             border-bottom: 1px solid #eee;
-        }
-
-        .cart-item-info {
-            flex: 1;
-        }
-
-        .cart-item-name {
-            font-weight: bold;
-        }
-
-        .cart-item-price {
-            color: #666;
-            font-size: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .cart-item-quantity button {
@@ -166,12 +197,61 @@
             font-weight: bold;
         }
 
-        .commission {
-            background: #f0f0f0;
+        /* قسم الخصم */
+        .discount-section {
+            background: #f9f9f9;
             padding: 15px;
             border-radius: 10px;
             margin: 15px 0;
-            text-align: center;
+        }
+
+        .discount-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .discount-input input {
+            flex: 1;
+        }
+
+        /* قائمة المخزن */
+        .inventory-list, .search-results {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .inventory-item, .invoice-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .low-stock {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        /* التقارير */
+        .report-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .report-filters select, .report-filters input {
+            width: auto;
+            flex: 1;
+        }
+
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
         }
 
         .alert {
@@ -195,377 +275,631 @@
             .main-content {
                 grid-template-columns: 1fr;
             }
+            .report-filters {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>📊 عدد الفواتير</h3>
-                <div class="number" id="invoiceCount">0</div>
+        <!-- علامات التبويب -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('sales')">🧾 المبيعات</button>
+            <button class="tab-btn" onclick="showTab('inventory')">🏪 المخزن</button>
+            <button class="tab-btn" onclick="showTab('search')">🔍 البحث</button>
+            <button class="tab-btn" onclick="showTab('reports')">📊 التقارير</button>
+        </div>
+
+        <!-- تبويب المبيعات -->
+        <div id="salesTab" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📊 عدد الفواتير</h3>
+                    <div class="number" id="invoiceCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>💰 إجمالي المبيعات</h3>
+                    <div class="number" id="totalSales">0 د.ع</div>
+                </div>
+                <div class="stat-card">
+                    <h3>🏪 عدد المنتجات</h3>
+                    <div class="number" id="productCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>📦 إجمالي المخزون</h3>
+                    <div class="number" id="totalStock">0</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h3>💰 إجمالي المبيعات</h3>
-                <div class="number" id="totalSales">0 د.ع</div>
+
+            <div class="main-content">
+                <div class="sales-form">
+                    <h2>🧾 فاتورة مبيعات جديدة</h2>
+                    <div id="alert" class="alert"></div>
+
+                    <div class="form-group">
+                        <label>👤 اختر العميل</label>
+                        <select id="customerSelect">
+                            <option value="">-- اختر عميل --</option>
+                            <option value="عميل نقدي">عميل نقدي</option>
+                            <option value="محمد أحمد">محمد أحمد</option>
+                            <option value="علي حسن">علي حسن</option>
+                            <option value="فاطمة كاظم">فاطمة كاظم</option>
+                            <option value="حسين رضا">حسين رضا</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>💰 طريقة الدفع</label>
+                        <select id="paymentMethod">
+                            <option value="نقدي">نقدي</option>
+                            <option value="أجل">أجل</option>
+                            <option value="شبكة">شبكة</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📦 اختر منتج</label>
+                        <select id="productSelect">
+                            <option value="">-- اختر منتج --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔢 الكمية</label>
+                        <input type="number" id="quantity" value="1" min="1">
+                    </div>
+
+                    <button class="btn-add" onclick="addToCart()">➕ إضافة إلى السلة</button>
+                </div>
+
+                <div class="cart-section">
+                    <h2>🛒 سلة المشتريات</h2>
+                    <div id="cartItems" class="cart-items">
+                        <p style="text-align: center; color: #999;">السلة فارغة</p>
+                    </div>
+
+                    <!-- قسم الخصم -->
+                    <div class="discount-section">
+                        <label>🎁 إضافة خصم</label>
+                        <div class="discount-input">
+                            <input type="number" id="discountValue" placeholder="قيمة الخصم" step="0.01">
+                            <select id="discountType">
+                                <option value="percentage">% نسبة مئوية</option>
+                                <option value="fixed">💰 مبلغ ثابت</option>
+                            </select>
+                        </div>
+                        <button class="btn-add" style="margin-top: 10px; background: #ff9800;" onclick="applyDiscount()">تطبيق الخصم</button>
+                    </div>
+
+                    <div class="cart-total">
+                        المجموع: <span id="subTotal">0.00</span> د.ع<br>
+                        <span id="discountDisplay" style="color: #ff4444;"></span>
+                        <strong>إجمالي الفاتورة: <span id="cartTotal">0.00</span> د.ع</strong>
+                    </div>
+
+                    <button class="btn-save" onclick="saveInvoice()">💾 حفظ الفاتورة</button>
+                </div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="sales-form">
-                <h2 style="margin-bottom: 20px;">🧾 فاتورة مبيعات جديدة</h2>
-                <div id="alert" class="alert"></div>
-
-                <div class="form-group">
-                    <label>👤 اختر مندوب</label>
-                    <select id="salesmanSelect">
-                        <option value="">-- اختر مندوب --</option>
-                        <option value="كردو">كردو</option>
-                        <option value="علي">علي</option>
-                        <option value="حسن">حسن</option>
-                    </select>
+        <!-- تبويب المخزن -->
+        <div id="inventoryTab" class="tab-content">
+            <div class="inventory-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>🏪 إدارة المخزن</h2>
+                    <button class="btn-add" style="width: auto; padding: 10px 20px;" onclick="showAddProductDialog()">➕ إضافة منتج</button>
                 </div>
-
-                <div class="form-group">
-                    <label>💰 طريقة الدفع</label>
-                    <select id="paymentMethod">
-                        <option value="نقدي">نقدي</option>
-                        <option value="أجل">أجل</option>
-                        <option value="شبكة">شبكة</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>🏪 الصندوق</label>
-                    <select id="cashBox">
-                        <option value="عصر نقدي">عصر نقدي - رئيسي</option>
-                        <option value="صندوق ثانوي">صندوق ثانوي</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>📦 اختر منتج</label>
-                    <select id="productSelect">
-                        <option value="">-- اختر منتج --</option>
-                        <option value="خبز" data-price="600">خبز - 600 د.ع</option>
-                        <option value="حليب" data-price="1200">حليب - 1200 د.ع</option>
-                        <option value="سكر" data-price="800">سكر - 800 د.ع</option>
-                        <option value="رز" data-price="1500">رز - 1500 د.ع</option>
-                        <option value="زيت" data-price="1000">زيت - 1000 د.ع</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>🔢 الكمية</label>
-                    <input type="number" id="quantity" value="1" min="1">
-                </div>
-
-                <button class="btn-add" onclick="addToCart()">➕ إضافة إلى السلة</button>
+                <div id="inventoryList" class="inventory-list"></div>
             </div>
+        </div>
 
-            <div class="cart-section">
-                <h2 style="margin-bottom: 20px;">🛒 سلة المشتريات</h2>
-                <div id="cartItems" class="cart-items">
-                    <p style="text-align: center; color: #999;">السلة فارغة</p>
+        <!-- تبويب البحث -->
+        <div id="searchTab" class="tab-content">
+            <div class="search-section">
+                <h2>🔍 البحث عن الفواتير</h2>
+                <div class="form-group">
+                    <label>🔎 بحث بـ</label>
+                    <select id="searchType">
+                        <option value="number">رقم الفاتورة</option>
+                        <option value="customer">اسم العميل</option>
+                        <option value="date">التاريخ</option>
+                    </select>
                 </div>
-                <div class="cart-total">
-                    إجمالي الفاتورة: <span id="cartTotal">0.00</span> د.ع
+                <div class="form-group">
+                    <label>📝 قيمة البحث</label>
+                    <input type="text" id="searchQuery" placeholder="أدخل قيمة البحث...">
                 </div>
-                <div class="commission">
-                    💰 العمولة المتوقعة: <span id="commissionAmount">0.00</span> د.ع (1%)
+                <button class="btn-search" onclick="searchInvoices()">🔍 بحث</button>
+                <div id="searchResults" class="search-results" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
+        <!-- تبويب التقارير -->
+        <div id="reportsTab" class="tab-content">
+            <div class="reports-section">
+                <h2>📊 التقارير والإحصائيات</h2>
+                
+                <div class="report-filters">
+                    <select id="reportPeriod">
+                        <option value="daily">📅 يومي</option>
+                        <option value="weekly">📆 أسبوعي</option>
+                        <option value="monthly">🗓️ شهري</option>
+                        <option value="yearly">📅 سنوي</option>
+                    </select>
+                    <input type="date" id="reportDate">
+                    <button class="btn-export" onclick="generateReport()">📊 عرض التقرير</button>
                 </div>
-                <button class="btn-save" onclick="saveInvoice()">💾 حفظ الفاتورة</button>
+
+                <div id="reportResult"></div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn-export" onclick="exportToExcel()">📎 تصدير إلى Excel</button>
+                    <button class="btn-export" onclick="printReport()">🖨️ طباعة التقرير</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // سلة المشتريات
+        // ============== البيانات ==============
+        let inventory = [];
         let cart = [];
+        let invoices = [];
+        let currentDiscount = { value: 0, type: 'percentage' };
 
-        // إضافة منتج إلى السلة
-        function addToCart() {
-            const productSelect = document.getElementById('productSelect');
-            const productName = productSelect.value;
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            const productPrice = parseFloat(selectedOption.dataset.price);
-            const quantity = parseInt(document.getElementById('quantity').value);
-
-            if (!productName) {
-                showAlert('الرجاء اختيار منتج', 'error');
-                return;
-            }
-
-            if (quantity < 1) {
-                showAlert('الكمية يجب أن تكون أكبر من 0', 'error');
-                return;
-            }
-
-            // البحث عن المنتج في السلة
-            const existingItem = cart.find(item => item.name === productName);
-            if (existingItem) {
-                existingItem.quantity += quantity;
-                existingItem.total = existingItem.quantity * existingItem.price;
+        // ============== تحميل وحفظ البيانات ==============
+        function loadData() {
+            const savedInventory = localStorage.getItem('inventory');
+            const savedInvoices = localStorage.getItem('invoices');
+            
+            if (savedInventory) {
+                inventory = JSON.parse(savedInventory);
             } else {
-                cart.push({
-                    name: productName,
-                    price: productPrice,
-                    quantity: quantity,
-                    total: productPrice * quantity
-                });
+                inventory = [
+                    { id: 1, name: 'خبز', price: 600, stock: 50 },
+                    { id: 2, name: 'حليب', price: 1200, stock: 30 },
+                    { id: 3, name: 'سكر', price: 800, stock: 25 },
+                    { id: 4, name: 'رز', price: 1500, stock: 40 },
+                    { id: 5, name: 'زيت', price: 1000, stock: 20 }
+                ];
             }
-
-            updateCartDisplay();
-            document.getElementById('quantity').value = 1;
-            showAlert(`تمت إضافة ${quantity} × ${productName}`, 'success');
+            
+            if (savedInvoices) {
+                invoices = JSON.parse(savedInvoices);
+            }
+            
+            updateInventoryDisplay();
+            updateProductSelect();
+            updateStatistics();
         }
 
-        // تحديث عرض السلة
-        function updateCartDisplay() {
-            const container = document.getElementById('cartItems');
-            const totalSpan = document.getElementById('cartTotal');
-            const commissionSpan = document.getElementById('commissionAmount');
+        function saveData() {
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+        }
 
-            if (cart.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #999;">السلة فارغة</p>';
-                totalSpan.innerText = '0.00';
-                commissionSpan.innerText = '0.00';
+        // ============== عرض المخزن ==============
+        function updateInventoryDisplay() {
+            const container = document.getElementById('inventoryList');
+            let totalStock = 0;
+            
+            if (inventory.length === 0) {
+                container.innerHTML = '<p style="text-align: center;">لا توجد منتجات</p>';
+                document.getElementById('productCount').innerText = '0';
+                document.getElementById('totalStock').innerText = '0';
                 return;
             }
+            
+            let html = '<table style="width:100%"><tr><th>المنتج</th><th>السعر</th><th>المتبقي</th><th></th></tr>';
+            inventory.forEach(product => {
+                totalStock += product.stock;
+                const stockClass = product.stock < 10 ? 'low-stock' : '';
+                html += `
+                    <tr class="inventory-item">
+                        <td><strong>${product.name}</strong></td>
+                        <td>${product.price} د.ع</td>
+                        <td class="${stockClass}">${product.stock}</td>
+                        <td><button onclick="editProduct(${product.id})" style="background:#667eea;color:white;border:none;padding:5px 10px;border-radius:5px;">✏️</button></td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            
+            container.innerHTML = html;
+            document.getElementById('productCount').innerText = inventory.length;
+            document.getElementById('totalStock').innerText = totalStock;
+        }
 
-            let total = 0;
+        function updateProductSelect() {
+            const select = document.getElementById('productSelect');
+            select.innerHTML = '<option value="">-- اختر منتج --</option>';
+            inventory.forEach(product => {
+                if (product.stock > 0) {
+                    select.innerHTML += `<option value="${product.id}" data-price="${product.price}" data-stock="${product.stock}">${product.name} - ${product.price} د.ع (متوفر: ${product.stock})</option>`;
+                }
+            });
+        }
+
+        function showAddProductDialog() {
+            const name = prompt('اسم المنتج:');
+            if (!name) return;
+            const price = parseFloat(prompt('السعر:'));
+            if (isNaN(price)) return;
+            const stock = parseInt(prompt('الكمية:'));
+            if (isNaN(stock)) return;
+            
+            const newId = inventory.length > 0 ? Math.max(...inventory.map(p => p.id)) + 1 : 1;
+            inventory.push({ id: newId, name, price, stock });
+            saveData();
+            updateInventoryDisplay();
+            updateProductSelect();
+            showAlert(`تمت إضافة ${name}`, 'success');
+        }
+
+        function editProduct(id) {
+            const product = inventory.find(p => p.id === id);
+            const newStock = parseInt(prompt(`تعديل كمية ${product.name}:`, product.stock));
+            if (!isNaN(newStock) && newStock >= 0) {
+                product.stock = newStock;
+                saveData();
+                updateInventoryDisplay();
+                updateProductSelect();
+                showAlert(`تم تعديل ${product.name}`, 'success');
+            }
+        }
+
+        // ============== السلة والخصم ==============
+        function addToCart() {
+            const productId = parseInt(document.getElementById('productSelect').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const product = inventory.find(p => p.id === productId);
+            
+            if (!productId || !product) {
+                showAlert('اختر منتجاً', 'error');
+                return;
+            }
+            if (quantity > product.stock) {
+                showAlert(`الكمية غير متوفرة! المتوفر: ${product.stock}`, 'error');
+                return;
+            }
+            
+            const existing = cart.find(item => item.productId === productId);
+            const newQty = (existing ? existing.quantity : 0) + quantity;
+            if (newQty > product.stock) {
+                showAlert(`إجمالي الكمية ${newQty} يتجاوز المتوفر ${product.stock}`, 'error');
+                return;
+            }
+            
+            if (existing) {
+                existing.quantity = newQty;
+                existing.total = existing.quantity * existing.price;
+            } else {
+                cart.push({ productId, name: product.name, price: product.price, quantity, total: product.price * quantity });
+            }
+            
+            updateCartDisplay();
+            document.getElementById('quantity').value = 1;
+            showAlert(`تمت إضافة ${quantity} × ${product.name}`, 'success');
+        }
+
+        function updateCartDisplay() {
+            const container = document.getElementById('cartItems');
+            const subTotalSpan = document.getElementById('subTotal');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align: center;">السلة فارغة</p>';
+                subTotalSpan.innerText = '0.00';
+                updateTotalWithDiscount();
+                return;
+            }
+            
+            let subTotal = 0;
             let html = '';
             cart.forEach((item, index) => {
-                total += item.total;
+                subTotal += item.total;
                 html += `
                     <div class="cart-item">
-                        <div class="cart-item-info">
-                            <div class="cart-item-name">${item.name}</div>
-                            <div class="cart-item-price">${item.price} د.ع × ${item.quantity}</div>
-                        </div>
-                        <div class="cart-item-quantity">
+                        <div><strong>${item.name}</strong><br>${item.price} د.ع</div>
+                        <div>الكمية: 
                             <button onclick="changeQuantity(${index}, -1)">-</button>
-                            <span>${item.quantity}</span>
+                            ${item.quantity}
                             <button onclick="changeQuantity(${index}, 1)">+</button>
                         </div>
-                        <div class="cart-item-total">${item.total.toFixed(2)} د.ع</div>
+                        <div>${item.total.toFixed(2)} د.ع</div>
                         <button class="btn-remove" onclick="removeFromCart(${index})">✖</button>
                     </div>
                 `;
             });
-
+            
             container.innerHTML = html;
-            totalSpan.innerText = total.toFixed(2);
-            const commission = total * 0.01;
-            commissionSpan.innerText = commission.toFixed(2);
+            subTotalSpan.innerText = subTotal.toFixed(2);
+            updateTotalWithDiscount();
         }
 
-        // تغيير الكمية
         function changeQuantity(index, delta) {
-            const newQuantity = cart[index].quantity + delta;
-            if (newQuantity < 1) {
+            const newQty = cart[index].quantity + delta;
+            if (newQty < 1) {
                 removeFromCart(index);
                 return;
             }
-            cart[index].quantity = newQuantity;
-            cart[index].total = cart[index].price * newQuantity;
+            const product = inventory.find(p => p.id === cart[index].productId);
+            if (newQty > product.stock) {
+                showAlert(`الكمية غير متوفرة!`, 'error');
+                return;
+            }
+            cart[index].quantity = newQty;
+            cart[index].total = cart[index].price * newQty;
             updateCartDisplay();
         }
 
-        // إزالة منتج من السلة
         function removeFromCart(index) {
             cart.splice(index, 1);
             updateCartDisplay();
-            showAlert('تمت إزالة المنتج', 'success');
+            showAlert('تمت الإزالة', 'success');
         }
 
-        // حفظ الفاتورة
+        function applyDiscount() {
+            const value = parseFloat(document.getElementById('discountValue').value);
+            const type = document.getElementById('discountType').value;
+            if (isNaN(value) || value < 0) {
+                showAlert('أدخل قيمة خصم صحيحة', 'error');
+                return;
+            }
+            currentDiscount = { value, type };
+            updateTotalWithDiscount();
+            showAlert(`تم تطبيق خصم ${value}${type === 'percentage' ? '%' : ' د.ع'}`, 'success');
+        }
+
+        function updateTotalWithDiscount() {
+            const subTotal = parseFloat(document.getElementById('subTotal').innerText);
+            let discountAmount = 0;
+            
+            if (currentDiscount.type === 'percentage') {
+                discountAmount = subTotal * (currentDiscount.value / 100);
+            } else {
+                discountAmount = currentDiscount.value;
+            }
+            
+            const finalTotal = Math.max(0, subTotal - discountAmount);
+            document.getElementById('cartTotal').innerText = finalTotal.toFixed(2);
+            document.getElementById('discountDisplay').innerHTML = discountAmount > 0 ? `الخصم: -${discountAmount.toFixed(2)} د.ع<br>` : '';
+        }
+
+        // ============== حفظ الفاتورة ==============
         function saveInvoice() {
             if (cart.length === 0) {
-                showAlert('السلة فارغة! أضف منتجات أولاً', 'error');
+                showAlert('السلة فارغة!', 'error');
                 return;
             }
-
-            const salesman = document.getElementById('salesmanSelect').value;
-            if (!salesman) {
-                showAlert('الرجاء اختيار مندوب', 'error');
-                return;
-            }
-
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const cashBox = document.getElementById('cashBox').value;
-            const total = parseFloat(document.getElementById('cartTotal').innerText);
-            const commission = parseFloat(document.getElementById('commissionAmount').innerText);
-            const invoiceNumber = 'INV-' + Date.now();
-            const date = new Date().toLocaleString();
-
-            // عرض معلومات الفاتورة
-            const invoiceDetails = `
-                🧾 **تم حفظ الفاتورة بنجاح** 🧾
-                
-                📌 رقم الفاتورة: ${invoiceNumber}
-                📅 التاريخ: ${date}
-                👤 المندوب: ${salesman}
-                💳 طريقة الدفع: ${paymentMethod}
-                🏪 الصندوق: ${cashBox}
-                
-                📦 المنتجات:
-                ${cart.map(item => `- ${item.name}: ${item.quantity} × ${item.price} = ${item.total.toFixed(2)} د.ع`).join('\n')}
-                
-                💰 الإجمالي: ${total.toFixed(2)} د.ع
-                🎁 العمولة (1%): ${commission.toFixed(2)} د.ع
-                
-                شكراً لتعاملكم مع مكتب حاج فاضل
-            `;
-
-            alert(invoiceDetails);
-
-            // طباعة الفاتورة
-            printInvoice(invoiceNumber, salesman, paymentMethod, cashBox, cart, total, commission, date);
-
-            // تفريغ السلة
-            cart = [];
-            updateCartDisplay();
             
-            // تحديث عدد الفواتير
+            const customer = document.getElementById('customerSelect').value;
+            if (!customer) {
+                showAlert('اختر العميل', 'error');
+                return;
+            }
+            
+            // خصم الكميات من المخزن
+            for (const item of cart) {
+                const product = inventory.find(p => p.id === item.productId);
+                product.stock -= item.quantity;
+            }
+            
+            const subTotal = parseFloat(document.getElementById('subTotal').innerText);
+            let discountAmount = 0;
+            if (currentDiscount.type === 'percentage') {
+                discountAmount = subTotal * (currentDiscount.value / 100);
+            } else {
+                discountAmount = currentDiscount.value;
+            }
+            const finalTotal = Math.max(0, subTotal - discountAmount);
+            
+            const invoice = {
+                number: 'INV-' + Date.now(),
+                date: new Date().toLocaleString('ar-IQ'),
+                customer: customer,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                items: [...cart],
+                subTotal: subTotal,
+                discount: { value: currentDiscount.value, type: currentDiscount.type, amount: discountAmount },
+                total: finalTotal,
+                timestamp: Date.now()
+            };
+            
+            invoices.push(invoice);
+            saveData();
+            updateInventoryDisplay();
+            updateProductSelect();
             updateStatistics();
+            
+            // عرض الفاتورة
+            alert(`✅ تم حفظ الفاتورة\nرقم: ${invoice.number}\nالعميل: ${customer}\nالإجمالي: ${finalTotal.toFixed(2)} د.ع`);
+            
+            // تفريغ السلة والخصم
+            cart = [];
+            currentDiscount = { value: 0, type: 'percentage' };
+            document.getElementById('discountValue').value = '';
+            updateCartDisplay();
+            showAlert('تم حفظ الفاتورة بنجاح', 'success');
         }
 
-        // طباعة الفاتورة
-        function printInvoice(number, salesman, payment, box, items, total, commission, date) {
+        // ============== البحث ==============
+        function searchInvoices() {
+            const searchType = document.getElementById('searchType').value;
+            const query = document.getElementById('searchQuery').value.toLowerCase();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            let results = [];
+            for (const inv of invoices) {
+                if (searchType === 'number' && inv.number.toLowerCase().includes(query)) {
+                    results.push(inv);
+                } else if (searchType === 'customer' && inv.customer.toLowerCase().includes(query)) {
+                    results.push(inv);
+                } else if (searchType === 'date' && inv.date.toLowerCase().includes(query)) {
+                    results.push(inv);
+                }
+            }
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p style="text-align: center;">❌ لا توجد نتائج</p>';
+                return;
+            }
+            
+            let html = '<table style="width:100%"><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th></th></tr>';
+            results.forEach(inv => {
+                html += `
+                    <tr class="invoice-result">
+                        <td>${inv.number}</td>
+                        <td>${inv.date}</td>
+                        <td>${inv.customer}</td>
+                        <td>${inv.total.toFixed(2)} د.ع</td>
+                        <td><button onclick="viewInvoiceDetails(${invoices.indexOf(inv)})" style="background:#667eea;color:white;border:none;padding:5px 10px;border-radius:5px;">📄 عرض</button></td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function viewInvoiceDetails(index) {
+            const inv = invoices[index];
+            let details = `فاتورة: ${inv.number}\nالتاريخ: ${inv.date}\nالعميل: ${inv.customer}\nطريقة الدفع: ${inv.paymentMethod}\n\nالمنتجات:\n`;
+            inv.items.forEach(item => {
+                details += `- ${item.name}: ${item.quantity} × ${item.price} = ${item.total.toFixed(2)} د.ع\n`;
+            });
+            details += `\nالمجموع: ${inv.subTotal.toFixed(2)} د.ع`;
+            if (inv.discount.amount > 0) {
+                details += `\nالخصم: -${inv.discount.amount.toFixed(2)} د.ع`;
+            }
+            details += `\nالإجمالي: ${inv.total.toFixed(2)} د.ع`;
+            alert(details);
+        }
+
+        // ============== التقارير ==============
+        function generateReport() {
+            const period = document.getElementById('reportPeriod').value;
+            const targetDate = document.getElementById('reportDate').value;
+            const reportDiv = document.getElementById('reportResult');
+            
+            let filtered = [...invoices];
+            
+            if (targetDate) {
+                const target = new Date(targetDate);
+                filtered = invoices.filter(inv => {
+                    const invDate = new Date(inv.timestamp);
+                    if (period === 'daily') {
+                        return invDate.toDateString() === target.toDateString();
+                    } else if (period === 'weekly') {
+                        const weekStart = new Date(target);
+                        weekStart.setDate(target.getDate() - target.getDay());
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekStart.getDate() + 6);
+                        return invDate >= weekStart && invDate <= weekEnd;
+                    } else if (period === 'monthly') {
+                        return invDate.getMonth() === target.getMonth() && invDate.getFullYear() === target.getFullYear();
+                    } else if (period === 'yearly') {
+                        return invDate.getFullYear() === target.getFullYear();
+                    }
+                    return true;
+                });
+            }
+            
+            let totalSales = 0;
+            let totalInvoices = filtered.length;
+            let totalDiscount = 0;
+            
+            filtered.forEach(inv => {
+                totalSales += inv.total;
+                totalDiscount += inv.discount.amount || 0;
+            });
+            
+            let html = `
+                <div class="chart-container">
+                    <h3>📊 تقرير ${period === 'daily' ? 'يومي' : period === 'weekly' ? 'أسبوعي' : period === 'monthly' ? 'شهري' : 'سنوي'}</h3>
+                    <table style="width:100%">
+                        <tr><td><strong>📅 عدد الفواتير:</strong></td><td>${totalInvoices}</td></tr>
+                        <tr><td><strong>💰 إجمالي المبيعات:</strong></td><td>${totalSales.toFixed(2)} د.ع</td></tr>
+                        <tr><td><strong>🎁 إجمالي الخصومات:</strong></td><td>${totalDiscount.toFixed(2)} د.ع</td></tr>
+                        <tr><td><strong>📊 متوسط الفاتورة:</strong></td><td>${totalInvoices > 0 ? (totalSales / totalInvoices).toFixed(2) : 0} د.ع</td></tr>
+                    </table>
+                </div>
+            `;
+            
+            if (filtered.length > 0) {
+                html += '<h4>📋 الفواتير:</h4><table style="width:100%"><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th></tr>';
+                filtered.forEach(inv => {
+                    html += `<tr><td>${inv.number}</td><td>${inv.date}</td><td>${inv.customer}</td><td>${inv.total.toFixed(2)} د.ع</td></tr>`;
+                });
+                html += '</table>';
+            }
+            
+            reportDiv.innerHTML = html;
+        }
+
+        function exportToExcel() {
+            let csv = "رقم الفاتورة,التاريخ,العميل,طريقة الدفع,الإجمالي\n";
+            invoices.forEach(inv => {
+                csv += `"${inv.number}","${inv.date}","${inv.customer}","${inv.paymentMethod}",${inv.total.toFixed(2)}\n`;
+            });
+            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `تقرير_المبيعات_${Date.now()}.csv`;
+            link.click();
+            showAlert("تم تصدير التقرير", "success");
+        }
+
+        function printReport() {
+            const reportContent = document.getElementById('reportResult').innerHTML;
+            if (!reportContent) {
+                showAlert("قم بإنشاء التقرير أولاً", "error");
+                return;
+            }
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
-                <html dir="rtl">
-                <head>
-                    <title>فاتورة ${number}</title>
-                    <style>
-                        body {
-                            font-family: 'Tahoma', Arial, sans-serif;
-                            padding: 30px;
-                            max-width: 800px;
-                            margin: 0 auto;
-                        }
-                        .header {
-                            text-align: center;
-                            border-bottom: 3px solid #667eea;
-                            padding-bottom: 20px;
-                            margin-bottom: 20px;
-                        }
-                        .header h1 {
-                            color: #667eea;
-                            margin-bottom: 5px;
-                        }
-                        .info {
-                            margin: 20px 0;
-                            line-height: 1.8;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 20px 0;
-                        }
-                        th, td {
-                            border: 1px solid #ddd;
-                            padding: 10px;
-                            text-align: center;
-                        }
-                        th {
-                            background: #667eea;
-                            color: white;
-                        }
-                        .total {
-                            font-size: 20px;
-                            font-weight: bold;
-                            text-align: left;
-                            margin: 20px 0;
-                            padding-top: 10px;
-                            border-top: 2px solid #ddd;
-                        }
-                        .commission {
-                            color: #00b09b;
-                            font-size: 16px;
-                        }
-                        .footer {
-                            text-align: center;
-                            margin-top: 40px;
-                            padding-top: 20px;
-                            border-top: 1px solid #ddd;
-                            font-size: 12px;
-                            color: #666;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>📄 مكتب حاج فاضل</h1>
-                        <h2>فاتورة مبيعات</h2>
-                        <p>رقم: ${number}</p>
-                    </div>
-                    
-                    <div class="info">
-                        <p><strong>📅 التاريخ:</strong> ${date}</p>
-                        <p><strong>👤 المندوب:</strong> ${salesman}</p>
-                        <p><strong>💳 طريقة الدفع:</strong> ${payment}</p>
-                        <p><strong>🏪 الصندوق:</strong> ${box}</p>
-                    </div>
-                    
-                    <table>
-                        <thead>
-                            <tr><th>المنتج</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(item => `
-                                <tr>
-                                    <td>${item.name}</td>
-                                    <td>${item.price} د.ع</td>
-                                    <td>${item.quantity}</td>
-                                    <td>${item.total.toFixed(2)} د.ع</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    
-                    <div class="total">
-                        💰 الإجمالي: ${total.toFixed(2)} د.ع
-                    </div>
-                    <div class="commission">
-                        🎁 عمولة المندوب (1%): ${commission.toFixed(2)} د.ع
-                    </div>
-                    
-                    <div class="footer">
-                        <p>شكراً لتعاملكم مع مكتب حاج فاضل</p>
-                        <p>مع تحيات فريق المبيعات</p>
-                    </div>
-                    
-                    <script>window.print();<\/script>
-                </body>
-                </html>
+                <html dir="rtl"><head><title>تقرير المبيعات</title>
+                <style>body{font-family:Arial;padding:20px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ddd;padding:8px;text-align:center;} th{background:#667eea;color:white;}</style>
+                </head><body><h1>📊 تقرير المبيعات - مكتب حاج فاضل</h1>${reportContent}</body></html>
             `);
             printWindow.document.close();
+            printWindow.print();
         }
 
-        // تحديث الإحصائيات
+        // ============== الإحصائيات والتبويب ==============
         function updateStatistics() {
-            const invoiceCountSpan = document.getElementById('invoiceCount');
-            let count = parseInt(invoiceCountSpan.innerText) || 0;
-            invoiceCountSpan.innerText = count + 1;
+            let totalSales = 0;
+            for (const inv of invoices) {
+                totalSales += inv.total;
+            }
+            document.getElementById('totalSales').innerText = totalSales.toFixed(2) + ' د.ع';
+            document.getElementById('invoiceCount').innerText = invoices.length;
         }
 
-        // عرض رسالة
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'reports') {
+                document.getElementById('reportDate').valueAsDate = new Date();
+            }
+        }
+
         function showAlert(message, type) {
             const alertDiv = document.getElementById('alert');
             alertDiv.className = `alert alert-${type}`;
             alertDiv.innerText = message;
             alertDiv.style.display = 'block';
-            setTimeout(() => {
-                alertDiv.style.display = 'none';
-            }, 2500);
+            setTimeout(() => alertDiv.style.display = 'none', 3000);
         }
 
-        // عند تحميل الصفحة
+        // بدء التشغيل
         window.onload = function() {
-            console.log('✅ صفحة المبيعات جاهزة');
-            updateCartDisplay();
+            loadData();
+            document.getElementById('reportDate').valueAsDate = new Date();
+            showAlert('مرحباً بك في نظام المبيعات المتكامل', 'success');
         };
     </script>
 </body>
