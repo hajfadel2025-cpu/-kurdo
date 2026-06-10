@@ -28,11 +28,12 @@
         
         .container { max-width: 1600px; margin: auto; }
         
+        /* Header */
         .header {
             background: rgba(255,255,255,0.95);
-            padding: 20px 25px;
+            padding: 15px 25px;
             border-radius: 20px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -46,18 +47,51 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            font-size: 28px;
+            font-size: 24px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
         
+        /* Navigation Menu */
+        .nav-menu {
+            background: rgba(255,255,255,0.95);
+            border-radius: 50px;
+            padding: 8px 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .nav-item {
+            padding: 10px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .nav-item i { font-size: 16px; }
+        
+        .nav-item.mandubs { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .nav-item.inventory { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .nav-item.sales { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .nav-item.reports { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+        
+        .nav-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        
         .user-info {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 50px;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -67,18 +101,19 @@
             background: rgba(255,255,255,0.2);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 50px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: 0.3s;
         }
         
         .logout-btn:hover { background: #e74c3c; }
         
+        /* Stats Cards */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -93,6 +128,7 @@
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: 0.3s;
+            cursor: pointer;
         }
         
         .stat:hover { transform: translateY(-5px); }
@@ -101,6 +137,7 @@
         .stat .num { font-size: 28px; font-weight: bold; color: #2c3e50; margin: 10px 0 5px; }
         .stat .txt { color: #7f8c8d; font-size: 12px; }
         
+        /* Charts Row */
         .charts-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -123,8 +160,10 @@
             gap: 10px;
             border-right: 3px solid #667eea;
             padding-right: 12px;
+            font-size: 16px;
         }
         
+        /* Action Buttons */
         .action-buttons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -153,6 +192,7 @@
         .btn-purchases { background: linear-gradient(135deg, #43e97b, #38f9d7); }
         .btn-export { background: linear-gradient(135deg, #fa709a, #fee140); }
         
+        /* Row Layout */
         .row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -175,6 +215,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 16px;
         }
         
         table { width: 100%; font-size: 13px; border-collapse: collapse; }
@@ -186,33 +227,10 @@
         .badge.orange { background: #ffeaa7; color: #e67e22; }
         .badge.green { background: #e8f8f5; color: #27ae60; }
         
-        .links {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
-        }
-        
-        .link {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 12px;
-            text-decoration: none;
-            border-radius: 15px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        
-        .link:hover { transform: translateY(-3px); }
-        
         .footer { text-align: center; margin-top: 25px; color: rgba(255,255,255,0.8); font-size: 12px; }
         .refresh-time { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px; text-align: center; }
         
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -284,13 +302,16 @@
             .stats { grid-template-columns: repeat(2, 1fr); }
             .charts-row { grid-template-columns: 1fr; }
             .row { grid-template-columns: 1fr; }
+            .nav-menu { border-radius: 15px; justify-content: center; }
+            .nav-item { padding: 6px 12px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- Header -->
     <div class="header">
-        <h1><i class="fas fa-landmark"></i> مكتب حاج فاضل - الرئيسية</h1>
+        <h1><i class="fas fa-landmark"></i> مكتب حاج فاضل - نظام إدارة المبيعات</h1>
         <div class="user-info">
             <i class="fas fa-user-circle"></i>
             <span id="userName">مرحباً بك</span>
@@ -298,22 +319,33 @@
         </div>
     </div>
     
+    <!-- Navigation Menu -->
+    <div class="nav-menu">
+        <a href="mandubs.html" class="nav-item mandubs"><i class="fas fa-user-tie"></i> المندوبين</a>
+        <a href="inventory.html" class="nav-item inventory"><i class="fas fa-boxes"></i> المخزن</a>
+        <a href="sales.html" class="nav-item sales"><i class="fas fa-cart-shopping"></i> المبيعات</a>
+        <a href="customers.html" class="nav-item reports"><i class="fas fa-users"></i> العملاء</a>
+    </div>
+    
+    <!-- Stats Cards -->
     <div class="stats">
         <div class="stat"><i class="fas fa-boxes"></i><div class="num" id="productsCount">0</div><div class="txt">المنتجات</div></div>
         <div class="stat"><i class="fas fa-users"></i><div class="num" id="customersCount">0</div><div class="txt">العملاء</div></div>
         <div class="stat"><i class="fas fa-user-tie"></i><div class="num" id="mandubsCount">0</div><div class="txt">المندوبين</div></div>
         <div class="stat"><i class="fas fa-file-invoice"></i><div class="num" id="salesCount">0</div><div class="txt">الفواتير</div></div>
-        <div class="stat"><i class="fas fa-chart-line"></i><div class="num" id="totalSales">0</div><div class="txt">المبيعات</div></div>
-        <div class="stat"><i class="fas fa-hand-holding-usd"></i><div class="num" id="totalDebt">0</div><div class="txt">الديون</div></div>
-        <div class="stat"><i class="fas fa-coins"></i><div class="num" id="totalProfit">0</div><div class="txt">الأرباح</div></div>
+        <div class="stat"><i class="fas fa-chart-line"></i><div class="num" id="totalSales">0</div><div class="txt">إجمالي المبيعات</div></div>
+        <div class="stat"><i class="fas fa-hand-holding-usd"></i><div class="num" id="totalDebt">0</div><div class="txt">إجمالي الديون</div></div>
+        <div class="stat"><i class="fas fa-coins"></i><div class="num" id="totalProfit">0</div><div class="txt">صافي الأرباح</div></div>
         <div class="stat"><i class="fas fa-trophy"></i><div class="num" id="topMandub">0</div><div class="txt">أفضل مندوب</div></div>
     </div>
     
+    <!-- Charts Row -->
     <div class="charts-row">
-        <div class="chart-card"><h3><i class="fas fa-chart-simple"></i> المبيعات آخر 7 أيام</h3><canvas id="salesChart"></canvas></div>
+        <div class="chart-card"><h3><i class="fas fa-chart-line"></i> المبيعات خلال آخر 7 أيام</h3><canvas id="salesChart"></canvas></div>
         <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> المبيعات حسب المندوب</h3><canvas id="mandubChart"></canvas></div>
     </div>
     
+    <!-- Action Buttons -->
     <div class="action-buttons">
         <button class="action-btn btn-inventory" onclick="showInventoryReport()"><i class="fas fa-clipboard-list"></i> جرد المخزون</button>
         <button class="action-btn btn-sales" onclick="showSalesReport()"><i class="fas fa-file-invoice-dollar"></i> جرد فواتير المبيعات</button>
@@ -321,37 +353,39 @@
         <button class="action-btn btn-export" onclick="exportFullReport()"><i class="fas fa-download"></i> تصدير تقرير كامل</button>
     </div>
     
+    <!-- Info Boxes -->
     <div class="row">
         <div class="box">
             <h3><i class="fas fa-exclamation-triangle"></i> منتجات منخفضة المخزون</h3>
-            <table><thead><tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead><tbody id="lowStockList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+            98<table> <thead> <tr> <th>المنتج</th> <th>الكمية</th> <th>الحالة</th> </tr> </thead> <tbody id="lowStockList"> <tr> <td colspan="3">جاري التحميل...</td> </tr> </tbody> </table>
         </div>
         <div class="box">
             <h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3>
-            <table><thead><tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+            98<table> <thead> <tr> <th>العميل</th> <th>الدين</th> <th>الحالة</th> </tr> </thead> <tbody id="overdueList"> <tr> <td colspan="3">جاري التحميل...</td> </tr> </tbody> </table>
         </div>
     </div>
     
     <div class="row">
         <div class="box">
             <h3><i class="fas fa-receipt"></i> آخر الفواتير</h3>
-            <table><thead><tr><th>رقم</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="4">جاري التحميل...</td></tr></tbody></table>
+            98<table> <thead> <tr> <th>رقم</th> <th>العميل</th> <th>المندوب</th> <th>المبلغ</th> </tr> </thead> <tbody id="recentSales"> <tr> <td colspan="4">جاري التحميل...</td> </tr> </tbody> </table>
         </div>
         <div class="box">
-            <h3><i class="fas fa-rocket"></i> روابط سريعة</h3>
-            <div class="links">
-                <a href="mandubs.html" class="link"><i class="fas fa-user-tie"></i> مندوبين</a>
-                <a href="inventory.html" class="link"><i class="fas fa-boxes"></i> مخزن</a>
-                <a href="customers.html" class="link"><i class="fas fa-users"></i> عملاء</a>
-                <a href="sales.html" class="link"><i class="fas fa-cart-shopping"></i> مبيعات</a>
+            <h3><i class="fas fa-chart-simple"></i> إحصائيات سريعة</h3>
+            <div style="padding: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>📊 إجمالي الفواتير:</span><strong id="statSalesCount">0</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>💰 إجمالي المبيعات:</span><strong id="statTotalSales">0 د</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>🏪 عدد المنتجات:</span><strong id="statProductsCount">0</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>👥 عدد العملاء:</span><strong id="statCustomersCount">0</strong></div>
             </div>
         </div>
     </div>
     
-    <div class="footer"><i class="fas fa-sync-alt"></i> تحديث تلقائي لحظي</div>
+    <div class="footer"><i class="fas fa-sync-alt"></i> تحديث تلقائي لحظي من قاعدة البيانات</div>
     <div class="refresh-time" id="lastUpdate"><i class="far fa-clock"></i> آخر تحديث: --</div>
 </div>
 
+<!-- Modal -->
 <div id="reportModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -403,6 +437,7 @@
             allProducts = [];
             snapshot.forEach(doc => { allProducts.push({ id: doc.id, ...doc.data() }); });
             document.getElementById('productsCount').innerText = allProducts.length;
+            document.getElementById('statProductsCount').innerText = allProducts.length;
             updateLowStockList();
             updateLastUpdate();
         });
@@ -411,6 +446,7 @@
             allCustomers = [];
             snapshot.forEach(doc => { allCustomers.push({ id: doc.id, ...doc.data() }); });
             document.getElementById('customersCount').innerText = allCustomers.length;
+            document.getElementById('statCustomersCount').innerText = allCustomers.length;
             updateTotalDebt();
             updateOverdueList();
             updateLastUpdate();
@@ -420,6 +456,8 @@
             allSales = [];
             snapshot.forEach(doc => { allSales.push({ id: doc.id, ...doc.data() }); });
             document.getElementById('salesCount').innerText = allSales.length;
+            document.getElementById('statSalesCount').innerText = allSales.length;
+            document.getElementById('statTotalSales').innerHTML = allSales.reduce((s, i) => s + (i.total || 0), 0).toFixed(0) + ' د';
             updateTotalSales();
             updateTotalProfit();
             updateTopMandub();
@@ -428,12 +466,12 @@
             updateLastUpdate();
         });
         
-        // Count mandubs
+        // Count mandubs from users collection
         db.collection('users').onSnapshot((snapshot) => {
             let count = 0;
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.role === 'mandub' || data.accountType === 'مندوب') count++;
+                if (data.role === 'mandub' || data.accountType === 'مندوب' || data.type === 'مندوب') count++;
             });
             document.getElementById('mandubsCount').innerText = count || 0;
         });
@@ -475,7 +513,7 @@
         low.forEach(p => {
             let qty = p.quantity || 0;
             let badge = qty <= 5 ? '<span class="badge red">⚠️ حرج</span>' : '<span class="badge orange">⚠️ منخفض</span>';
-            html += `<tr><td>${p.itemName || p.name}</td><td>${qty}</td><td>${badge}</td></tr>`;
+            html += `<tr><td><strong>${p.itemName || p.name}</strong></td><td>${qty}</td><td>${badge}</td></tr>`;
         });
         container.innerHTML = html;
     }
@@ -503,6 +541,7 @@
     }
     
     function updateCharts() {
+        // Sales chart last 7 days
         let last7Days = [];
         let salesByDay = {};
         for (let i = 6; i >= 0; i--) {
@@ -525,6 +564,7 @@
             options: { responsive: true }
         });
         
+        // Mandub chart
         let mandubSales = {};
         allSales.forEach(s => {
             let n = s.mandubName || 'غير محدد';
@@ -533,7 +573,7 @@
         if (mandubChart) mandubChart.destroy();
         mandubChart = new Chart(document.getElementById('mandubChart'), {
             type: 'doughnut',
-            data: { labels: Object.keys(mandubSales), datasets: [{ data: Object.values(mandubSales), backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'] }] },
+            data: { labels: Object.keys(mandubSales), datasets: [{ data: Object.values(mandubSales), backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'] }] },
             options: { responsive: true }
         });
     }
@@ -649,39 +689,4 @@
                 <div class="summary-item"><div class="label">الأرباح المتوقعة</div><div class="value">${totalExpectedProfit.toFixed(2)} د</div></div>
             </div>
             <table style="width:100%">
-                <thead><tr><th>#</th><th>المنتج</th><th>سعر الشراء</th><th>سعر البيع</th><th>الكمية</th><th>قيمة المشتريات</th><th>الربح المتوقع</th></tr></thead>
-                <tbody>${tableHtml || '<tr><td colspan="7">لا توجد منتجات</td></tr>'}</tbody>
-            </table>
-        `;
-        document.getElementById('reportContent').innerHTML = html;
-        document.getElementById('reportModal').style.display = 'flex';
-    };
-    
-    // 4. تصدير تقرير كامل
-    window.exportFullReport = function() {
-        let csv = "تقرير شامل - مكتب حاج فاضل\n\n";
-        csv += "المنتجات\n";
-        csv += "المنتج,الفئة,الكمية,سعر الشراء,سعر البيع,القيمة\n";
-        allProducts.forEach(p => {
-            csv += `"${p.itemName || p.name}",${p.category || '-'},${p.quantity || 0},${p.costPrice || 0},${p.sellingPrice || 0},${((p.costPrice || 0) * (p.quantity || 0)).toFixed(2)}\n`;
-        });
-        
-        csv += "\nالمبيعات\n";
-        csv += "رقم الفاتورة,التاريخ,العميل,المندوب,المبلغ\n";
-        allSales.forEach(s => {
-            csv += `"${s.invoiceNumber || '-'}",${s.date || '-'},"${s.customerName || '-'}","${s.mandubName || '-'}",${(s.total || 0).toFixed(2)}\n`;
-        });
-        
-        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'full_report.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        alert('تم تصدير التقرير بنجاح');
-    };
-</script>
-</body>
-</html>
+                <thead><
