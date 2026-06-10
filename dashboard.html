@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الرئيسية - مكتب حاج فاضل</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -11,23 +17,27 @@
             background: #f0f2f5;
             padding: 20px;
         }
-        .container { max-width: 1300px; margin: auto; }
+        .container { max-width: 1400px; margin: auto; }
         
-        /* الهيدر بسيط */
         .header {
             background: white;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .header h1 { color: #2c3e50; font-size: 24px; }
+        .user-info { background: #2980b9; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; }
+        .logout-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
         
-        /* بطاقات بسيطة */
         .stats {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -41,7 +51,6 @@
         .stat .num { font-size: 28px; font-weight: bold; color: #2980b9; }
         .stat .txt { color: #7f8c8d; font-size: 13px; margin-top: 5px; }
         
-        /* صفين */
         .row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -61,9 +70,10 @@
             margin-bottom: 10px;
         }
         
-        /* الجداول */
         table { width: 100%; font-size: 13px; border-collapse: collapse; }
-        td { padding: 8px; border-bottom: 1px solid #ecf0f1; }
+        td, th { padding: 8px; border-bottom: 1px solid #ecf0f1; text-align: center; }
+        th { background: #ecf0f1; font-weight: bold; }
+        
         .badge {
             padding: 2px 8px;
             border-radius: 15px;
@@ -73,7 +83,6 @@
         .badge.orange { background: #ffeaa7; color: #e67e22; }
         .badge.green { background: #e8f8f5; color: #27ae60; }
         
-        /* روابط */
         .links {
             display: flex;
             gap: 10px;
@@ -88,99 +97,61 @@
             border-radius: 8px;
             text-align: center;
             flex: 1;
+            transition: 0.3s;
         }
+        .link:hover { background: #1a6a9e; transform: translateY(-2px); }
+        
         .footer {
             text-align: center;
             margin-top: 20px;
             color: #7f8c8d;
             font-size: 12px;
         }
+        
+        .refresh-time { font-size: 11px; color: #95a5a6; margin-top: 10px; text-align: center; }
+        
         @media (max-width: 700px) {
             .stats { grid-template-columns: repeat(2, 1fr); }
             .row { grid-template-columns: 1fr; }
         }
     </style>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-        const firebaseConfig = {
-            apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
-            authDomain: "haj-fadel-accounting.firebaseapp.com",
-            projectId: "haj-fadel-accounting",
-            storageBucket: "haj-fadel-accounting.firebasestorage.app",
-            messagingSenderId: "449205985318",
-            appId: "1:449205985318:web:2dece1e1412165b01f46e7"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        
-        async function load() {
-            const [m, inv, c, s] = await Promise.all([
-                get(ref(db, "mandubs")), get(ref(db, "inventory")),
-                get(ref(db, "customers")), get(ref(db, "sales"))
-            ]);
-            let mandubs = m.exists() ? Object.values(m.val()) : [];
-            let products = inv.exists() ? Object.values(inv.val()) : [];
-            let customers = c.exists() ? Object.values(c.val()) : [];
-            let sales = s.exists() ? Object.values(s.val()) : [];
-            
-            document.getElementById('mandubsCount').innerText = mandubs.length;
-            document.getElementById('productsCount').innerText = products.length;
-            document.getElementById('customersCount').innerText = customers.length;
-            document.getElementById('salesCount').innerText = sales.length;
-            
-            let totalSales = sales.reduce((sum, i) => sum + (i.total || 0), 0);
-            let totalDebt = customers.reduce((sum, i) => sum + (i.currentDebt || 0), 0);
-            document.getElementById('totalSales').innerText = totalSales.toFixed(0);
-            document.getElementById('totalDebt').innerText = totalDebt.toFixed(0);
-            
-            // أفضل مندوب
-            let topMandub = mandubs.sort((a,b) => (b.totalSales||0) - (a.totalSales||0))[0];
-            document.getElementById('topMandub').innerHTML = topMandub ? `${topMandub.name} (${(topMandub.totalSales||0).toFixed(0)} د)` : 'لا يوجد';
-            
-            // منتجات منخفضة
-            let low = products.filter(p => (p.quantity||0) <= 20).slice(0,5);
-            let lowHtml = '';
-            low.forEach(p => lowHtml += `<tr><td>${p.name}</td><td>${p.quantity||0}</td><td><span class="badge orange">منخفض</span></td></tr>`);
-            document.getElementById('lowStockList').innerHTML = lowHtml || '<tr><td colspan="3">لا توجد</td></tr>';
-            
-            // عملاء متأخرون
-            let overdue = customers.filter(c => (c.currentDebt||0) > 100).slice(0,5);
-            let overHtml = '';
-            overdue.forEach(c => overHtml += `<tr><td>${c.name}</td><td>${(c.currentDebt||0).toFixed(0)} د</td><td><span class="badge red">متأخر</span></td></tr>`);
-            document.getElementById('overdueList').innerHTML = overHtml || '<tr><td colspan="3">لا يوجد</td></tr>';
-            
-            // آخر 5 فواتير
-            let recent = sales.sort((a,b) => (b.timestamp||0) - (a.timestamp||0)).slice(0,5);
-            let recentHtml = '';
-            recent.forEach(s => recentHtml += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.mandubName || '-'}</td><td>${(s.total||0).toFixed(0)} د</td></tr>`);
-            document.getElementById('recentSales').innerHTML = recentHtml || '<tr><td colspan="3">لا توجد</td></tr>';
-        }
-        load();
-        setInterval(load, 15000);
-    </script>
 </head>
 <body>
 <div class="container">
-    <div class="header"><h1>📊 مكتب حاج فاضل - الرئيسية</h1></div>
+    <div class="header">
+        <h1>📊 مكتب حاج فاضل - الرئيسية</h1>
+        <div class="user-info">
+            <span id="userName">مرحباً بك</span>
+            <button class="logout-btn" onclick="logout()">🚪 تسجيل خروج</button>
+        </div>
+    </div>
     
     <div class="stats">
-        <div class="stat"><div class="num" id="mandubsCount">0</div><div class="txt">المندوبين</div></div>
         <div class="stat"><div class="num" id="productsCount">0</div><div class="txt">المنتجات</div></div>
         <div class="stat"><div class="num" id="customersCount">0</div><div class="txt">العملاء</div></div>
         <div class="stat"><div class="num" id="salesCount">0</div><div class="txt">الفواتير</div></div>
         <div class="stat"><div class="num" id="totalSales">0</div><div class="txt">إجمالي المبيعات</div></div>
         <div class="stat"><div class="num" id="totalDebt">0</div><div class="txt">إجمالي الديون</div></div>
+        <div class="stat"><div class="num" id="totalProfit">0</div><div class="txt">صافي الأرباح</div></div>
         <div class="stat"><div class="num" id="topMandub">0</div><div class="txt">أفضل مندوب</div></div>
     </div>
     
     <div class="row">
-        <div class="box"><h3>⚠️ منتجات منخفضة المخزون</h3><table><tbody id="lowStockList"></tbody></table></div>
-        <div class="box"><h3>⚠️ عملاء متأخرون</h3><table><tbody id="overdueList"></tbody></table></div>
+        <div class="box"><h3>⚠️ منتجات منخفضة المخزون</h3>
+            <table><thead><tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead>
+            <tbody id="lowStockList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+        </div>
+        <div class="box"><h3>⚠️ عملاء متأخرون</h3>
+            <table><thead><tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead>
+            <tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+        </div>
     </div>
     
     <div class="row">
-        <div class="box"><h3>🧾 آخر الفواتير</h3><table><thead><tr><th>رقم</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody id="recentSales"></tbody></table></div>
+        <div class="box"><h3>🧾 آخر الفواتير</h3>
+            <table><thead><tr><th>رقم</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead>
+            <tbody id="recentSales"><tr><td colspan="4">جاري التحميل...</td></tr></tbody></table>
+        </div>
         <div class="box"><h3>🔗 روابط سريعة</h3>
             <div class="links">
                 <a href="mandubs.html" class="link">👥 مندوبين</a>
@@ -190,7 +161,193 @@
             </div>
         </div>
     </div>
-    <div class="footer">تحديث تلقائي كل 15 ثانية</div>
+    <div class="footer">تحديث تلقائي لحظي من قاعدة البيانات</div>
+    <div class="refresh-time" id="lastUpdate">آخر تحديث: --</div>
 </div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    let currentUser = null;
+    let allProducts = [];
+    let allCustomers = [];
+    let allSales = [];
+    
+    // Check authentication
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('userName').innerHTML = `👤 ${user.email || 'مرحباً'}`;
+            startListeners();
+        } else {
+            window.location.href = "login.html";
+        }
+    });
+    
+    window.logout = async function() {
+        await auth.signOut();
+        window.location.href = "login.html";
+    };
+    
+    function startListeners() {
+        // Real-time listener for products (only show those with quantity > 0)
+        db.collection('inventory').onSnapshot((snapshot) => {
+            allProducts = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Only show products with quantity > 0 in dashboard
+                if ((data.quantity || 0) > 0) {
+                    allProducts.push({ id: doc.id, ...data });
+                }
+            });
+            document.getElementById('productsCount').innerText = allProducts.length;
+            updateLowStockList();
+            updateLastUpdate();
+        });
+        
+        // Real-time listener for customers
+        db.collection('customers').onSnapshot((snapshot) => {
+            allCustomers = [];
+            snapshot.forEach(doc => {
+                allCustomers.push({ id: doc.id, ...doc.data() });
+            });
+            document.getElementById('customersCount').innerText = allCustomers.length;
+            updateTotalDebt();
+            updateOverdueList();
+            updateLastUpdate();
+        });
+        
+        // Real-time listener for sales
+        db.collection('sales').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+            allSales = [];
+            snapshot.forEach(doc => {
+                allSales.push({ id: doc.id, ...doc.data() });
+            });
+            document.getElementById('salesCount').innerText = allSales.length;
+            updateTotalSales();
+            updateTotalProfit();
+            updateTopMandub();
+            updateRecentSales();
+            updateLastUpdate();
+        });
+    }
+    
+    function updateTotalDebt() {
+        let totalDebt = allCustomers.reduce((sum, c) => sum + (c.totalDebt || 0), 0);
+        document.getElementById('totalDebt').innerText = totalDebt.toFixed(0);
+    }
+    
+    function updateTotalSales() {
+        let totalSales = allSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+        document.getElementById('totalSales').innerText = totalSales.toFixed(0);
+    }
+    
+    function updateTotalProfit() {
+        let totalProfit = allSales.reduce((sum, sale) => sum + (sale.commission || 0), 0);
+        document.getElementById('totalProfit').innerText = totalProfit.toFixed(0);
+    }
+    
+    function updateTopMandub() {
+        // Aggregate sales by mandub
+        let mandubSales = {};
+        allSales.forEach(sale => {
+            const name = sale.mandubName || 'غير محدد';
+            const amount = sale.total || 0;
+            mandubSales[name] = (mandubSales[name] || 0) + amount;
+        });
+        
+        let topName = 'لا يوجد';
+        let topAmount = 0;
+        for (let [name, amount] of Object.entries(mandubSales)) {
+            if (amount > topAmount) {
+                topAmount = amount;
+                topName = name;
+            }
+        }
+        
+        if (topAmount > 0) {
+            document.getElementById('topMandub').innerHTML = `${topName}<br><span style="font-size:11px;">${topAmount.toFixed(0)} د</span>`;
+        } else {
+            document.getElementById('topMandub').innerHTML = 'لا يوجد';
+        }
+    }
+    
+    function updateLowStockList() {
+        const lowThreshold = 20;
+        let lowProducts = allProducts.filter(p => (p.quantity || 0) <= lowThreshold);
+        lowProducts = lowProducts.slice(0, 5);
+        
+        const container = document.getElementById('lowStockList');
+        if (lowProducts.length === 0) {
+            container.innerHTML = '<tr><td colspan="3">لا توجد منتجات منخفضة</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        lowProducts.forEach(p => {
+            const quantity = p.quantity || 0;
+            let badgeClass = quantity <= 5 ? 'red' : 'orange';
+            let status = quantity <= 5 ? 'حرج' : 'منخفض';
+            html += `<tr><td>${p.itemName || p.name}</td><td>${quantity}</td><td><span class="badge ${badgeClass}">${status}</span></td></tr>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    function updateOverdueList() {
+        const overdueThreshold = 100;
+        let overdueCustomers = allCustomers.filter(c => (c.totalDebt || 0) > overdueThreshold);
+        overdueCustomers = overdueCustomers.slice(0, 5);
+        
+        const container = document.getElementById('overdueList');
+        if (overdueCustomers.length === 0) {
+            container.innerHTML = '<tr><td colspan="3">لا يوجد عملاء متأخرون</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        overdueCustomers.forEach(c => {
+            html += `<tr><td>${c.customerName || c.name}</td><td>${(c.totalDebt || 0).toFixed(0)} د</td><td><span class="badge red">متأخر</span></td></tr>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    function updateRecentSales() {
+        let recent = [...allSales].slice(0, 5);
+        
+        const container = document.getElementById('recentSales');
+        if (recent.length === 0) {
+            container.innerHTML = '<tr><td colspan="4">لا توجد فواتير</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        recent.forEach(sale => {
+            html += `<tr>
+                <td>${sale.invoiceNumber || '-'}</td>
+                <td>${sale.customerName || '-'}</td>
+                <td>${sale.mandubName || '-'}</td>
+                <td>${(sale.total || 0).toFixed(0)} د</td>
+            </tr>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    function updateLastUpdate() {
+        const now = new Date();
+        document.getElementById('lastUpdate').innerHTML = `آخر تحديث: ${now.toLocaleTimeString('ar-EG')}`;
+    }
+</script>
 </body>
 </html>
