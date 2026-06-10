@@ -246,7 +246,7 @@
             background: white;
             border-radius: 25px;
             width: 90%;
-            max-width: 1100px;
+            max-width: 1200px;
             max-height: 85vh;
             overflow-y: auto;
             padding: 25px;
@@ -265,6 +265,7 @@
             padding-bottom: 15px;
             border-bottom: 2px solid #667eea;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .close-modal { cursor: pointer; font-size: 28px; color: #999; transition: 0.3s; }
@@ -283,7 +284,27 @@
             border-radius: 12px;
             font-size: 13px;
             flex: 1;
+            min-width: 120px;
         }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #667eea20, #764ba220);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .summary-item .label { font-size: 12px; color: #666; }
+        .summary-item .value { font-size: 20px; font-weight: bold; color: #2c3e50; }
         
         @media (max-width: 768px) {
             .stats { grid-template-columns: repeat(2, 1fr); }
@@ -320,10 +341,10 @@
     </div>
     
     <div class="action-buttons">
-        <button class="action-btn inventory" onclick="showInventoryReport()"><i class="fas fa-clipboard-list"></i> جرد المخزون</button>
-        <button class="action-btn sales" onclick="showSalesReport()"><i class="fas fa-file-invoice-dollar"></i> جرد فواتير المبيعات</button>
-        <button class="action-btn purchases" onclick="showPurchasesReport()"><i class="fas fa-truck"></i> جرد المشتريات</button>
-        <button class="action-btn export" onclick="exportFullReport()"><i class="fas fa-download"></i> تصدير تقرير كامل</button>
+        <button class="action-btn inventory" id="btnInventoryReport"><i class="fas fa-clipboard-list"></i> جرد المخزون</button>
+        <button class="action-btn sales" id="btnSalesReport"><i class="fas fa-file-invoice-dollar"></i> جرد فواتير المبيعات</button>
+        <button class="action-btn purchases" id="btnPurchasesReport"><i class="fas fa-truck"></i> جرد المشتريات</button>
+        <button class="action-btn export" id="btnExportReport"><i class="fas fa-download"></i> تصدير تقرير كامل</button>
     </div>
     
     <div class="row">
@@ -333,14 +354,14 @@
         </div>
         <div class="box">
             <h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3>
-            <table><thead><tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+            86<table> <thead> <tr> <th>العميل</th> <th>الدين</th> <th>الحالة</th> </tr> </thead> <tbody id="overdueList"> <tr> <td colspan="3">جاري التحميل...</td> </tr> </tbody> </table>
         </div>
     </div>
     
     <div class="row">
         <div class="box">
             <h3><i class="fas fa-receipt"></i> آخر الفواتير</h3>
-            <table><thead><tr><th>رقم</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="4">جاري التحميل...</td></tr></tbody></table>
+            86<table> <thead> <tr> <th>رقم</th> <th>العميل</th> <th>المندوب</th> <th>المبلغ</th> </tr> </thead> <tbody id="recentSales"> <tr> <td colspan="4">جاري التحميل...</td> </tr> </tbody> </table>
         </div>
         <div class="box">
             <h3><i class="fas fa-rocket"></i> روابط سريعة</h3>
@@ -360,14 +381,15 @@
 <div id="reportModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="reportTitle"><i class="fas fa-chart-bar"></i> تقرير</h2>
-            <span class="close-modal" onclick="closeReport()">&times;</span>
+            <h2 id="reportTitle"><i class="fas fa-chart-bar"></i> التقرير</h2>
+            <span class="close-modal" onclick="closeReportModal()">&times;</span>
         </div>
         <div id="reportContent"></div>
     </div>
 </div>
 
 <script>
+    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
         authDomain: "haj-fadel-accounting.firebaseapp.com",
@@ -384,37 +406,39 @@
     let allProducts = [];
     let allCustomers = [];
     let allSales = [];
-    let allMandubs = [];
     let salesChart = null;
     let mandubChart = null;
     
-    auth.onAuthStateChanged(async (user) => {
+    // Authentication
+    auth.onAuthStateChanged((user) => {
         if (user) {
             document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${user.email || 'مرحباً'}`;
-            await loadMandubs();
             startListeners();
+            loadMandubsCount();
         } else {
             window.location.href = "login.html";
         }
     });
     
-    async function loadMandubs() {
+    async function loadMandubsCount() {
         try {
             const snapshot = await db.collection('users').get();
-            allMandubs = [];
+            let count = 0;
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.role === 'mandub' || data.accountType === 'مندوب') {
-                    allMandubs.push({ id: doc.id, name: data.employeeName || data.name });
+                if (data.role === 'mandub' || data.accountType === 'مندوب' || data.type === 'مندوب') {
+                    count++;
                 }
             });
-            document.getElementById('mandubsCount').innerText = allMandubs.length;
+            document.getElementById('mandubsCount').innerText = count;
         } catch(e) { console.error(e); }
     }
     
     window.logout = async function() { await auth.signOut(); window.location.href = "login.html"; };
     
+    // Real-time listeners
     function startListeners() {
+        // Products
         db.collection('inventory').onSnapshot((snapshot) => {
             allProducts = [];
             snapshot.forEach(doc => { allProducts.push({ id: doc.id, ...doc.data() }); });
@@ -423,6 +447,7 @@
             updateLastUpdate();
         });
         
+        // Customers
         db.collection('customers').onSnapshot((snapshot) => {
             allCustomers = [];
             snapshot.forEach(doc => { allCustomers.push({ id: doc.id, ...doc.data() }); });
@@ -432,6 +457,7 @@
             updateLastUpdate();
         });
         
+        // Sales
         db.collection('sales').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
             allSales = [];
             snapshot.forEach(doc => { allSales.push({ id: doc.id, ...doc.data() }); });
@@ -446,41 +472,42 @@
     }
     
     function updateTotalDebt() {
-        let totalDebt = allCustomers.reduce((sum, c) => sum + (c.totalDebt || 0), 0);
-        document.getElementById('totalDebt').innerText = totalDebt.toFixed(0);
+        let total = allCustomers.reduce((sum, c) => sum + (c.totalDebt || 0), 0);
+        document.getElementById('totalDebt').innerText = total.toFixed(0);
     }
     
     function updateTotalSales() {
-        let totalSales = allSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-        document.getElementById('totalSales').innerText = totalSales.toFixed(0);
+        let total = allSales.reduce((sum, s) => sum + (s.total || 0), 0);
+        document.getElementById('totalSales').innerText = total.toFixed(0);
     }
     
     function updateTotalProfit() {
-        let totalProfit = allSales.reduce((sum, sale) => sum + (sale.total || 0) * ((sale.commissionRate || 0) / 100), 0);
-        document.getElementById('totalProfit').innerText = totalProfit.toFixed(0);
+        let total = allSales.reduce((sum, s) => sum + (s.commission || 0), 0);
+        document.getElementById('totalProfit').innerText = total.toFixed(0);
     }
     
     function updateTopMandub() {
         let mandubSales = {};
         allSales.forEach(sale => {
-            const name = sale.mandubName || 'غير محدد';
+            let name = sale.mandubName || 'غير محدد';
             mandubSales[name] = (mandubSales[name] || 0) + (sale.total || 0);
         });
         let topName = 'لا يوجد', topAmount = 0;
         for (let [name, amount] of Object.entries(mandubSales)) {
             if (amount > topAmount) { topAmount = amount; topName = name; }
         }
-        document.getElementById('topMandub').innerHTML = topAmount > 0 ? `${topName}<br><span style="font-size:11px;">${topAmount.toFixed(0)} د</span>` : 'لا يوجد';
+        let display = topAmount > 0 ? `${topName}<br><span style="font-size:11px;">${topAmount.toFixed(0)} د</span>` : 'لا يوجد';
+        document.getElementById('topMandub').innerHTML = display;
     }
     
     function updateLowStockList() {
-        let lowProducts = allProducts.filter(p => (p.quantity || 0) <= 20).slice(0, 5);
-        const container = document.getElementById('lowStockList');
-        if (lowProducts.length === 0) { container.innerHTML = '<tr><td colspan="3">لا توجد منتجات منخفضة</td></tr>'; return; }
+        let low = allProducts.filter(p => (p.quantity || 0) <= 20).slice(0, 5);
+        let container = document.getElementById('lowStockList');
+        if (low.length === 0) { container.innerHTML = '<tr><td colspan="3">لا توجد منتجات منخفضة</td></tr>'; return; }
         let html = '';
-        lowProducts.forEach(p => {
-            const qty = p.quantity || 0;
-            const badge = qty <= 5 ? '<span class="badge red"><i class="fas fa-skull-crosswalk"></i> حرج</span>' : '<span class="badge orange"><i class="fas fa-exclamation-triangle"></i> منخفض</span>';
+        low.forEach(p => {
+            let qty = p.quantity || 0;
+            let badge = qty <= 5 ? '<span class="badge red"><i class="fas fa-skull-crosswalk"></i> حرج</span>' : '<span class="badge orange"><i class="fas fa-exclamation-triangle"></i> منخفض</span>';
             html += `<tr><td>${p.itemName || p.name}</td><td>${qty}</td><td>${badge}</td></tr>`;
         });
         container.innerHTML = html;
@@ -488,107 +515,189 @@
     
     function updateOverdueList() {
         let overdue = allCustomers.filter(c => (c.totalDebt || 0) > 100).slice(0, 5);
-        const container = document.getElementById('overdueList');
+        let container = document.getElementById('overdueList');
         if (overdue.length === 0) { container.innerHTML = '<tr><td colspan="3">لا يوجد عملاء متأخرون</td></tr>'; return; }
         let html = '';
-        overdue.forEach(c => { html += `<tr><td>${c.customerName || c.name}</td><td>${(c.totalDebt || 0).toFixed(0)} د</td><td><span class="badge red"><i class="fas fa-hourglass-end"></i> متأخر</span></td></tr>`; });
+        overdue.forEach(c => {
+            html += `<tr><td>${c.customerName || c.name}</td><td>${(c.totalDebt || 0).toFixed(0)} د</td><td><span class="badge red"><i class="fas fa-hourglass-end"></i> متأخر</span></td></tr>`;
+        });
         container.innerHTML = html;
     }
     
     function updateRecentSales() {
         let recent = [...allSales].slice(0, 5);
-        const container = document.getElementById('recentSales');
+        let container = document.getElementById('recentSales');
         if (recent.length === 0) { container.innerHTML = '<tr><td colspan="4">لا توجد فواتير</td></tr>'; return; }
         let html = '';
-        recent.forEach(s => { html += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.customerName || '-'}</td><td>${s.mandubName || '-'}</td><td>${(s.total || 0).toFixed(0)} د</td></tr>`; });
+        recent.forEach(s => {
+            html += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.customerName || '-'}</td><td>${s.mandubName || '-'}</td><td>${(s.total || 0).toFixed(0)} د</td></tr>`;
+        });
         container.innerHTML = html;
     }
     
     function updateCharts() {
-        const last7Days = []; const salesByDay = {};
-        for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toLocaleDateString('ar-EG'); last7Days.push(ds); salesByDay[ds] = 0; }
-        allSales.forEach(s => { if (s.timestamp) { const sd = new Date(s.timestamp).toLocaleDateString('ar-EG'); if (salesByDay[sd] !== undefined) salesByDay[sd] += s.total || 0; } });
+        // Sales chart last 7 days
+        let last7Days = [];
+        let salesByDay = {};
+        for (let i = 6; i >= 0; i--) {
+            let d = new Date();
+            d.setDate(d.getDate() - i);
+            let ds = d.toLocaleDateString('ar-EG');
+            last7Days.push(ds);
+            salesByDay[ds] = 0;
+        }
+        allSales.forEach(s => {
+            if (s.timestamp) {
+                let sd = new Date(s.timestamp).toLocaleDateString('ar-EG');
+                if (salesByDay[sd] !== undefined) salesByDay[sd] += s.total || 0;
+            }
+        });
         if (salesChart) salesChart.destroy();
-        salesChart = new Chart(document.getElementById('salesChart'), { type: 'line', data: { labels: last7Days, datasets: [{ label: 'المبيعات (د.ع)', data: last7Days.map(d => salesByDay[d]), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true } });
+        salesChart = new Chart(document.getElementById('salesChart'), {
+            type: 'line',
+            data: { labels: last7Days, datasets: [{ label: 'المبيعات (د.ع)', data: last7Days.map(d => salesByDay[d]), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.1)', fill: true, tension: 0.4 }] },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
         
+        // Mandub chart
         let mandubSales = {};
-        allSales.forEach(s => { const n = s.mandubName || 'غير محدد'; mandubSales[n] = (mandubSales[n] || 0) + (s.total || 0); });
+        allSales.forEach(s => {
+            let n = s.mandubName || 'غير محدد';
+            mandubSales[n] = (mandubSales[n] || 0) + (s.total || 0);
+        });
         if (mandubChart) mandubChart.destroy();
-        mandubChart = new Chart(document.getElementById('mandubChart'), { type: 'doughnut', data: { labels: Object.keys(mandubSales), datasets: [{ data: Object.values(mandubSales), backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'] }] }, options: { responsive: true } });
+        mandubChart = new Chart(document.getElementById('mandubChart'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(mandubSales), datasets: [{ data: Object.values(mandubSales), backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'] }] },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
     }
     
-    function updateLastUpdate() { document.getElementById('lastUpdate').innerHTML = `<i class="far fa-clock"></i> آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`; }
+    function updateLastUpdate() {
+        document.getElementById('lastUpdate').innerHTML = `<i class="far fa-clock"></i> آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`;
+    }
     
     // ==================== REPORT FUNCTIONS ====================
     
-    window.closeReport = function() { document.getElementById('reportModal').style.display = 'none'; };
+    function closeReportModal() {
+        document.getElementById('reportModal').style.display = 'none';
+    }
     
-    window.showInventoryReport = function() {
+    // 1. جرد المخزون
+    document.getElementById('btnInventoryReport').addEventListener('click', function() {
         document.getElementById('reportTitle').innerHTML = '<i class="fas fa-clipboard-list"></i> جرد المخزون';
-        let html = `<div class="filter-bar"><input type="text" id="searchProduct" placeholder="🔍 بحث..." onkeyup="filterInventory()"><select id="stockFilter" onchange="filterInventory()"><option value="all">الكل</option><option value="low">منخفض</option><option value="out">نفذ</option></select></div>
-        <table style="width:100%"><thead><tr><th>المنتج</th><th>الفئة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>القيمة</th></tr></thead><tbody id="invTable"></tbody><tfoot><tr style="background:#ecf0f1"><td colspan="5"><strong>الإجمالي</strong></td><td><strong id="invTotal">0</strong></td></tr></tfoot></table>`;
+        
+        let html = `
+            <div class="filter-bar">
+                <input type="text" id="searchInventory" placeholder="🔍 بحث عن منتج..." onkeyup="filterInventoryReport()">
+                <select id="filterInventoryStock" onchange="filterInventoryReport()">
+                    <option value="all">جميع المنتجات</option>
+                    <option value="low">منخفض المخزون (≤20)</option>
+                    <option value="out">نفذت الكمية (0)</option>
+                </select>
+            </div>
+            <div class="summary-card">
+                <div class="summary-item"><div class="label">عدد المنتجات</div><div class="value" id="invCount">0</div></div>
+                <div class="summary-item"><div class="label">إجمالي القطع</div><div class="value" id="invTotalQty">0</div></div>
+                <div class="summary-item"><div class="label">قيمة المخزون</div><div class="value" id="invTotalValue">0 د</div></div>
+            </div>
+            <table style="width:100%">
+                <thead><tr><th>#</th><th>المنتج</th><th>الفئة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>القيمة</th></tr></thead>
+                <tbody id="inventoryTableBody"></tbody>
+            </table>
+        `;
         document.getElementById('reportContent').innerHTML = html;
         document.getElementById('reportModal').style.display = 'flex';
-        renderInventory();
-    };
+        renderInventoryReport();
+    });
     
-    function renderInventory() {
+    window.filterInventoryReport = function() { renderInventoryReport(); };
+    
+    function renderInventoryReport() {
+        let search = document.getElementById('searchInventory')?.value.toLowerCase() || '';
+        let filter = document.getElementById('filterInventoryStock')?.value || 'all';
+        
         let filtered = [...allProducts];
-        const search = document.getElementById('searchProduct')?.value.toLowerCase() || '';
-        const filter = document.getElementById('stockFilter')?.value || 'all';
         if (search) filtered = filtered.filter(p => (p.itemName || p.name || '').toLowerCase().includes(search));
         if (filter === 'low') filtered = filtered.filter(p => (p.quantity || 0) <= 20 && (p.quantity || 0) > 0);
         if (filter === 'out') filtered = filtered.filter(p => (p.quantity || 0) <= 0);
-        let total = 0, html = '';
-        filtered.forEach(p => { const val = (p.costPrice || 0) * (p.quantity || 0); total += val; html += `<tr><td>${p.itemName || p.name}</td><td>${p.category || '-'}</td><td>${p.quantity || 0}</td><td>${(p.costPrice || 0).toFixed(2)}</td><td>${(p.sellingPrice || 0).toFixed(2)}</td><td>${val.toFixed(2)} د</td></tr>`; });
-        document.getElementById('invTable').innerHTML = html || '<tr><td colspan="6">لا توجد منتجات</td></tr>';
-        document.getElementById('invTotal').innerHTML = total.toFixed(2) + ' د';
+        
+        let totalQty = 0, totalValue = 0;
+        let html = '';
+        filtered.forEach((p, idx) => {
+            let qty = p.quantity || 0;
+            let value = (p.costPrice || 0) * qty;
+            totalQty += qty;
+            totalValue += value;
+            html += `<tr>
+                <td>${idx + 1}</td>
+                <td><strong>${p.itemName || p.name}</strong></td>
+                <td>${p.category || '-'}</td>
+                <td>${qty}</td>
+                <td>${(p.costPrice || 0).toFixed(2)}</td>
+                <td>${(p.sellingPrice || 0).toFixed(2)}</td>
+                <td>${value.toFixed(2)} د</td>
+            </tr>`;
+        });
+        
+        document.getElementById('inventoryTableBody').innerHTML = html || '<tr><td colspan="7">لا توجد منتجات</td></tr>';
+        document.getElementById('invCount').innerText = filtered.length;
+        document.getElementById('invTotalQty').innerText = totalQty;
+        document.getElementById('invTotalValue').innerHTML = totalValue.toFixed(2) + ' د';
     }
-    window.filterInventory = renderInventory;
     
-    window.showSalesReport = function() {
+    // 2. جرد فواتير المبيعات
+    document.getElementById('btnSalesReport').addEventListener('click', function() {
         document.getElementById('reportTitle').innerHTML = '<i class="fas fa-file-invoice-dollar"></i> جرد فواتير المبيعات';
-        let totalSales = allSales.reduce((s, i) => s + (i.total || 0), 0);
-        let html = `<div class="filter-bar"><input type="text" id="searchSale" placeholder="🔍 بحث..." onkeyup="filterSales()"><input type="date" id="dateFrom" onchange="filterSales()"><input type="date" id="dateTo" onchange="filterSales()"><select id="mandubFilterSales" onchange="filterSales()"><option value="all">جميع المندوبين</option>${allMandubs.map(m => `<option value="${m.name}">${m.name}</option>`).join('')}</select></div>
-        <div style="background:#667eea20;padding:12px;border-radius:12px;margin-bottom:15px;"><i class="fas fa-chart-line"></i> إجمالي المبيعات: ${totalSales.toFixed(2)} د</div>
-        <table style="width:100%"><thead><tr><th>رقم</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>طريقة الدفع</th><th>المجموع</th><th>الخصم</th><th>الإجمالي</th></tr></thead><tbody id="salesTable"></tbody><tfoot><tr style="background:#ecf0f1"><td colspan="7"><strong>الإجمالي</strong></td><td><strong id="salesTotal">0</strong></td></tr></tfoot></table>`;
+        
+        let totalSalesAmount = allSales.reduce((sum, s) => sum + (s.total || 0), 0);
+        let totalCommission = allSales.reduce((sum, s) => sum + (s.commission || 0), 0);
+        
+        let html = `
+            <div class="filter-bar">
+                <input type="text" id="searchSales" placeholder="🔍 بحث عن فاتورة..." onkeyup="filterSalesReport()">
+                <input type="date" id="dateFromSales" placeholder="من تاريخ" onchange="filterSalesReport()">
+                <input type="date" id="dateToSales" placeholder="إلى تاريخ" onchange="filterSalesReport()">
+            </div>
+            <div class="summary-card">
+                <div class="summary-item"><div class="label">عدد الفواتير</div><div class="value" id="salesCountReport">0</div></div>
+                <div class="summary-item"><div class="label">إجمالي المبيعات</div><div class="value" id="salesTotalReport">0 د</div></div>
+                <div class="summary-item"><div class="label">إجمالي العمولات</div><div class="value" id="commissionTotalReport">0 د</div></div>
+            </div>
+            <table style="width:100%">
+                <thead><tr><th>#</th><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>طريقة الدفع</th><th>المجموع</th><th>الخصم</th><th>الإجمالي</th></tr></thead>
+                <tbody id="salesTableBody"></tbody>
+            </table>
+        `;
         document.getElementById('reportContent').innerHTML = html;
         document.getElementById('reportModal').style.display = 'flex';
-        renderSales();
-    };
+        renderSalesReport();
+    });
     
-    function renderSales() {
+    window.filterSalesReport = function() { renderSalesReport(); };
+    
+    function renderSalesReport() {
+        let search = document.getElementById('searchSales')?.value.toLowerCase() || '';
+        let dateFrom = document.getElementById('dateFromSales')?.value;
+        let dateTo = document.getElementById('dateToSales')?.value;
+        
         let filtered = [...allSales];
-        const search = document.getElementById('searchSale')?.value.toLowerCase() || '';
-        const from = document.getElementById('dateFrom')?.value;
-        const to = document.getElementById('dateTo')?.value;
-        const mandub = document.getElementById('mandubFilterSales')?.value || 'all';
         if (search) filtered = filtered.filter(s => (s.invoiceNumber || '').toLowerCase().includes(search));
-        if (mandub !== 'all') filtered = filtered.filter(s => s.mandubName === mandub);
-        if (from) filtered = filtered.filter(s => s.timestamp && new Date(s.timestamp) >= new Date(from));
-        if (to) filtered = filtered.filter(s => s.timestamp && new Date(s.timestamp) <= new Date(to));
-        let total = 0, html = '';
-        filtered.forEach(s => { total += s.total || 0; html += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.date || '-'}</td><td>${s.customerName || '-'}</td><td>${s.mandubName || '-'}</td><td>${s.paymentMethod || '-'}</td><td>${(s.subTotal || 0).toFixed(2)}</td><td>${(s.discount?.amount || 0).toFixed(2)}</td><td>${(s.total || 0).toFixed(2)}</td></tr>`; });
-        document.getElementById('salesTable').innerHTML = html || '<tr><td colspan="8">لا توجد فواتير</td></tr>';
-        document.getElementById('salesTotal').innerHTML = total.toFixed(2) + ' د';
-    }
-    window.filterSales = renderSales;
-    
-    window.showPurchasesReport = function() {
-        document.getElementById('reportTitle').innerHTML = '<i class="fas fa-truck"></i> جرد المشتريات';
-        let totalPurchase = 0, totalProfit = 0, html = '';
-        allProducts.forEach(p => {
-            const purchase = (p.costPrice || 0) * (p.quantity || 0);
-            const profit = ((p.sellingPrice || 0) - (p.costPrice || 0)) * (p.quantity || 0);
-            totalPurchase += purchase;
-            totalProfit += profit;
-            html += `<tr><td>${p.itemName || p.name}</td><td>${(p.costPrice || 0).toFixed(2)}</td><td>${(p.sellingPrice || 0).toFixed(2)}</td><td>${p.quantity || 0}</td><td>${purchase.toFixed(2)}</td><td style="color:${profit >= 0 ? '#27ae60' : '#e74c3c'}">${profit.toFixed(2)}</td></tr>`;
-        });
-        let content = `<table style="width:100%"><thead><tr><th>المنتج</th><th>سعر الشراء</th><th>سعر البيع</th><th>الكمية</th><th>قيمة المشتريات</th><th>الربح المتوقع</th></tr></thead><tbody>${html || '<tr><td colspan="6">لا توجد منتجات</td></tr>'}</tbody><tfoot><tr style="background:#ecf0f1"><td colspan="4"><strong>الإجمالي</strong></td><td><strong>${totalPurchase.toFixed(2)} د</strong></td><td><strong>${totalProfit.toFixed(2)} د</strong></td></tr></tfoot></table>`;
-        document.getElementById('reportContent').innerHTML = content;
-        document.getElementById('reportModal').style.display = 'flex';
-    };
-    
-    window.exportFullReport = function() {
-        let csv = "تقرير شامل - مكتب حاج فاضل\n\n";
-        csv += "المن
+        if (dateFrom) filtered = filtered.filter(s => s.timestamp && new Date(s.timestamp) >= new Date(dateFrom));
+        if (dateTo) filtered = filtered.filter(s => s.timestamp && new Date(s.timestamp) <= new Date(dateTo));
+        
+        let totalSales = 0, totalCommission = 0;
+        let html = '';
+        filtered.forEach((s, idx) => {
+            totalSales += s.total || 0;
+            totalCommission += s.commission || 0;
+            html += `<tr>
+                <td>${idx + 1}</td>
+                <td>${s.invoiceNumber || '-'}</td>
+                <td>${s.date || '-'}</td>
+                <td>${s.customerName || '-'}</td>
+                <td>${s.mandubName || '-'}</td>
+                <td>${s.paymentMethod || '-'}</td>
+                <td>${(s.subTotal || 0).toFixed(2)}</td>
+                <td>${(s.discount?.amount || 0).toFixed(2)}</td>
+                <td><strong>${(s.total
