@@ -67,11 +67,13 @@
         <div class="user-info"><i class="fas fa-user-circle"></i> <span id="userName">مرحباً بك</span> <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</button></div>
     </div>
     
+    <!-- تم إضافة رابط صندوق الكاش هنا -->
     <div class="nav-menu">
         <a href="mandubs.html" class="nav-item mandubs"><i class="fas fa-user-tie"></i> المندوبين</a>
         <a href="inventory.html" class="nav-item inventory"><i class="fas fa-boxes"></i> المخزن</a>
         <a href="sales.html" class="nav-item sales"><i class="fas fa-cart-shopping"></i> المبيعات</a>
         <a href="customers.html" class="nav-item reports"><i class="fas fa-users"></i> العملاء</a>
+        <a href="cash-register.html" class="nav-item" style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white;"><i class="fas fa-cash-register"></i> صندوق الكاش</a>
     </div>
     
     <div class="stats">
@@ -143,7 +145,6 @@
         db.collection('customers').onSnapshot(s => { allCustomers = []; s.forEach(d => allCustomers.push({ id: d.id, ...d.data() })); document.getElementById('customersCount').innerText = allCustomers.length; document.getElementById('statCustomersCount').innerText = allCustomers.length; updateTotalDebt(); updateOverdueList(); });
         db.collection('sales').orderBy('timestamp', 'desc').onSnapshot(s => { allSales = []; s.forEach(d => allSales.push({ id: d.id, ...d.data() })); document.getElementById('salesCount').innerText = allSales.length; document.getElementById('statSalesCount').innerText = allSales.length; document.getElementById('statTotalSales').innerHTML = allSales.reduce((s,i) => s + (i.total || 0), 0).toFixed(0) + ' د'; updateTotalSales(); updateTotalProfit(); updateTopMandub(); updateRecentSales(); updateCharts(); });
         
-        // ========== التعديل الأساسي لحساب المندوبين ==========
         db.collection('users').onSnapshot((snapshot) => {
             let count = 0;
             snapshot.forEach(doc => {
