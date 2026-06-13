@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الفواتير - مكتب حاج فاضل</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', 'Tahoma', sans-serif; }
+        body { background: linear-gradient(135deg, #1e3c72, #2a5298); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 25px; }
+        h2 { color: #1e3c72; margin-bottom: 20px; border-right: 4px solid #3498db; padding-right: 15px; }
+        
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-bar input, .filter-bar select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; flex: 1; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: #1e3c72; color: white; }
+        tr:hover { background: #f5f5f5; }
+        
+        button { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; margin: 2px; }
+        .btn-edit { background: #3498db; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-cash { background: #27ae60; color: white; }
+        .btn-credit { background: #e67e22; color: white; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 20px; width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto; padding: 25px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .close-modal { cursor: pointer; font-size: 24px; color: #999; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
+        
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .total-row { font-weight: bold; background: #f0f0f0; }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-credit { background: #ffeaa7; color: #856404; }
+        
+        @media (max-width: 768px) { th, td { font-size: 11px; padding: 6px; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2><i class="fas fa-file-invoice"></i> إدارة الفواتير (مبيعات)</h2>
+    
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 بحث برقم الفاتورة أو العميل...">
+        <select id="typeFilter">
+            <option value="all">الكل</option>
+            <option value="نقدي">نقدي</option>
+            <option value="أجل">أجل</option>
+        </select>
+        <input type="date" id="dateFilter">
+        <button onclick="loadInvoices()" style="background:#3498db">🔍 بحث</button>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table id="invoicesTable">
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>المبلغ</th><th>طريقة الدفع</th><th>الحالة</th><th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="invoicesBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- نافذة تعديل الفاتورة -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> تعديل الفاتورة</h3>
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+        </div>
+        <input type="hidden" id="editInvoiceId">
+        <input type="hidden" id="editOriginalItems">
+        
+        <div class="form-grid">
+            <div class="form-group"><label>رقم الفاتورة</label><input type="text" id="editInvoiceNumber" readonly></div>
+            <div class="form-group"><label>التاريخ</label><input type="date" id="editDate"></div>
+            <div class="form-group"><label>العميل</label>
+                <select id="editCustomerId"><option value="">-- اختر عميل --</option></select>
+            </div>
+            <div class="form-group"><label>المندوب</label>
+                <select id="editMandubId"><option value="">-- اختر مندوب --</option></select>
+            </div>
+            <div class="form-group"><label>طريقة الدفع</label>
+                <select id="editPaymentMethod">
+                    <option value="نقدي">نقدي</option>
+                    <option value="أجل">أجل</option>
+                    <option value="شبكة">شبكة</option>
+                </select>
+            </div>
+        </div>
+        
+        <h4>المنتجات</h4>
+        <div id="editCartItems" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;"></div>
+        
+        <div class="form-grid">
+            <div class="form-group"><label>➕ إضافة منتج</label>
+                <select id="editProductSelect"><option value="">-- اختر منتج --</option></select>
+            </div>
+            <div class="form-group"><label>الكمية</label><input type="number" id="editProductQty" value="1" min="1"></div>
+            <div class="form-group"><label>السعر</label><input type="number" id="editProductPrice" step="0.01"></div>
+            <div class="form-group"><button onclick="addToEditCart()" style="margin-top:22px;">➕ إضافة</button></div>
+        </div>
+        
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee;">
+            <strong>المجموع: <span id="editSubTotal">0.00</span> د.ع</strong><br>
+            <strong style="font-size: 18px;">الإجمالي: <span id="editTotal">0.00</span> د.ع</strong>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="saveInvoiceChanges()" style="background:#27ae60; flex:1;">💾 حفظ التغييرات</button>
+            <button onclick="closeEditModal()" style="background:#95a5a6; flex:1;">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    let allInvoices = [];
+    let allCustomers = [];
+    let allMandubs = [];
+    let allProducts = [];
+    let editCart = [];
+    
+    auth.onAuthStateChanged((user) => {
+        if (!user) window.location.href = "login.html";
+        else { loadData(); }
+    });
+    
+    async function loadData() {
+        await Promise.all([
+            loadCustomers(),
+            loadMandubs(),
+            loadProducts(),
+            loadInvoices()
+        ]);
+    }
+    
+    async function loadCustomers() {
+        const snapshot = await db.collection('customers').get();
+        allCustomers = [];
+        snapshot.forEach(doc => allCustomers.push({ id: doc.id, ...doc.data() }));
+        const select = document.getElementById('editCustomerId');
+        select.innerHTML = '<option value="">-- اختر عميل --</option>';
+        allCustomers.forEach(c => select.innerHTML += `<option value="${c.id}">${c.customerName || c.name}</option>`);
+    }
+    
+    async function loadMandubs() {
+        const snapshot = await db.collection('users').where('accountType', '==', 'مندوب').get();
+        allMandubs = [];
+        snapshot.forEach(doc => allMandubs.push({ id: doc.id, ...doc.data() }));
+        const select = document.getElementById('editMandubId');
+        select.innerHTML = '<option value="">-- اختر مندوب --</option>';
+        allMandubs.forEach(m => select.innerHTML += `<option value="${m.id}">${m.employeeName || m.name}</option>`);
+    }
+    
+    async function loadProducts() {
+        const snapshot = await db.collection('inventory').get();
+        allProducts = [];
+        snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
+        const select = document.getElementById('editProductSelect');
+        select.innerHTML = '<option value="">-- اختر منتج --</option>';
+        allProducts.forEach(p => select.innerHTML += `<option value="${p.id}" data-price="${p.sellingPrice || p.price}" data-stock="${p.quantity || 0}">${p.itemName || p.name} - ${p.sellingPrice || p.price} د.ع</option>`);
+        
+        document.getElementById('editProductSelect').onchange = function() {
+            const price = this.selectedOptions[0]?.getAttribute('data-price') || 0;
+            document.getElementById('editProductPrice').value = price;
+        };
+    }
+    
+    async function loadInvoices() {
+        const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+        const typeFilter = document.getElementById('typeFilter')?.value || 'all';
+        const dateFilter = document.getElementById('dateFilter')?.value;
+        
+        let query = db.collection('sales').orderBy('timestamp', 'desc');
+        const snapshot = await query.get();
+        
+        allInvoices = [];
+        snapshot.forEach(doc => allInvoices.push({ id: doc.id, ...doc.data() }));
+        
+        let filtered = allInvoices;
+        if (search) filtered = filtered.filter(i => (i.invoiceNumber || '').toLowerCase().includes(search) || (i.customerName || '').toLowerCase().includes(search));
+        if (typeFilter !== 'all') filtered = filtered.filter(i => i.paymentMethod === typeFilter);
+        if (dateFilter) filtered = filtered.filter(i => i.date?.split(' ')[0] === dateFilter);
+        
+        displayInvoices(filtered);
+    }
+    
+    function displayInvoices(invoices) {
+        const tbody = document.getElementById('invoicesBody');
+        if (invoices.length === 0) { tbody.innerHTML = '<tr><td colspan="8">لا توجد فواتير</td></tr>'; return; }
+        
+        let html = '';
+        invoices.forEach(inv => {
+            const statusClass = inv.paymentMethod === 'نقدي' ? 'status-paid' : 'status-credit';
+            html += `
+                <tr>
+                    <td>${inv.invoiceNumber || '-'}</td>
+                    <td>${inv.date || '-'}</td>
+                    <td>${inv.customerName || '-'}</td>
+                    <td>${inv.mandubName || '-'}</td>
+                    <td>${(inv.total || 0).toFixed(2)}</td>
+                    <td>${inv.paymentMethod || '-'}</td>
+                    <td class="${statusClass}">${inv.paymentMethod === 'نقدي' ? '✅ مدفوع' : '⏳ مؤجل'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="openEditModal('${inv.id}')"><i class="fas fa-edit"></i> تعديل</button>
+                        <button class="btn-delete" onclick="deleteInvoice('${inv.id}')"><i class="fas fa-trash"></i> حذف</button>
+                        ${inv.paymentMethod === 'أجل' ? `<button class="btn-cash" onclick="convertToCash('${inv.id}')"><i class="fas fa-money-bill"></i> تحويل نقدي</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+    
+    async function openEditModal(invoiceId) {
+        const invoice = allInvoices.find(i => i.id === invoiceId);
+        if (!invoice) return;
+        
+        document.getElementById('editInvoiceId').value = invoiceId;
+        document.getElementById('editInvoiceNumber').value = invoice.invoiceNumber || '';
+        document.getElementById('editDate').value = invoice.date?.split(' ')[0] || new Date().toISOString().split('T')[0];
+        document.getElementById('editCustomerId').value = invoice.customerId || '';
+        document.getElementById('editMandubId').value = invoice.mandubId || '';
+        document.getElementById('editPaymentMethod').value = invoice.paymentMethod || 'نقدي';
+        
+        editCart = [...(invoice.items || [])];
+        renderEditCart();
+        document.getElementById('editModal').style.display = 'flex';
+    }
+    
+    function renderEditCart() {
+        const container = document.getElementById('editCartItems');
+        let subTotal = 0;
+        
+        if (editCart.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;">لا توجد منتجات</p>';
+            document.getElementById('editSubTotal').innerText = '0.00';
+            document.getElementById('editTotal').innerText = '0.00';
+            return;
+        }
+        
+        let html = '';
+        editCart.forEach((item, idx) => {
+            subTotal += item.total;
+            html += `
+                <div class="cart-item">
+                    <div><strong>${item.name}</strong><br>${item.price} د.ع</div>
+                    <div>الكمية: <button onclick="changeEditQty(${idx}, -1)">-</button> ${item.quantity} <button onclick="changeEditQty(${idx}, 1)">+</button></div>
+                    <div>${item.total.toFixed(2)} د.ع</div>
+                    <div><button onclick="removeFromEditCart(${idx})" style="background:#e74c3c; padding:3px 8px;">✖</button></div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        document.getElementById('editSubTotal').innerText = subTotal.toFixed(2);
+        document.getElementById('editTotal').innerText = subTotal.toFixed(2);
+    }
+    
+    window.changeEditQty = (idx, delta) => {
+        const newQty = editCart[idx].quantity + delta;
+        if (newQty < 1) { removeFromEditCart(idx); return; }
+        editCart[idx].quantity = newQty;
+        editCart[idx].total = editCart[idx].price * newQty;
+        renderEditCart();
+    };
+    
+    window.removeFromEditCart = (idx) => {
+        editCart.splice(idx, 1);
+        renderEditCart();
+    };
+    
+    window.addToEditCart = () => {
+        const productId = document.getElementById('editProductSelect').value;
+        const product = allProducts.find(p => p.id === productId);
+        if (!product) { alert('اختر منتجاً'); return; }
+        
+        const qty = parseInt(document.getElementById('editProductQty').value);
+        const price = parseFloat(document.getElementById('editProductPrice').value);
+        
+        if (!qty || qty <= 0) { alert('أدخل كمية صحيحة'); return; }
+        
+        const existing = editCart.find(i => i.productId === productId);
+        if (existing) {
+            existing.quantity += qty;
+            existing.total = existing.price * existing.quantity;
+        } else {
+            editCart.push({
+                productId: productId,
+                name: product.itemName || product.name,
+                price: price,
+                quantity: qty,
+                total: price * qty
+            });
+        }
+        renderEditCart();
+        document.getElementById('editProductQty').value = '1';
+    };
+    
+    window.saveInvoiceChanges = async () => {
+        const invoiceId = document.getElementById('editInvoiceId').value;
+        const customerId = document.getElementById('editCustomerId').value;
+        const mandubId = document.getElementById('editMandubId').value;
+        const paymentMethod = document.getElementById('editPaymentMethod').value;
+        const date = document.getElementById('editDate').value;
+        
+        if (editCart.length === 0) { alert('لا توجد منتجات في الفاتورة'); return; }
+        
+        const customer = allCustomers.find(c => c.id === customerId);
+        const mandub = allMandubs.find(m => m.id === mandubId);
+        const total = editCart.reduce((sum, i) => sum + i.total, 0);
+        
+        try {
+            // استعادة المخزون القديم
+            const oldInvoice = allInvoices.find(i => i.id === invoiceId);
+            if (oldInvoice && oldInvoice.items) {
+                for (const oldItem of oldInvoice.items) {
+                    const productRef = db.collection('inventory').doc(oldItem.productId);
+                    const productDoc = await productRef.get();
+                    if (productDoc.exists) {
+                        await productRef.update({ quantity: (productDoc.data().quantity || 0) + oldItem.quantity });
+                    }
+                }
+            }
+            
+            // خصم المخزون الجديد
+            for (const item of editCart) {
+                const productRef = db.collection('inventory').doc(item.productId);
+                const productDoc = await productRef.get();
+                const currentQty = productDoc.data().quantity || 0;
+                if (currentQty < item.quantity) {
+                    throw new Error(`المنتج ${item.name} غير متوفر بالكمية المطلوبة`);
+                }
+                await productRef.update({ quantity: currentQty - item.quantity });
+            }
+            
+            // تحديث دين العميل
+            if (oldInvoice && oldInvoice.customerId !== customerId) {
+                const oldCustomerRef = db.collection('customers').doc(oldInvoice.customerId);
+                const oldCustomerDoc = await oldCustomerRef.get();
+                if (oldCustomerDoc.exists) {
+                    await oldCustomerRef.update({ totalDebt: (oldCustomerDoc.data().totalDebt || 0) - (oldInvoice.total || 0) });
+                }
+            }
+            
+            const customerRef = db.collection('customers').doc(customerId);
+            const customerDoc = await customerRef.get();
+            const currentDebt = customerDoc.data()?.totalDebt || 0;
+            const newDebt = paymentMethod === 'أجل' ? currentDebt + total : currentDebt - (oldInvoice?.total || 0);
+            await customerRef.update({ totalDebt: newDebt });
+            
+            // تحديث الفاتورة
+            await db.collection('sales').doc(invoiceId).update({
+                customerId: customerId,
+                customerName: customer?.customerName || customer?.name,
+                mandubId: mandubId,
+                mandubName: mandub?.employeeName || mandub?.name,
+                paymentMethod: paymentMethod,
+                date: new Date(date).toLocaleDateString('ar-IQ'),
+                items: editCart,
+                total: total,
+                updatedAt: new Date()
+            });
+            
+            alert('تم تحديث الفاتورة بنجاح');
+            closeEditModal();
+            loadInvoices();
+            
+        } catch (error) {
+            alert('خطأ: ' + error.message);
+        }
+    };
+    
+    window.deleteInvoice = async (invoiceId) => {
+        if (!confirm('⚠️ هل أنت متأكد من حذف هذه الفاتورة؟ سيتم إعادة الكميات إلى المخزون.')) return;
+        
+        const invoice = allInvoices.find(i => i.id === invoiceId);
+        if (!invoice) return;
+        
+        try {
+            // إعادة الكميات إلى المخزون
+            if (invoice.items) {
+                for (const item of invoice.items) {
+                    const productRef = db.collection('inventory').doc(item.productId);
+                    const productDoc = await productRef.get();
+                    if (productDoc.exists) {
+                        await productRef.update({ quantity: (productDoc.data().quantity || 0) + item.quantity });
+                    }
+                }
+            }
+            
+            // تحديث دين العميل
+            if (invoice.paymentMethod === 'أجل' && invoice.customerId) {
+                const customerRef = db.collection('customers').doc(invoice.customerId);
+                const customerDoc = await customerRef.get();
+                if (customerDoc.exists) {
+                    await customerRef.update({ totalDebt: (customerDoc.data().totalDebt || 0) - (invoice.total || 0) });
+                }
+            }
+            
+            await db.collection('sales').doc(invoiceId).delete();
+            alert('تم حذف الفاتورة بنجاح');
+            loadInvoices();
+            
+        } catch (error) {
+            alert('خطأ: ' + error.message);
+        }
+    };
+    
+    window.convertToCash = async (invoiceId) => {
+        if (!confirm('تحويل هذه الفاتورة إلى نقدي؟ سيتم خصم المبلغ من ديون العميل.')) return;
+        
+        const invoice = allInvoices.find(i => i.id === invoiceId);
+        if (!invoice) return;
+        
+        try {
+            const customerRef = db.collection('customers').doc(invoice.customerId);
+            const customerDoc = await customerRef.get();
+            const newDebt = (customerDoc.data()?.totalDebt || 0) - (invoice.total || 0);
+            await customerRef.update({ totalDebt: newDebt });
+            
+            await db.collection('sales').doc(invoiceId).update({
+                paymentMethod: 'نقدي',
+                convertedAt: new Date()
+            });
+            
+            alert('تم تحويل الفاتورة إلى نقدي بنجاح');
+            loadInvoices();
+        } catch (error) {
+            alert('خطأ: ' + error.message);
+        }
+    };
+    
+    window.closeEditModal = () => {
+        document.getElementById('editModal').style.display = 'none';
+        editCart = [];
+    };
+    
+    document.getElementById('searchInput')?.addEventListener('input', () => loadInvoices());
+    document.getElementById('typeFilter')?.addEventListener('change', () => loadInvoices());
+    document.getElementById('dateFilter')?.addEventListener('change', () => loadInvoices());
+</script>
+</body>
+</html>
