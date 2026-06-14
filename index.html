@@ -2,43 +2,163 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام حج فاضل - تسجيل الدخول</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>مكتب حاج فاضل - نظام إدارة المبيعات</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .login-container { background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #2c3e50; }
-        h2 { color: #2c3e50; margin-bottom: 10px; font-size: 24px; }
-        p { color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
-        .form-group { margin-bottom: 20px; text-align: right; }
-        label { display: block; margin-bottom: 8px; color: #34495e; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: right; outline: none; transition: 0.3s; }
-        input:focus { border-color: #2c3e50; box-shadow: 0 0 5px rgba(44, 62, 80, 0.3); }
-        button { width: 100%; padding: 12px; background: #2c3e50; border: none; color: white; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #1a252f; }
-        .error-msg { color: #e74c3c; font-size: 14px; margin-top: 15px; display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .logo {
+            margin-bottom: 20px;
+        }
+        
+        .logo i {
+            font-size: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .message {
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
     </style>
 </head>
 <body>
-
-<div class="login-container">
-    <h2>نظام المندوبين والمبيعات</h2>
-    <p>مكتب الحج فاضل</p>
-    
-    <form id="loginForm">
-        <div class="form-group">
-            <label>البريد الإلكتروني:</label>
-            <input type="email" id="email" placeholder="example@mail.com" required>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-landmark"></i>
         </div>
-        <div class="form-group">
-            <label>كلمة المرور:</label>
-            <input type="password" id="password" placeholder="********" required>
+        <h2>مكتب حاج فاضل</h2>
+        <p>نظام إدارة المبيعات والمندوبين</p>
+        
+        <div class="spinner"></div>
+        <div class="message">جاري تحويلك إلى صفحة تسجيل الدخول...</div>
+        <div id="errorMsg" class="error-message">
+            ⚠️ لم يتم تحويلك تلقائياً؟ اضغط الزر أدناه
         </div>
-        <button type="submit">تسجيل الدخول</button>
-        <div class="error-msg" id="errorMsg">خطأ في البريد الإلكتروني أو كلمة المرور!</div>
-    </form>
-</div>
+        <button onclick="goToLogin()" style="display: none;" id="manualBtn">🔐 الذهاب إلى تسجيل الدخول</button>
+    </div>
 
-<script type="module" src="login.js"></script>
+    <script>
+        // Font Awesome
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+        document.head.appendChild(link);
+        
+        // محاولة التوجيه إلى login.html
+        function goToLogin() {
+            window.location.href = "login.html";
+        }
+        
+        // محاولة التوجيه بعد 1 ثانية
+        setTimeout(function() {
+            try {
+                window.location.href = "login.html";
+            } catch(e) {
+                showError();
+            }
+        }, 1000);
+        
+        // محاولة بديلة بعد 3 ثواني إذا لم ينجح التوجيه
+        setTimeout(function() {
+            if (window.location.pathname === '/' || window.location.pathname === '/Repository/' || window.location.pathname === '/Repository/index.html') {
+                showError();
+            }
+        }, 3000);
+        
+        function showError() {
+            document.getElementById('errorMsg').style.display = 'block';
+            document.getElementById('manualBtn').style.display = 'inline-block';
+        }
+        
+        // دعم الضغط على الزر
+        document.getElementById('manualBtn').onclick = goToLogin;
+        
+        // التحقق من وجود login.html
+        fetch('login.html', { method: 'HEAD' })
+            .then(response => {
+                if (!response.ok) {
+                    console.log('ملف login.html غير موجود');
+                }
+            })
+            .catch(() => {
+                console.log('لا يمكن الوصول إلى login.html');
+            });
+    </script>
 </body>
 </html>
