@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>مكتب حاج فاضل - نظام إدارة المبيعات</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="مكتب حاج فاضل">
+    <meta name="theme-color" content="#667eea">
+    <title>مكتب حاج فاضل</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Cairo', 'Tahoma', sans-serif;
@@ -31,10 +31,6 @@
             width: 100%;
         }
         
-        .logo {
-            margin-bottom: 20px;
-        }
-        
         .logo i {
             font-size: 70px;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -43,15 +39,8 @@
             color: transparent;
         }
         
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        p {
-            color: #666;
-            margin-bottom: 30px;
-        }
+        h2 { color: #333; margin: 20px 0 10px; }
+        p { color: #666; margin-bottom: 30px; }
         
         .spinner {
             width: 40px;
@@ -60,7 +49,7 @@
             border-top: 4px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 20px;
         }
         
         @keyframes spin {
@@ -68,9 +57,16 @@
             100% { transform: rotate(360deg); }
         }
         
-        .message {
-            color: #667eea;
-            font-size: 14px;
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
         }
         
         .error-message {
@@ -78,22 +74,6 @@
             font-size: 14px;
             margin-top: 20px;
             display: none;
-        }
-        
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.05);
         }
     </style>
 </head>
@@ -106,59 +86,59 @@
         <p>نظام إدارة المبيعات والمندوبين</p>
         
         <div class="spinner"></div>
-        <div class="message">جاري تحويلك إلى صفحة تسجيل الدخول...</div>
+        <div class="message" style="color:#667eea;">جاري تحويلك إلى تسجيل الدخول...</div>
         <div id="errorMsg" class="error-message">
-            ⚠️ لم يتم تحويلك تلقائياً؟ اضغط الزر أدناه
+            ⚠️ لم يتم التحويل تلقائياً
         </div>
-        <button onclick="goToLogin()" style="display: none;" id="manualBtn">🔐 الذهاب إلى تسجيل الدخول</button>
+        <button id="loginBtn" style="display: none;">🔐 الذهاب إلى تسجيل الدخول</button>
     </div>
 
     <script>
-        // Font Awesome
+        // إضافة Font Awesome
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
         document.head.appendChild(link);
         
-        // محاولة التوجيه إلى login.html
+        // وظيفة التحويل
         function goToLogin() {
+            // طريقة مباشرة للتحويل
             window.location.href = "login.html";
         }
         
-        // محاولة التوجيه بعد 1 ثانية
+        // محاولة التحويل فوراً
+        try {
+            goToLogin();
+        } catch(e) {
+            console.log("خطأ في التحويل المباشر");
+        }
+        
+        // محاولة ثانية بعد نصف ثانية
         setTimeout(function() {
             try {
-                window.location.href = "login.html";
+                goToLogin();
             } catch(e) {
                 showError();
             }
-        }, 1000);
+        }, 500);
         
-        // محاولة بديلة بعد 3 ثواني إذا لم ينجح التوجيه
+        // محاولة ثالثة بعد 1.5 ثانية
         setTimeout(function() {
-            if (window.location.pathname === '/' || window.location.pathname === '/Repository/' || window.location.pathname === '/Repository/index.html') {
+            try {
+                goToLogin();
+            } catch(e) {
                 showError();
             }
-        }, 3000);
+        }, 1500);
         
         function showError() {
             document.getElementById('errorMsg').style.display = 'block';
-            document.getElementById('manualBtn').style.display = 'inline-block';
+            const btn = document.getElementById('loginBtn');
+            btn.style.display = 'inline-block';
+            btn.onclick = function() {
+                window.location.href = "login.html";
+            };
         }
-        
-        // دعم الضغط على الزر
-        document.getElementById('manualBtn').onclick = goToLogin;
-        
-        // التحقق من وجود login.html
-        fetch('login.html', { method: 'HEAD' })
-            .then(response => {
-                if (!response.ok) {
-                    console.log('ملف login.html غير موجود');
-                }
-            })
-            .catch(() => {
-                console.log('لا يمكن الوصول إلى login.html');
-            });
     </script>
 </body>
 </html>
