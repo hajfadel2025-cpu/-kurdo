@@ -7,12 +7,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="مكتب حاج فاضل">
     <meta name="theme-color" content="#667eea">
-    <title>مكتب حاج فاضل</title>
+    <title>تسجيل الدخول - مكتب حاج فاضل</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', 'Tahoma', sans-serif; }
         body {
-            font-family: 'Cairo', 'Tahoma', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -20,125 +24,146 @@
             align-items: center;
             padding: 20px;
         }
-        
-        .container {
-            text-align: center;
+        .login-container {
             background: white;
-            padding: 40px;
             border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 400px;
+            padding: 40px;
             width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        
-        .logo i {
-            font-size: 70px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo i { font-size: 60px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .logo h2 { color: #333; margin-top: 10px; }
+        .logo p { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .input-group { position: relative; }
+        .input-group i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+        input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: 0.3s;
         }
-        
-        h2 { color: #333; margin: 20px 0 10px; }
-        p { color: #666; margin-bottom: 30px; }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
+        input:focus { outline: none; border-color: #667eea; }
         button {
-            margin-top: 20px;
-            padding: 12px 24px;
+            width: 100%;
+            padding: 14px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 18px;
             font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
         }
-        
-        .error-message {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 20px;
-            display: none;
-        }
+        button:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .alert { padding: 12px; border-radius: 12px; margin-bottom: 20px; display: none; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .register-link { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .register-link a { color: #667eea; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <i class="fas fa-landmark"></i>
-        </div>
+<div class="login-container">
+    <div class="logo">
+        <i class="fas fa-landmark"></i>
         <h2>مكتب حاج فاضل</h2>
         <p>نظام إدارة المبيعات والمندوبين</p>
-        
-        <div class="spinner"></div>
-        <div class="message" style="color:#667eea;">جاري تحويلك إلى تسجيل الدخول...</div>
-        <div id="errorMsg" class="error-message">
-            ⚠️ لم يتم التحويل تلقائياً
-        </div>
-        <button id="loginBtn" style="display: none;">🔐 الذهاب إلى تسجيل الدخول</button>
     </div>
+    
+    <div id="alert" class="alert"></div>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="example@company.com" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>كلمة المرور</label>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="********" required>
+            </div>
+        </div>
+        
+        <button type="submit">تسجيل الدخول</button>
+    </form>
+    
+    <div class="register-link">
+        ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a>
+    </div>
+</div>
 
-    <script>
-        // إضافة Font Awesome
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
-        document.head.appendChild(link);
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    const form = document.getElementById('loginForm');
+    const alertDiv = document.getElementById('alert');
+    
+    function showAlert(message, type) {
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerText = message;
+        alertDiv.style.display = 'block';
+        setTimeout(() => alertDiv.style.display = 'none', 5000);
+    }
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        // وظيفة التحويل
-        function goToLogin() {
-            // طريقة مباشرة للتحويل
-            window.location.href = "login.html";
-        }
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
         
-        // محاولة التحويل فوراً
         try {
-            goToLogin();
-        } catch(e) {
-            console.log("خطأ في التحويل المباشر");
-        }
-        
-        // محاولة ثانية بعد نصف ثانية
-        setTimeout(function() {
-            try {
-                goToLogin();
-            } catch(e) {
-                showError();
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // البحث عن دور المستخدم
+            const usersRef = db.collection('users');
+            const q = usersRef.where('uid', '==', user.uid);
+            const querySnapshot = await q.get();
+            
+            let role = 'مندوب';
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                role = data.accountType || data.role || 'مندوب';
+            });
+            
+            if (role === 'مدير' || role === 'admin') {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'sales.html';
             }
-        }, 500);
-        
-        // محاولة ثالثة بعد 1.5 ثانية
-        setTimeout(function() {
-            try {
-                goToLogin();
-            } catch(e) {
-                showError();
-            }
-        }, 1500);
-        
-        function showError() {
-            document.getElementById('errorMsg').style.display = 'block';
-            const btn = document.getElementById('loginBtn');
-            btn.style.display = 'inline-block';
-            btn.onclick = function() {
-                window.location.href = "login.html";
-            };
+            
+        } catch (error) {
+            console.error(error);
+            let message = 'فشل تسجيل الدخول';
+            if (error.code === 'auth/user-not-found') message = 'البريد الإلكتروني غير مسجل';
+            else if (error.code === 'auth/wrong-password') message = 'كلمة المرور غير صحيحة';
+            else if (error.code === 'auth/invalid-email') message = 'البريد الإلكتروني غير صالح';
+            showAlert(message, 'error');
         }
-    </script>
+    });
+</script>
 </body>
 </html>
