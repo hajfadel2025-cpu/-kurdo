@@ -11,11 +11,11 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
         body { background: linear-gradient(135deg, #1e3c72, #2a5298); padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; border-radius: 20px; padding: 25px; }
+        .container { max-width: 1200px; margin: auto; background: white; border-radius: 20px; padding: 25px; }
         h2 { color: #1e3c72; border-right: 4px solid #2ecc71; padding-right: 15px; margin-bottom: 20px; }
         .form-card { background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
         button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
@@ -38,10 +38,12 @@
         <button onclick="addSupplier()" style="margin-top:15px;"><i class="fas fa-save"></i> إضافة مورد</button>
     </div>
     
-    <table>
-        <thead><table><th>المورد</th><th>الهاتف</th><th>العنوان</th><th>الرصيد</th><th>إجراءات</th></tr></thead>
-        <tbody id="suppliersList"></tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead><tr><th>المورد</th><th>الهاتف</th><th>العنوان</th><th>الرصيد</th><th>إجراءات</th></tr></thead>
+            <tbody id="suppliersList"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -65,12 +67,14 @@
         snapshot.forEach(doc => {
             const s = doc.data();
             html += `<tr>
-                <td>${s.name}</td><td>${s.phone || '-'}</td><td>${s.address || '-'}</td>
+                <td>${s.name}</td>
+                <td>${s.phone || '-'}</td>
+                <td>${s.address || '-'}</td>
                 <td>${(s.balance || 0).toFixed(2)} د.ع</td>
                 <td><button class="btn-sm btn-danger" onclick="deleteSupplier('${doc.id}')">حذف</button></td>
             </tr>`;
         });
-        document.getElementById('suppliersList').innerHTML = html || '.<td colspan="5">لا يوجد موردون</td></tr>';
+        document.getElementById('suppliersList').innerHTML = html || '<tr><td colspan="5">لا يوجد موردون</td></tr>';
     }
     
     window.addSupplier = async () => {
