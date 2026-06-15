@@ -3,564 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام المبيعات المتكامل - مكتب حاج فاضل</title>
-    
-    <!-- Firebase SDK -->
+    <title>المبيعات - نظام المخازن</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
-        .header h1 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .user-info { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; color: white; }
-        .logout-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
-        
-        /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .stat-card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
-        .stat-card .number { font-size: 28px; font-weight: bold; color: #667eea; }
-        
-        /* Main Grid */
-        .main-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; }
-        .card { background: rgba(255,255,255,0.95); border-radius: 25px; padding: 25px; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3); }
-        .card h2 { margin-bottom: 20px; color: #1a1a2e; border-right: 4px solid #667eea; padding-right: 15px; }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
-        select, input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; }
-        select:focus, input:focus { outline: none; border-color: #667eea; }
-        
-        button { padding: 12px 20px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 100%; }
-        .btn-success { background: linear-gradient(135deg, #00b09b, #96c93d); color: white; width: 100%; }
-        .btn-danger { background: #ff4444; color: white; padding: 6px 12px; }
-        
-        .cart-items { max-height: 350px; overflow-y: auto; margin-bottom: 20px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
-        .cart-total { padding-top: 15px; border-top: 2px solid #eee; font-size: 18px; font-weight: bold; }
-        .discount-section { background: rgba(102, 126, 234, 0.1); padding: 15px; border-radius: 15px; margin: 15px 0; }
-        
-        .alert { padding: 12px; border-radius: 12px; margin-bottom: 15px; display: none; }
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-error { background: #f8d7da; color: #721c24; }
-        
-        .mandub-info { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 10px 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
-        
-        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: linear-gradient(135deg, #1e3c72, #2a5298); padding: 20px; }
+        .container { max-width: 1400px; margin: auto; background: white; border-radius: 20px; padding: 25px; }
+        h2 { color: #1e3c72; border-right: 4px solid #3498db; padding-right: 15px; margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 100%; }
+        button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .cart-item { display: flex; justify-content: space-between; background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #1e3c72; color: white; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 مكتب حاج فاضل | نظام المبيعات المتكامل</h1>
-            <div class="user-info">
-                <span id="currentMandubName">جاري التحميل...</span>
-                <button class="logout-btn" onclick="logout()">🚪 تسجيل خروج</button>
-            </div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card"><h3>📊 عدد الفواتير</h3><div class="number" id="invoiceCount">0</div></div>
-            <div class="stat-card"><h3>💰 إجمالي المبيعات</h3><div class="number" id="totalSales">0 د.ع</div></div>
-            <div class="stat-card"><h3>🏪 المنتجات</h3><div class="number" id="productCount">0</div></div>
-            <div class="stat-card"><h3>👥 العملاء</h3><div class="number" id="customerCount">0</div></div>
-        </div>
-
-        <div class="main-grid">
-            <div class="card">
-                <h2>🧾 فاتورة جديدة</h2>
-                <div id="alert" class="alert"></div>
-                
-                <div class="mandub-info">
-                    🔹 المندوب المسؤول: <strong id="mandubNameDisplay">-</strong> 🔹
-                </div>
-                
-                <div class="form-group">
-                    <label>👤 العميل</label>
-                    <select id="customerSelect">
-                        <option value="">-- اختر عميل --</option>
-                        <option value="new">➕ عميل جديد</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>💰 طريقة الدفع</label>
-                    <select id="paymentMethod">
-                        <option value="نقدي">نقدي</option>
-                        <option value="أجل">أجل</option>
-                        <option value="شبكة">شبكة</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>📦 المنتج</label>
-                    <select id="productSelect">
-                        <option value="">-- اختر منتج --</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>🔢 الكمية</label>
-                    <input type="number" id="quantity" value="1" min="1">
-                </div>
-                
-                <button class="btn-primary" onclick="addToCart()">➕ إضافة للسلة</button>
-            </div>
-
-            <div class="card">
-                <h2>🛒 سلة المشتريات</h2>
-                <div id="cartItems" class="cart-items"><p style="text-align:center;color:#999;">السلة فارغة</p></div>
-                
-                <div class="discount-section">
-                    <label>🎁 خصم</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="number" id="discountValue" placeholder="القيمة" style="flex:1;">
-                        <select id="discountType" style="width:auto;">
-                            <option value="percentage">%</option>
-                            <option value="fixed">💰 د.ع</option>
-                        </select>
-                    </div>
-                    <button class="btn-primary" style="margin-top:10px; background:#ff9800;" onclick="applyDiscount()">تطبيق الخصم</button>
-                </div>
-                
-                <div class="cart-total">
-                    المجموع: <span id="subTotal">0.00</span> د.ع<br>
-                    <span id="discountDisplay" style="color:#ff4444;"></span>
-                    <strong>الإجمالي: <span id="cartTotal">0.00</span> د.ع</strong>
-                </div>
-                
-                <button class="btn-success" onclick="saveInvoice()">💾 حفظ الفاتورة وإرسال واتساب</button>
-            </div>
-        </div>
+<div class="container">
+    <h2><i class="fas fa-cart-shopping"></i> فاتورة مبيعات</h2>
+    
+    <div class="form-grid">
+        <select id="customerId"><option value="">اختر العميل</option></select>
+        <input type="text" id="invoiceNumber" placeholder="رقم الفاتورة">
+        <input type="date" id="invoiceDate">
+        <select id="paymentMethod"><option value="نقدي">نقدي</option><option value="أجل">أجل</option></select>
     </div>
+    
+    <div class="form-grid">
+        <select id="productId"><option value="">اختر منتج</option></select>
+        <input type="number" id="qty" placeholder="الكمية">
+        <input type="number" id="price" placeholder="سعر البيع">
+        <button onclick="addToCart()">➕ إضافة</button>
+    </div>
+    
+    <h3>سلة المبيعات</h3>
+    <div id="cartList"></div>
+    <h3>الإجمالي: <span id="totalAmount">0.00</span> د.ع</h3>
+    <button onclick="saveSale()">💾 حفظ فاتورة البيع</button>
+    
+    <h3>سجل فواتير المبيعات</h3>
+    <table id="salesTable"><thead><tr><th>رقم</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th></tr></thead><tbody></tbody></table>
+</div>
 
-    <script>
-        // ==================== Firebase Configuration ====================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
-            authDomain: "haj-fadel-accounting.firebaseapp.com",
-            projectId: "haj-fadel-accounting",
-            storageBucket: "haj-fadel-accounting.firebasestorage.app",
-            messagingSenderId: "449205985318",
-            appId: "1:449205985318:web:2dece1e1412165b01f46e7"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        // ==================== Global Variables ====================
-        let inventory = [];
-        let cart = [];
-        let customers = [];
-        let invoices = [];
-        let currentDiscount = { value: 0, type: 'percentage' };
-        let currentUser = null;
-        let currentMandub = null;
-
-        // ==================== Authentication & User ====================
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentUser = user;
-                await loadCurrentMandub(user.uid);
-                await loadData();
-            } else {
-                window.location.href = "login.html";
-            }
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    let cart = [];
+    let products = [];
+    let customers = [];
+    
+    auth.onAuthStateChanged(user => { if (!user) window.location.href = "login.html"; else loadData(); });
+    
+    async function loadData() {
+        await loadCustomers();
+        await loadProducts();
+        await loadSales();
+    }
+    
+    async function loadCustomers() {
+        const snapshot = await db.collection('customers').get();
+        customers = [];
+        let html = '<option value="">اختر العميل</option>';
+        snapshot.forEach(doc => { customers.push({ id: doc.id, ...doc.data() }); html += `<option value="${doc.id}">${doc.data().customerName}</option>`; });
+        document.getElementById('customerId').innerHTML = html;
+    }
+    
+    async function loadProducts() {
+        const snapshot = await db.collection('inventory').get();
+        products = [];
+        let html = '<option value="">اختر منتج</option>';
+        snapshot.forEach(doc => { products.push({ id: doc.id, ...doc.data() }); html += `<option value="${doc.id}">${doc.data().itemName} (المتبقي: ${doc.data().quantity || 0})</option>`; });
+        document.getElementById('productId').innerHTML = html;
+    }
+    
+    window.addToCart = () => {
+        const productId = document.getElementById('productId').value;
+        const product = products.find(p => p.id === productId);
+        if (!product) return alert('اختر منتج');
+        const qty = parseInt(document.getElementById('qty').value);
+        const price = parseFloat(document.getElementById('price').value);
+        if (!qty || !price) return alert('أدخل الكمية والسعر');
+        if (qty > (product.quantity || 0)) return alert(`الكمية المطلوبة أكبر من المتوفر (المتوفر: ${product.quantity})`);
+        cart.push({ productId, name: product.itemName, qty, price, total: qty * price });
+        renderCart();
+    };
+    
+    function renderCart() {
+        let html = '';
+        let total = 0;
+        cart.forEach((item, i) => {
+            total += item.total;
+            html += `<div class="cart-item"><span>${item.name} x ${item.qty}</span><span>${item.total.toFixed(2)} د.ع</span><button onclick="removeItem(${i})">❌</button></div>`;
         });
-
-        async function loadCurrentMandub(uid) {
-            try {
-                // First check in Firestore users collection
-                const usersRef = db.collection("users");
-                const q = usersRef.where("uid", "==", uid);
-                const querySnapshot = await q.get();
-                
-                if (!querySnapshot.empty) {
-                    const userData = querySnapshot.docs[0].data();
-                    currentMandub = {
-                        id: querySnapshot.docs[0].id,
-                        name: userData.employeeName || userData.name,
-                        commissionRate: userData.commissionRate || 0,
-                        role: userData.role || 'user'
-                    };
-                } else {
-                    // If not found, try to get from mandub with same email/phone
-                    currentMandub = {
-                        id: uid,
-                        name: user.email || 'مندوب',
-                        commissionRate: 0,
-                        role: 'user'
-                    };
-                }
-                
-                document.getElementById('currentMandubName').innerHTML = `👤 ${currentMandub.name}`;
-                document.getElementById('mandubNameDisplay').innerText = currentMandub.name;
-            } catch (error) {
-                console.error("Error loading mandub:", error);
-            }
+        document.getElementById('cartList').innerHTML = html;
+        document.getElementById('totalAmount').innerText = total.toFixed(2);
+    }
+    
+    window.removeItem = (i) => { cart.splice(i,1); renderCart(); };
+    
+    window.saveSale = async () => {
+        const customerId = document.getElementById('customerId').value;
+        if (!customerId || cart.length === 0) return alert('اختر عميل وأضف منتجات');
+        const total = cart.reduce((s,i)=>s+i.total,0);
+        const batch = db.batch();
+        
+        // 1. خصم الكمية من المخزن
+        for (let item of cart) {
+            const productRef = db.collection('inventory').doc(item.productId);
+            const docSnap = await productRef.get();
+            const oldQty = docSnap.data().quantity || 0;
+            batch.update(productRef, { quantity: oldQty - item.qty });
         }
-
-        window.logout = async function() {
-            await auth.signOut();
-            window.location.href = "login.html";
-        };
-
-        // ==================== Load Data ====================
-        async function loadData() {
-            await Promise.all([
-                loadCustomers(),
-                loadProducts(),
-                loadInvoices()
-            ]);
-            updateStatistics();
+        
+        // 2. تحديث رصيد العميل (دين)
+        const customerRef = db.collection('customers').doc(customerId);
+        const custSnap = await customerRef.get();
+        const oldDebt = custSnap.data().totalDebt || 0;
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        if (paymentMethod === 'أجل') {
+            batch.update(customerRef, { totalDebt: oldDebt + total });
         }
-
-        async function loadCustomers() {
-            try {
-                const snapshot = await db.collection('customers').get();
-                customers = [];
-                snapshot.forEach(doc => {
-                    customers.push({ id: doc.id, ...doc.data() });
-                });
-                document.getElementById('customerCount').innerText = customers.length;
-                updateCustomerSelect();
-            } catch(e) {
-                console.error("Error loading customers:", e);
-                customers = [];
-                updateCustomerSelect();
-            }
-        }
-
-        async function loadProducts() {
-            try {
-                const snapshot = await db.collection('inventory').get();
-                inventory = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    inventory.push({ 
-                        id: doc.id, 
-                        name: data.itemName || data.name,
-                        price: data.sellingPrice || data.price,
-                        stock: data.quantity || 0
-                    });
-                });
-                document.getElementById('productCount').innerText = inventory.length;
-                updateProductSelect();
-            } catch(e) {
-                console.error("Error loading products:", e);
-                inventory = [];
-                updateProductSelect();
-            }
-        }
-
-        async function loadInvoices() {
-            try {
-                const snapshot = await db.collection('sales')
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .get();
-                invoices = [];
-                snapshot.forEach(doc => {
-                    invoices.push({ id: doc.id, ...doc.data() });
-                });
-            } catch(e) {
-                console.error("Error loading invoices:", e);
-                invoices = [];
-            }
-            updateStatistics();
-        }
-
-        // ==================== UI Updates ====================
-        function updateCustomerSelect() {
-            const select = document.getElementById('customerSelect');
-            select.innerHTML = '<option value="">-- اختر عميل --</option>';
-            customers.forEach(c => {
-                select.innerHTML += `<option value="${c.id}" data-phone="${c.phone || ''}" data-name="${c.customerName || c.name}">${c.customerName || c.name} - رصيد: ${(c.totalDebt || 0).toFixed(2)} د.ع</option>`;
-            });
-            select.innerHTML += '<option value="new">➕ عميل جديد</option>';
-        }
-
-        function updateProductSelect() {
-            const select = document.getElementById('productSelect');
-            select.innerHTML = '<option value="">-- اختر منتج --</option>';
-            inventory.forEach(p => {
-                if (p.stock > 0) {
-                    select.innerHTML += `<option value="${p.id}" data-price="${p.price}" data-stock="${p.stock}">${p.name} - ${p.price} د.ع (المتبقي: ${p.stock})</option>`;
-                }
-            });
-        }
-
-        function updateStatistics() {
-            let total = 0;
-            invoices.forEach(inv => total += inv.total || 0);
-            document.getElementById('totalSales').innerText = total.toFixed(2) + ' د.ع';
-            document.getElementById('invoiceCount').innerText = invoices.length;
-        }
-
-        // ==================== Cart Functions ====================
-        window.addToCart = function() {
-            const productId = document.getElementById('productSelect').value;
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const product = inventory.find(p => p.id === productId);
-            
-            if (!productId || !product) {
-                showAlert('اختر منتجاً', 'error');
-                return;
-            }
-            if (quantity > product.stock) {
-                showAlert(`المتوفر: ${product.stock} فقط`, 'error');
-                return;
-            }
-            
-            const existing = cart.find(i => i.productId === productId);
-            if (existing) {
-                if (existing.quantity + quantity > product.stock) {
-                    showAlert('كمية غير متوفرة', 'error');
-                    return;
-                }
-                existing.quantity += quantity;
-                existing.total = existing.price * existing.quantity;
-            } else {
-                cart.push({
-                    productId,
-                    name: product.name,
-                    price: product.price,
-                    quantity,
-                    total: product.price * quantity
-                });
-            }
-            updateCartDisplay();
-            document.getElementById('quantity').value = 1;
-            showAlert('تمت الإضافة', 'success');
-        };
-
-        function updateCartDisplay() {
-            const container = document.getElementById('cartItems');
-            let subTotal = 0;
-            
-            if (cart.length === 0) {
-                container.innerHTML = '<p style="text-align:center;">السلة فارغة</p>';
-                document.getElementById('subTotal').innerText = '0.00';
-                updateTotalWithDiscount();
-                return;
-            }
-            
-            let html = '';
-            cart.forEach((item, idx) => {
-                subTotal += item.total;
-                html += `
-                    <div class="cart-item">
-                        <div><strong>${item.name}</strong><br>${item.price} د.ع</div>
-                        <div>الكمية: <button onclick="changeQuantity(${idx}, -1)">-</button> ${item.quantity} <button onclick="changeQuantity(${idx}, 1)">+</button></div>
-                        <div>${item.total.toFixed(2)} د.ع</div>
-                        <button class="btn-danger" onclick="removeFromCart(${idx})">✖</button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            document.getElementById('subTotal').innerText = subTotal.toFixed(2);
-            updateTotalWithDiscount();
-        }
-
-        window.changeQuantity = function(index, delta) {
-            const newQty = cart[index].quantity + delta;
-            if (newQty < 1) {
-                removeFromCart(index);
-                return;
-            }
-            const product = inventory.find(p => p.id === cart[index].productId);
-            if (newQty > product.stock) {
-                showAlert('الكمية غير متوفرة', 'error');
-                return;
-            }
-            cart[index].quantity = newQty;
-            cart[index].total = cart[index].price * newQty;
-            updateCartDisplay();
-        };
-
-        window.removeFromCart = function(index) {
-            cart.splice(index, 1);
-            updateCartDisplay();
-            showAlert('تمت الإزالة', 'success');
-        };
-
-        window.applyDiscount = function() {
-            const value = parseFloat(document.getElementById('discountValue').value);
-            if (isNaN(value) || value < 0) {
-                showAlert('أدخل قيمة صحيحة', 'error');
-                return;
-            }
-            currentDiscount = { value, type: document.getElementById('discountType').value };
-            updateTotalWithDiscount();
-            showAlert(`تم تطبيق خصم ${value}${currentDiscount.type === 'percentage' ? '%' : ' د.ع'}`, 'success');
-        };
-
-        function updateTotalWithDiscount() {
-            const subTotal = parseFloat(document.getElementById('subTotal').innerText);
-            let discountAmount = currentDiscount.type === 'percentage' ? subTotal * (currentDiscount.value / 100) : currentDiscount.value;
-            const finalTotal = Math.max(0, subTotal - discountAmount);
-            document.getElementById('cartTotal').innerText = finalTotal.toFixed(2);
-            document.getElementById('discountDisplay').innerHTML = discountAmount > 0 ? `الخصم: -${discountAmount.toFixed(2)} د.ع<br>` : '';
-        }
-
-        // ==================== Save Invoice ====================
-        window.saveInvoice = async function() {
-            if (cart.length === 0) {
-                showAlert('السلة فارغة!', 'error');
-                return;
-            }
-            
-            if (!currentMandub) {
-                showAlert('الرجاء تسجيل الدخول أولاً', 'error');
-                return;
-            }
-            
-            let customerId = document.getElementById('customerSelect').value;
-            let customer = null;
-            
-            // Handle new customer
-            if (customerId === 'new') {
-                const newCustomerName = prompt('الرجاء إدخال اسم العميل الجديد:');
-                if (!newCustomerName) {
-                    showAlert('الرجاء إدخال اسم العميل', 'error');
-                    return;
-                }
-                const newCustomerPhone = prompt('رقم الهاتف (اختياري):');
-                try {
-                    const newCustomerRef = await db.collection('customers').add({
-                        customerName: newCustomerName,
-                        phone: newCustomerPhone || '',
-                        totalDebt: 0,
-                        createdAt: new Date()
-                    });
-                    customerId = newCustomerRef.id;
-                    customer = { id: customerId, customerName: newCustomerName, phone: newCustomerPhone, totalDebt: 0 };
-                } catch (e) {
-                    showAlert('خطأ في إضافة العميل', 'error');
-                    return;
-                }
-            } else {
-                customer = customers.find(c => c.id === customerId);
-            }
-            
-            if (!customerId || !customer) {
-                showAlert('اختر العميل', 'error');
-                return;
-            }
-            
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const subTotal = parseFloat(document.getElementById('subTotal').innerText);
-            let discountAmount = currentDiscount.type === 'percentage' ? subTotal * (currentDiscount.value / 100) : currentDiscount.value;
-            const finalTotal = Math.max(0, subTotal - discountAmount);
-            
-            // Update inventory stock
-            const batch = db.batch();
-            for (const item of cart) {
-                const productRef = db.collection('inventory').doc(item.productId);
-                const product = inventory.find(p => p.id === item.productId);
-                if (product) {
-                    batch.update(productRef, { quantity: product.stock - item.quantity });
-                }
-            }
-            
-            // Create invoice
-            const invoice = {
-                invoiceNumber: 'INV-' + Date.now(),
-                date: new Date().toLocaleString('ar-IQ'),
-                mandubId: currentMandub.id,
-                mandubName: currentMandub.name,
-                commissionRate: currentMandub.commissionRate || 0,
-                commission: finalTotal * ((currentMandub.commissionRate || 0) / 100),
-                customerId: customerId,
-                customerName: customer.customerName || customer.name,
-                customerPhone: customer.phone || '',
-                paymentMethod: paymentMethod,
-                items: cart.map(item => ({
-                    productId: item.productId,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    total: item.total
-                })),
-                subTotal: subTotal,
-                discount: {
-                    value: currentDiscount.value,
-                    type: currentDiscount.type,
-                    amount: discountAmount
-                },
-                total: finalTotal,
-                timestamp: new Date().toISOString()
-            };
-            
-            try {
-                // Save invoice to Firestore
-                await db.collection('sales').add(invoice);
-                
-                // Update customer debt if payment method is "أجل"
-                if (paymentMethod === 'أجل') {
-                    const customerRef = db.collection('customers').doc(customerId);
-                    const newDebt = (customer.totalDebt || 0) + finalTotal;
-                    await customerRef.update({ totalDebt: newDebt });
-                }
-                
-                // Commit inventory updates
-                await batch.commit();
-                
-                showAlert(`✅ تم حفظ الفاتورة ${invoice.invoiceNumber}`, 'success');
-                
-                // Send WhatsApp if phone exists
-                const phone = customer.phone;
-                if (phone) {
-                    let message = `📄 *فاتورة مكتب حاج فاضل*%0A📅 التاريخ: ${invoice.date}%0A👤 العميل: ${customer.customerName || customer.name}%0A👤 المندوب: ${currentMandub.name}%0A🧾 رقم: ${invoice.invoiceNumber}%0A━━━━━━━━━━━━━━%0A*المنتجات:*%0A`;
-                    cart.forEach(item => {
-                        message += `• ${item.name} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)} د.ع%0A`;
-                    });
-                    message += `━━━━━━━━━━━━━━%0A💰 المجموع: ${subTotal.toFixed(2)} د.ع%0A`;
-                    if (discountAmount > 0) message += `🎁 الخصم: -${discountAmount.toFixed(2)} د.ع%0A`;
-                    message += `💵 *الإجمالي: ${finalTotal.toFixed(2)} د.ع*%0A💳 طريقة الدفع: ${paymentMethod}%0A━━━━━━━━━━━━━━%0Aشكراً لتسوقكم مع مكتب حاج فاضل 🌟`;
-                    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-                }
-                
-                // Reset
-                cart = [];
-                currentDiscount = { value: 0, type: 'percentage' };
-                document.getElementById('discountValue').value = '';
-                updateCartDisplay();
-                await loadProducts();
-                await loadInvoices();
-                updateProductSelect();
-                
-            } catch (error) {
-                console.error("Error saving invoice:", error);
-                showAlert('خطأ في حفظ الفاتورة: ' + error.message, 'error');
-            }
-        };
-
-        // ==================== Helper Functions ====================
-        function showAlert(message, type) {
-            const alertDiv = document.getElementById('alert');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.innerText = message;
-            alertDiv.style.display = 'block';
-            setTimeout(() => alertDiv.style.display = 'none', 3000);
-        }
-
-        // Auto-refresh data every 30 seconds
-        setInterval(() => {
-            if (currentUser) {
-                loadProducts();
-                loadInvoices();
-            }
-        }, 30000);
-    </script>
+        
+        // 3. حفظ فاتورة البيع
+        const saleRef = db.collection('sales').doc();
+        batch.set(saleRef, {
+            customerId, customerName: customers.find(c=>c.id===customerId).customerName,
+            date: document.getElementById('invoiceDate').value || new Date().toISOString().split('T')[0],
+            invoiceNumber: document.getElementById('invoiceNumber').value,
+            paymentMethod: paymentMethod,
+            items: cart, total, timestamp: new Date()
+        });
+        
+        await batch.commit();
+        alert('تم حفظ فاتورة البيع وتحديث المخزن');
+        cart = []; renderCart();
+        loadProducts(); loadSales();
+    };
+    
+    async function loadSales() {
+        const snapshot = await db.collection('sales').orderBy('timestamp','desc').get();
+        let html = '';
+        snapshot.forEach(doc => {
+            const s = doc.data();
+            html += `<tr><td>${s.invoiceNumber||'-'}</td><td>${s.customerName}</td><td>${s.date}</td><td>${s.total.toFixed(2)}</td></tr>`;
+        });
+        document.querySelector('#salesTable tbody').innerHTML = html;
+    }
+</script>
 </body>
 </html>
