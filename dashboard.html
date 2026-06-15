@@ -24,7 +24,6 @@
         
         .container { max-width: 1600px; margin: auto; }
         
-        /* Header */
         .header {
             background: white;
             padding: 15px 25px;
@@ -92,10 +91,6 @@
         }
         
         .nav-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
-        .nav-item.mandubs { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
-        .nav-item.inventory { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
-        .nav-item.sales { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
-        .nav-item.reports { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
         
         /* شبكة المربعات */
         .stats {
@@ -222,13 +217,14 @@
         </div>
     </div>
     
-    <!-- القائمة العلوية -->
+    <!-- القائمة العلوية (جميع الروابط) -->
     <div class="nav-menu">
         <a href="suppliers.html" class="nav-item" style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white;"><i class="fas fa-truck"></i> الموردين</a>
-        <a href="inventory.html" class="nav-item inventory"><i class="fas fa-boxes"></i> المخزن</a>
-        <a href="sales.html" class="nav-item sales"><i class="fas fa-cart-shopping"></i> المبيعات</a>
+        <a href="inventory.html" class="nav-item" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;"><i class="fas fa-boxes"></i> المخزن</a>
+        <a href="sales.html" class="nav-item" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white;"><i class="fas fa-cart-shopping"></i> المبيعات</a>
         <a href="purchases.html" class="nav-item" style="background: linear-gradient(135deg, #1abc9c, #16a085); color: white;"><i class="fas fa-truck"></i> المشتريات</a>
-        <a href="customers.html" class="nav-item reports"><i class="fas fa-users"></i> العملاء</a>
+        <a href="customers.html" class="nav-item" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white;"><i class="fas fa-users"></i> العملاء</a>
+        <a href="mandubs.html" class="nav-item" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;"><i class="fas fa-user-tie"></i> المندوبين</a>
         <a href="cash-register.html" class="nav-item" style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white;"><i class="fas fa-cash-register"></i> صندوق الكاش</a>
         <a href="invoice-manager.html" class="nav-item" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white;"><i class="fas fa-file-invoice"></i> فواتير مبيعات</a>
     </div>
@@ -262,11 +258,11 @@
     <!-- القوائم -->
     <div class="row">
         <div class="box"><h3><i class="fas fa-exclamation-triangle"></i> منتجات منخفضة المخزون</h3> <table><thead> <tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead><tbody id="lowStockList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
-        <div class="box"><h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3> <table><thead> <tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
+        <div class="box"><h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3> <tr><thead> <tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
     </div>
     
     <div class="row">
-        <div class="box"><h3><i class="fas fa-receipt"></i> آخر الفواتير</h3> <table><thead> <tr><th>رقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
+        <div class="box"><h3><i class="fas fa-receipt"></i> آخر الفواتير</h3> <table><thead><tr><th>رقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
         <div class="box"><h3><i class="fas fa-chart-simple"></i> إحصائيات سريعة</h3><div style="padding:10px;"><div>📊 الفواتير: <strong id="statSalesCount">0</strong></div><div>💰 المبيعات: <strong id="statTotalSales">0 د</strong></div><div>🏪 المنتجات: <strong id="statProductsCount">0</strong></div><div>👥 العملاء: <strong id="statCustomersCount">0</strong></div></div></div>
     </div>
     
