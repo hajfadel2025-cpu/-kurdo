@@ -66,7 +66,6 @@
         
         .logout-btn:hover { background: #e74c3c; }
         
-        /* القائمة العلوية */
         .nav-menu {
             background: white;
             border-radius: 12px;
@@ -92,7 +91,6 @@
         
         .nav-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
         
-        /* شبكة المربعات */
         .stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -116,7 +114,6 @@
         .stat .num { font-size: 24px; font-weight: bold; color: #1e3c72; }
         .stat .txt { color: #6c757d; font-size: 11px; margin-top: 5px; }
         
-        /* المخططات */
         .charts-row {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -139,7 +136,6 @@
             padding-right: 10px;
         }
         
-        /* أزرار */
         .action-buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -164,7 +160,6 @@
         .btn-purchases { background: linear-gradient(135deg, #43e97b, #38f9d7); }
         .btn-export { background: linear-gradient(135deg, #fa709a, #fee140); }
         
-        /* الصفوف */
         .row {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -217,7 +212,6 @@
         </div>
     </div>
     
-    <!-- القائمة العلوية (جميع الروابط) -->
     <div class="nav-menu">
         <a href="suppliers.html" class="nav-item" style="background: linear-gradient(135deg, #2ecc71, #27ae60); color: white;"><i class="fas fa-truck"></i> الموردين</a>
         <a href="inventory.html" class="nav-item" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;"><i class="fas fa-boxes"></i> المخزن</a>
@@ -229,7 +223,6 @@
         <a href="invoice-manager.html" class="nav-item" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white;"><i class="fas fa-file-invoice"></i> فواتير مبيعات</a>
     </div>
     
-    <!-- المربعات -->
     <div class="stats">
         <div class="stat"><i class="fas fa-boxes"></i><div class="num" id="productsCount">0</div><div class="txt">المنتجات</div></div>
         <div class="stat"><i class="fas fa-users"></i><div class="num" id="customersCount">0</div><div class="txt">العملاء</div></div>
@@ -241,13 +234,11 @@
         <div class="stat"><i class="fas fa-trophy"></i><div class="num" id="topMandub">0</div><div class="txt">أفضل مندوب</div></div>
     </div>
     
-    <!-- المخططات -->
     <div class="charts-row">
         <div class="chart-card"><h3><i class="fas fa-chart-line"></i> المبيعات خلال آخر 7 أيام</h3><canvas id="salesChart"></canvas></div>
         <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> المبيعات حسب المندوب</h3><canvas id="mandubChart"></canvas></div>
     </div>
     
-    <!-- أزرار -->
     <div class="action-buttons">
         <button class="action-btn btn-inventory" onclick="showInventoryReport()"><i class="fas fa-clipboard-list"></i> جرد المخزون</button>
         <button class="action-btn btn-sales" onclick="showSalesReport()"><i class="fas fa-file-invoice-dollar"></i> جرد المبيعات</button>
@@ -255,19 +246,18 @@
         <button class="action-btn btn-export" onclick="exportFullReport()"><i class="fas fa-download"></i> تصدير تقرير</button>
     </div>
     
-    <!-- القوائم -->
     <div class="row">
-        <div class="box"><h3><i class="fas fa-exclamation-triangle"></i> منتجات منخفضة المخزون</h3> <table><thead> <tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead><tbody id="lowStockList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
-        <div class="box"><h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3> <tr><thead> <tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
-    </div>
+        <div class="box"><h3><i class="fas fa-exclamation-triangle"></i> منتجات منخفضة المخزون</h3> <table><thead> <tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead><tbody id="lowStockList"><tr><td colspan="3">جاري التحميل...<\/td><\/tr><\/tbody><\/div>
+        <div class="box"><h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3> <table><thead> <tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...<\/td><\/tr><\/tbody><\/div>
+    <\/div>
     
     <div class="row">
-        <div class="box"><h3><i class="fas fa-receipt"></i> آخر الفواتير</h3> <table><thead><tr><th>رقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></div>
-        <div class="box"><h3><i class="fas fa-chart-simple"></i> إحصائيات سريعة</h3><div style="padding:10px;"><div>📊 الفواتير: <strong id="statSalesCount">0</strong></div><div>💰 المبيعات: <strong id="statTotalSales">0 د</strong></div><div>🏪 المنتجات: <strong id="statProductsCount">0</strong></div><div>👥 العملاء: <strong id="statCustomersCount">0</strong></div></div></div>
-    </div>
+        <div class="box"><h3><i class="fas fa-receipt"></i> آخر الفواتير</h3> <table><thead> <tr><th>رقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="3">جاري التحميل...<\/td><\/tr><\/tbody><\/div>
+        <div class="box"><h3><i class="fas fa-chart-simple"></i> إحصائيات سريعة</h3><div style="padding:10px;"><div>📊 الفواتير: <strong id="statSalesCount">0<\/strong><\/div><div>💰 المبيعات: <strong id="statTotalSales">0 د<\/strong><\/div><div>🏪 المنتجات: <strong id="statProductsCount">0<\/strong><\/div><div>👥 العملاء: <strong id="statCustomersCount">0<\/strong><\/div><\/div><\/div>
+    <\/div>
     
-    <div class="footer"><i class="fas fa-sync-alt"></i> تحديث تلقائي من قاعدة البيانات</div>
-</div>
+    <div class="footer"><i class="fas fa-sync-alt"></i> تحديث تلقائي من قاعدة البيانات<\/div>
+<\/div>
 
 <script>
     const firebaseConfig = {
@@ -365,29 +355,29 @@
     
     function updateLowStockList() {
         let low = allProducts.filter(p => (p.quantity || 0) <= 20).slice(0, 5);
-        let html = low.length === 0 ? '<tr><td colspan="3">لا توجد</td></tr>' : '';
+        let html = low.length === 0 ? '<tr><td colspan="3">لا توجد<\/td><\/tr>' : '';
         low.forEach(p => {
             let qty = p.quantity || 0;
-            let badge = qty <= 5 ? '<span class="badge red">حرج</span>' : '<span class="badge orange">منخفض</span>';
-            html += `<tr><td><strong>${p.itemName || p.name}</strong></td><td>${qty}</td><td>${badge}</td></tr>`;
+            let badge = qty <= 5 ? '<span class="badge red">حرج<\/span>' : '<span class="badge orange">منخفض<\/span>';
+            html += `<tr><td><strong>${p.itemName || p.name}<\/strong><\/td><td>${qty}<\/td><td>${badge}<\/td><\/tr>`;
         });
         document.getElementById('lowStockList').innerHTML = html;
     }
     
     function updateOverdueList() {
         let overdue = allCustomers.filter(c => (c.totalDebt || 0) > 100).slice(0, 5);
-        let html = overdue.length === 0 ? '<tr><td colspan="3">لا يوجد</td></tr>' : '';
+        let html = overdue.length === 0 ? '<tr><td colspan="3">لا يوجد<\/td><\/tr>' : '';
         overdue.forEach(c => {
-            html += `<tr><td>${c.customerName || c.name}</td><td>${(c.totalDebt || 0).toFixed(0)} د</td><td><span class="badge red">متأخر</span></td></tr>`;
+            html += `<tr><td>${c.customerName || c.name}<\/td><td>${(c.totalDebt || 0).toFixed(0)} د<\/td><td><span class="badge red">متأخر<\/span><\/td><\/tr>`;
         });
         document.getElementById('overdueList').innerHTML = html;
     }
     
     function updateRecentSales() {
         let recent = [...allSales].slice(0, 5);
-        let html = recent.length === 0 ? '<tr><td colspan="3">لا توجد</td></tr>' : '';
+        let html = recent.length === 0 ? '<tr><td colspan="3">لا توجد<\/td><\/tr>' : '';
         recent.forEach(s => {
-            html += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.customerName || '-'}</td><td>${(s.total || 0).toFixed(0)} د</td></tr>`;
+            html += `<tr><td>${s.invoiceNumber || '-'}<\/td><td>${s.customerName || '-'}<\/td><td>${(s.total || 0).toFixed(0)} د<\/td><\/tr>`;
         });
         document.getElementById('recentSales').innerHTML = html;
     }
@@ -432,6 +422,6 @@
     };
     window.showPurchasesReport = function() { alert('📊 قريباً'); };
     window.exportFullReport = function() { alert('📄 قريباً'); };
-</script>
-</body>
-</html>
+<\/script>
+<\/body>
+<\/html>
