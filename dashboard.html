@@ -27,10 +27,34 @@
         .stat .txt{color:#666;font-size:11px;margin-top:3px}
         
         /* مخططات مصغرة */
-        .charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:20px}
-        .chart-card{background:#f8f9fa;border-radius:12px;padding:12px}
-        .chart-card h3{color:#1e3c72;font-size:13px;margin-bottom:8px;border-right:3px solid #667eea;padding-right:10px}
-        .chart-card canvas{max-height:150px !important;height:150px !important;width:100% !important}
+        .charts-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 15px;
+    padding: 10px 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    max-height: 280px;
+    overflow: hidden;
+}
+
+.chart-card h3 {
+    color: #1e3c72;
+    font-size: 13px;
+    margin-bottom: 10px;
+    border-right: 3px solid #667eea;
+    padding-right: 10px;
+}
+
+.chart-card canvas {
+    max-height: 180px !important;
+    height: 180px !important;
+}
         
         .footer{text-align:center;margin-top:20px;color:#888;font-size:12px}
         
