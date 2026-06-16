@@ -13,36 +13,30 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1e3c72,#2a5298);min-height:100vh;padding:20px}
         .container{max-width:1200px;margin:auto;background:white;border-radius:20px;padding:25px}
-        h1{color:#1e3c72;margin-bottom:20px;border-right:4px solid #3498db;padding-right:15px;font-size:22px}
-        
-        .nav-menu{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px;background:#f8f9fa;padding:12px;border-radius:15px}
-        .nav-item{padding:6px 16px;border-radius:25px;text-decoration:none;font-weight:bold;color:white;font-size:13px}
-        
-        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-        .stat{background:#f8f9fa;padding:15px;border-radius:12px;text-align:center}
-        .stat i{font-size:24px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;color:transparent}
-        .stat .num{font-size:24px;font-weight:bold;color:#1e3c72}
-        .stat .txt{color:#666;font-size:11px}
-        
-        /* مخططات مصغرة */
-        .charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
-        .chart-card{background:#f8f9fa;border-radius:12px;padding:8px 12px}
-        .chart-card h3{color:#1e3c72;font-size:11px;margin-bottom:5px;border-right:3px solid #667eea;padding-right:8px}
-        .chart-card canvas{max-height:90px !important;height:90px !important;width:100% !important}
-        
-        .footer{text-align:center;margin-top:20px;color:#888;font-size:12px}
-        
+        h1{color:#1e3c72;font-size:20px;margin-bottom:20px;border-right:4px solid #3498db;padding-right:15px}
+        .nav-menu{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;background:#f8f9fa;padding:10px;border-radius:12px}
+        .nav-item{padding:5px 12px;border-radius:20px;text-decoration:none;font-weight:bold;color:white;font-size:12px}
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}
+        .stat{background:#f8f9fa;padding:12px;border-radius:10px;text-align:center}
+        .stat i{font-size:20px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .stat .num{font-size:20px;font-weight:bold;color:#1e3c72}
+        .stat .txt{color:#666;font-size:10px}
+        .charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px}
+        .chart-card{background:#f8f9fa;border-radius:10px;padding:6px 10px}
+        .chart-card h3{color:#1e3c72;font-size:10px;margin-bottom:3px;border-right:2px solid #667eea;padding-right:6px}
+        .chart-card canvas{max-height:70px !important;height:70px !important;width:100% !important}
+        .footer{text-align:center;margin-top:15px;color:#888;font-size:11px}
         @media(max-width:768px){
             .stats{grid-template-columns:repeat(2,1fr)}
             .charts-row{grid-template-columns:1fr}
-            .chart-card canvas{max-height:80px !important;height:80px !important}
-            .nav-item{font-size:11px;padding:5px 10px}
+            .chart-card canvas{max-height:60px !important;height:60px !important}
+            .nav-item{font-size:10px;padding:4px 8px}
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1><i class="fas fa-landmark"></i> نظام إدارة المخازن والمبيعات</h1>
+    <h1><i class="fas fa-landmark"></i> نظام إدارة المخازن</h1>
     
     <div class="nav-menu">
         <a href="suppliers.html" class="nav-item" style="background:#2ecc71">الموردين</a>
@@ -67,7 +61,7 @@
         <div class="chart-card"><h3>📊 المبيعات حسب المندوب</h3><canvas id="mandubChart"></canvas></div>
     </div>
     
-    <div class="footer">🔄 تحديث تلقائي من قاعدة البيانات</div>
+    <div class="footer">🔄 تحديث تلقائي</div>
 </div>
 
 <script>
@@ -83,19 +77,16 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    let salesChart, mandubChart;
-    let allSales = [];
+    let salesChart, mandubChart, allSales=[];
     
-    auth.onAuthStateChanged(user => { if(!user) window.location.href="login.html"; });
+    auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"});
     
     db.collection('inventory').onSnapshot(s=>document.getElementById('productsCount').innerText=s.size);
     db.collection('customers').onSnapshot(s=>document.getElementById('customersCount').innerText=s.size);
     db.collection('suppliers').onSnapshot(s=>document.getElementById('suppliersCount').innerText=s.size);
-    
     db.collection('sales').onSnapshot(s=>{
         document.getElementById('salesCount').innerText=s.size;
-        allSales=[];
-        s.forEach(d=>allSales.push(d.data()));
+        allSales=[]; s.forEach(d=>allSales.push(d.data()));
         updateCharts();
     });
     
@@ -113,7 +104,7 @@
                 if(sales[d]!==undefined) sales[d]+=s.total||0;
             }
         });
-        if(salesChart) salesChart.destroy();
+        if(salesChart)salesChart.destroy();
         salesChart = new Chart(document.getElementById('salesChart'), {
             type:'line',
             data:{labels:days,datasets:[{label:'',data:days.map(d=>sales[d]),borderColor:'#667eea',fill:true,tension:0.3}]},
@@ -122,11 +113,11 @@
         
         let ms={};
         allSales.forEach(s=>{let n=s.mandubName||'غير محدد'; ms[n]=(ms[n]||0)+(s.total||0);});
-        if(mandubChart) mandubChart.destroy();
+        if(mandubChart)mandubChart.destroy();
         mandubChart = new Chart(document.getElementById('mandubChart'), {
             type:'doughnut',
             data:{labels:Object.keys(ms),datasets:[{data:Object.values(ms),backgroundColor:['#667eea','#764ba2','#f093fb','#4facfe','#43e97b','#fa709a']}]},
-            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9}}}}
+            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:8}}}}
         });
     }
 </script>
