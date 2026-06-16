@@ -22,6 +22,8 @@
         th { background: #1e3c72; color: white; }
         .btn-danger { background: #e74c3c; }
         .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .badge { padding: 3px 10px; border-radius: 15px; font-size: 11px; }
+        .badge-success { background: #d4edda; color: #155724; }
     </style>
 </head>
 <body>
@@ -40,7 +42,7 @@
     
     <div style="overflow-x: auto;">
         <table>
-            <thead><tr><th>المورد</th><th>الهاتف</th><th>العنوان</th><th>الرصيد</th><th>إجراءات</th></tr></thead>
+            <thead><tr><th>المورد</th><th>الهاتف</th><th>العنوان</th><th>الرصيد</th><th>عدد المشتريات</th><th>إجراءات</th></tr></thead>
             <tbody id="suppliersList"></tbody>
         </table>
     </div>
@@ -62,25 +64,39 @@
     auth.onAuthStateChanged(user => { if (!user) window.location.href = "login.html"; else loadSuppliers(); });
     
     async function loadSuppliers() {
+        // جلب الموردين
         const snapshot = await db.collection('suppliers').get();
         let html = '';
-        snapshot.forEach(doc => {
+        
+        for (const doc of snapshot.docs) {
             const s = doc.data();
+            // جلب عدد المشتريات لهذا المورد
+            const purchasesSnap = await db.collection('purchases')
+                .where('supplierId', '==', doc.id)
+                .get();
+            const purchaseCount = purchasesSnap.size;
+            
             html += `<tr>
-                <td>${s.name}</td>
+                <td><strong>${s.name}</strong></td>
                 <td>${s.phone || '-'}</td>
                 <td>${s.address || '-'}</td>
                 <td>${(s.balance || 0).toFixed(2)} د.ع</td>
+                <td><span class="badge badge-success">${purchaseCount}</span></td>
                 <td><button class="btn-sm btn-danger" onclick="deleteSupplier('${doc.id}')">حذف</button></td>
             </tr>`;
-        });
-        document.getElementById('suppliersList').innerHTML = html || '<tr><td colspan="5">لا يوجد موردون</td></tr>';
+        }
+        document.getElementById('suppliersList').innerHTML = html || '<tr><td colspan="6">لا يوجد موردون</td></tr>';
     }
     
     window.addSupplier = async () => {
         const name = document.getElementById('supName').value.trim();
         if (!name) return alert('اسم المورد مطلوب');
-        await db.collection('suppliers').add({ name, phone: document.getElementById('supPhone').value, address: document.getElementById('supAddress').value, balance: 0 });
+        await db.collection('suppliers').add({ 
+            name, 
+            phone: document.getElementById('supPhone').value, 
+            address: document.getElementById('supAddress').value, 
+            balance: 0 
+        });
         alert('تمت الإضافة');
         document.getElementById('supName').value = '';
         document.getElementById('supPhone').value = '';
@@ -89,7 +105,17 @@
     };
     
     window.deleteSupplier = async (id) => {
-        if (confirm('حذف المورد؟')) { await db.collection('suppliers').doc(id).delete(); loadSuppliers(); }
+        if (confirm('حذف المورد؟ سيتم حذف جميع مشترياته أيضاً')) { 
+            // حذف مشتريات المورد
+            const purchasesSnap = await db.collection('purchases')
+                .where('supplierId', '==', id)
+                .get();
+            purchasesSnap.forEach(async (doc) => {
+                await db.collection('purchases').doc(doc.id).delete();
+            });
+            await db.collection('suppliers').doc(id).delete(); 
+            loadSuppliers(); 
+        }
     };
 </script>
 </body>
