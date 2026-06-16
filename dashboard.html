@@ -14,19 +14,30 @@
         body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1e3c72,#2a5298);min-height:100vh;padding:20px}
         .container{max-width:1200px;margin:auto;background:white;border-radius:20px;padding:25px}
         h1{color:#1e3c72;margin-bottom:20px;border-right:4px solid #3498db;padding-right:15px;font-size:22px}
+        
         .nav-menu{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px;background:#f8f9fa;padding:12px;border-radius:15px}
         .nav-item{padding:6px 16px;border-radius:25px;text-decoration:none;font-weight:bold;color:white;font-size:13px}
+        
         .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
         .stat{background:#f8f9fa;padding:15px;border-radius:12px;text-align:center}
         .stat i{font-size:24px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;color:transparent}
         .stat .num{font-size:24px;font-weight:bold;color:#1e3c72}
         .stat .txt{color:#666;font-size:11px}
-        .charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:20px}
-        .chart-card{background:#f8f9fa;border-radius:12px;padding:12px}
-        .chart-card h3{color:#1e3c72;font-size:13px;margin-bottom:8px;border-right:3px solid #667eea;padding-right:10px}
-        .chart-card canvas{max-height:150px;height:150px;width:100%}
+        
+        /* مخططات مصغرة */
+        .charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+        .chart-card{background:#f8f9fa;border-radius:12px;padding:8px 12px}
+        .chart-card h3{color:#1e3c72;font-size:11px;margin-bottom:5px;border-right:3px solid #667eea;padding-right:8px}
+        .chart-card canvas{max-height:90px !important;height:90px !important;width:100% !important}
+        
         .footer{text-align:center;margin-top:20px;color:#888;font-size:12px}
-        @media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
+        
+        @media(max-width:768px){
+            .stats{grid-template-columns:repeat(2,1fr)}
+            .charts-row{grid-template-columns:1fr}
+            .chart-card canvas{max-height:80px !important;height:80px !important}
+            .nav-item{font-size:11px;padding:5px 10px}
+        }
     </style>
 </head>
 <body>
@@ -115,7 +126,7 @@
         mandubChart = new Chart(document.getElementById('mandubChart'), {
             type:'doughnut',
             data:{labels:Object.keys(ms),datasets:[{data:Object.values(ms),backgroundColor:['#667eea','#764ba2','#f093fb','#4facfe','#43e97b','#fa709a']}]},
-            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9}}}}
         });
     }
 </script>
