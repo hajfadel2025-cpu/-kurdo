@@ -4,40 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الرئيسية - نظام المخازن</title>
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Cairo',sans-serif;background:linear-gradient(135deg,#1e3c72,#2a5298);min-height:100vh;padding:20px}
         .container{max-width:1200px;margin:auto;background:white;border-radius:20px;padding:25px}
         h1{color:#1e3c72;margin-bottom:20px;border-right:4px solid #3498db;padding-right:15px;font-size:22px}
-        
         .nav-menu{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px;background:#f8f9fa;padding:12px;border-radius:15px}
         .nav-item{padding:6px 16px;border-radius:25px;text-decoration:none;font-weight:bold;color:white;font-size:13px}
-        
         .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
         .stat{background:#f8f9fa;padding:15px;border-radius:12px;text-align:center}
         .stat i{font-size:24px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;color:transparent}
         .stat .num{font-size:24px;font-weight:bold;color:#1e3c72}
         .stat .txt{color:#666;font-size:11px}
-        
         .charts-row{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:20px}
         .chart-card{background:#f8f9fa;border-radius:12px;padding:12px}
         .chart-card h3{color:#1e3c72;font-size:13px;margin-bottom:8px;border-right:3px solid #667eea;padding-right:10px}
-        .chart-card canvas{max-height:150px !important;height:150px !important;width:100% !important}
-        
+        .chart-card canvas{max-height:150px;height:150px;width:100%}
         .footer{text-align:center;margin-top:20px;color:#888;font-size:12px}
-        
-        @media(max-width:768px){
-            .stats{grid-template-columns:repeat(2,1fr)}
-            .charts-row{grid-template-columns:1fr}
-            .chart-card canvas{max-height:130px !important;height:130px !important}
-        }
+        @media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
