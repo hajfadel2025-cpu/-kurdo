@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مكتب حاج فاضل - نظام إدارة المخازن المتكامل</title>
+    <title>مكتب حاج فاضل - النظام المحاسبي المتكامل لإدارة المخازن</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-purple: #6c5ce7;
             --light-purple: #a29bfe;
             --dark-purple: #4834d4;
-            --bg-gray: #f8f9fa;
+            --bg-gray: #f1f2f6;
+            --card-bg: #ffffff;
             --text-dark: #2d3436;
+            --text-muted: #636e72;
             --danger-red: #e17055;
             --success-green: #2ed573;
+            --warning-orange: #f1c40f;
         }
         
         body {
@@ -24,348 +27,513 @@
             color: var(--text-dark);
         }
 
-        /* القائمة الجانبية - جهة اليمين */
+        /* القائمة الجانبية الاحترافية - جهة اليمين */
         .sidebar {
             width: 280px;
-            background-color: #2c3e50;
+            background-color: #1e1e24;
             color: #fff;
             height: 100vh;
             position: fixed;
             right: 0;
             top: 0;
             padding-top: 20px;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            box-shadow: -3px 0 10px rgba(0,0,0,0.15);
+            z-index: 100;
         }
 
         .sidebar h2 {
             text-align: center;
-            font-size: 20px;
+            font-size: 22px;
+            color: #fff;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .sidebar p.brand-sub {
+            text-align: center;
+            font-size: 12px;
             color: var(--light-purple);
-            margin-bottom: 30px;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 15px;
+            margin: 0 0 30px 0;
+            letter-spacing: 1px;
         }
 
         .sidebar a {
-            display: block;
-            color: #dfe6e9;
-            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            color: #b2bec3;
+            padding: 16px 25px;
             text-decoration: none;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             border-right: 4px solid transparent;
             font-weight: 600;
+            font-size: 15px;
         }
 
         .sidebar a:hover, .sidebar a.active {
-            background-color: #34495e;
+            background-color: #2d2d35;
             border-right: 4px solid var(--primary-purple);
             color: #fff;
         }
 
-        /* المنطقة الرئيسية */
+        /* المنطقة الرئيسية للوحة التحكم */
         .main-content {
             margin-right: 280px;
             padding: 40px;
             width: calc(100% - 280px);
+            box-sizing: border-box;
         }
 
+        /* شريط العنوان العلوي */
         .header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #dfe6e9;
-            padding-bottom: 20px;
+            background: var(--card-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             margin-bottom: 30px;
         }
 
         .header-bar h1 {
             margin: 0;
-            font-size: 26px;
+            font-size: 24px;
             color: var(--dark-purple);
+            font-weight: 700;
         }
 
-        /* الكروت اللوحية */
+        /* كروت الإحصائيات المالية والمخزنية */
         .grid-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
 
         .stat-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            border-top: 4px solid var(--primary-purple);
+            background: var(--card-bg);
+            padding: 25px 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            border-top: 5px solid var(--primary-purple);
             text-align: center;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
         }
 
-        .stat-card h3 { margin: 0; font-size: 14px; color: #7f8c8d; }
-        .stat-card p { margin: 10px 0 0 0; font-size: 28px; font-weight: bold; color: var(--text-dark); }
+        .stat-card h3 { margin: 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
+        .stat-card p { margin: 12px 0 0 0; font-size: 26px; font-weight: 700; color: var(--text-dark); }
 
+        /* الكروت الكبيرة لتأطير العمليات */
         .card {
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
-            margin-bottom: 30px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            margin-bottom: 35px;
         }
 
-        .card h3 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .card h3 { 
+            margin-top: 0; 
+            margin-bottom: 25px; 
+            color: #2c3e50; 
+            font-size: 18px;
+            border-bottom: 2px solid #f1f2f6; 
+            padding-bottom: 12px; 
+            font-weight: 700;
+        }
 
-        /* الاستمارات */
-        .form-row {
+        /* تصميم استمارات الإدخال المحاسبية */
+        .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
         input, select, button {
             font-family: 'Cairo', sans-serif;
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            padding: 12px 15px;
+            border: 1px solid #dcdde1;
+            border-radius: 8px;
             font-size: 14px;
             outline: none;
+            background-color: #fff;
+            box-sizing: border-box;
         }
 
         input:focus, select:focus {
             border-color: var(--primary-purple);
+            box-shadow: 0 0 5px rgba(108, 92, 231, 0.2);
         }
 
-        button {
+        button.btn-submit {
             background-color: var(--primary-purple);
             color: white;
             border: none;
             cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            height: 47px;
         }
 
-        button:hover {
+        button.btn-submit:hover {
             background-color: var(--dark-purple);
         }
 
-        /* الجداول */
+        /* الجداول الحسابية الاحترافية */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         th, td {
-            padding: 14px 16px;
+            padding: 16px 20px;
             text-align: right;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #edeaea;
+            font-size: 14px;
         }
 
         th {
-            background-color: var(--primary-purple);
-            color: white;
-            font-weight: 600;
+            background-color: #f8f9fa;
+            color: var(--text-dark);
+            font-weight: 700;
+            border-bottom: 2px solid #dcdde1;
         }
 
         tr:hover {
-            background-color: #f8fafc;
+            background-color: #fafdff;
         }
 
+        /* الشارات المالية وحالة المخزون */
         .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
         }
 
-        .badge-success { background-color: #d4edda; color: #155724; }
-        .badge-danger { background-color: #f8d7da; color: #721c24; }
-        
+        .badge-success { background-color: #e3faf1; color: var(--success-green); }
+        .badge-danger { background-color: #ffeaa7; color: #d63031; }
+        .badge-warning { background-color: #fff9db; color: #e67e22; }
+
+        /* أزرار العمليات السريعة بجانب الجدول */
         .btn-action {
-            padding: 5px 10px;
+            padding: 6px 12px;
             font-size: 12px;
-            margin-left: 5px;
+            font-weight: 600;
+            margin-left: 4px;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
         }
+
+        .btn-action:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <h2>مكتب حاج فاضل</h2>
-        <a href="#" class="active">📦 إدارة المخازن</a>
-        <a href="#" onclick="alert('قسم التقارير والجرد المالي قيد التحديث لحساباتك')">📊 حركة الصادر والوارد</a>
+        <p class="brand-sub">نظام المخازن المحاسبي المتكامل</p>
+        <a href="#" class="active">📊 لوحة التحكم والجرد</a>
+        <a href="#" id="btn-ledger">📑 السجل الدفتري للمخازن</a>
     </div>
 
     <div class="main-content">
         <div class="header-bar">
-            <h1>لوحة تحكم المستودع الشاملة</h1>
-            <div style="font-weight: bold; color: #7f8c8d;">المزامنة السحابية: <span style="color: var(--success-green)">متصلة بـ Firebase</span></div>
+            <h1>إدارة الجرد الحقيقي والتقييم المالي لفروع المخازن</h1>
+            <div style="font-weight: 700; font-size: 14px;">المزامنة السحابية: <span style="color: var(--success-green)">● متصل آمن</span></div>
         </div>
 
         <div class="grid-stats">
-            <div class="stat-card">
-                <h3>إجمالي أصناف المواد</h3>
+            <div class="stat-card" style="border-top-color: var(--primary-purple);">
+                <h3>إجمالي أصناف المنتجات</h3>
                 <p id="total-items">0</p>
             </div>
-            <div class="stat-card" style="border-top-color: var(--danger-red);">
-                <h3>مواد منخفضة الكمية (تنبيه)</h3>
-                <p id="alert-items" style="color: var(--danger-red);">0</p>
-            </div>
             <div class="stat-card" style="border-top-color: var(--success-green);">
-                <h3>إجمالي قطع المخزون</h3>
-                <p id="total-qty" style="color: var(--success-green);">0</p>
+                <h3>القيمة المالية للمخزون (سعر التكلفة)</h3>
+                <p id="total-cost-value">0.00 $</p>
+            </div>
+            <div class="stat-card" style="border-top-color: var(--dark-purple);">
+                <h3>الأرباح المتوقعة عند البيع الكامل</h3>
+                <p id="total-expected-profit" style="color: var(--success-green);">0.00 $</p>
+            </div>
+            <div class="stat-card" style="border-top-color: var(--danger-red);">
+                <h3>الأصناف تحت حد التنبيه والأمان</h3>
+                <p id="alert-items" style="color: var(--danger-red);">0</p>
             </div>
         </div>
 
         <div class="card">
-            <h3>إدخال صنف / مادة جديدة للمستودع</h3>
-            <form id="stock-form">
-                <div class="form-row">
-                    <input type="text" id="item-code" placeholder="رمز المادة / الباركود" required>
-                    <input type="text" id="item-name" placeholder="اسم المادة بدقة" required>
-                    <input type="number" id="item-qty" placeholder="الكمية الحالية" required min="0">
-                    <input type="number" id="item-min" placeholder="حد التنبيه الأدنى" required min="0">
-                    <button type="submit">إضافة وحفظ سحابي</button>
+            <h3>تسجيل صنف مخزني جديد وضبط المعايير المالية</h3>
+            <form id="accounting-stock-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الباركود / رمز الصنف</label>
+                        <input type="text" id="item-code" placeholder="مثال: BR-100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم المادة والمواصفة</label>
+                        <input type="text" id="item-name" placeholder="ادخل اسم المادة بدقة" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية الافتتاحية</label>
+                        <input type="number" id="item-qty" placeholder="0" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>سعر التكلفة للقطعة ($)</label>
+                        <input type="number" id="item-cost" placeholder="0.00" step="0.01" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>سعر البيع المقترح ($)</label>
+                        <input type="number" id="item-price" placeholder="0.00" step="0.01" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>حد الأمان الأدنى (تنبيه)</label>
+                        <input type="number" id="item-min" placeholder="5" required min="0">
+                    </div>
+                    <button type="submit" class="btn-submit">حفظ وإدراج سحابي فوري</button>
                 </div>
             </form>
         </div>
 
         <div class="card">
-            <h3>بيانات الجرد الحقيقي الفوري</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>كود المادة</th>
-                        <th>اسم الصنف</th>
-                        <th>الكمية المتوفرة</th>
-                        <th>حد الطلب الأدنى</th>
-                        <th>الحالة</th>
-                        <th>العمليات الإدارية</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-table">
-                    </tbody>
-            </table>
+            <h3>بيانات دفتر الجرد الفوري التفصيلي وتقييم الأرباح</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>اسم الصنف</th>
+                            <th>المخزون المتوفر</th>
+                            <th>سعر التكلفة</th>
+                            <th>سعر البيع</th>
+                            <th>إجمالي رأس المال</th>
+                            <th>الربح المتوقع</th>
+                            <th>حالة الرصيد</th>
+                            <th>العمليات المحاسبية والمخزنية</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accounting-inventory-table">
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from './firebase-config.js';
 
-        const stockForm = document.getElementById('stock-form');
-        const inventoryTable = document.getElementById('inventory-table');
+        const stockForm = document.getElementById('accounting-stock-form');
+        const inventoryTable = document.getElementById('accounting-inventory-table');
         
-        // إحصائيات لوحة التحكم
+        // مساند الإحصائيات
         const totalItemsEl = document.getElementById('total-items');
+        const totalCostValueEl = document.getElementById('total-cost-value');
+        const totalExpectedProfitEl = document.getElementById('total-expected-profit');
         const alertItemsEl = document.getElementById('alert-items');
-        const totalQtyEl = document.getElementById('total-qty');
 
-        // دالة قراءة وتحديث البيانات فورا من Cloud Firestore
-        async function fetchWarehouseData() {
-            inventoryTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">جاري جلب البيانات السحابية الحالية...</td></tr>`;
+        // تعطيل الزر الدفتري حالياً للتنبيه
+        document.getElementById('btn-ledger').addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('السجل الحسابي التفصيلي العام وحسابات الصناديق قيد المزامنة البرمجية الفورية.');
+        });
+
+        // دالة الحساب الفوري لبيانات الجرد المالي والمخزني من Cloud Firestore
+        async function fetchAccountingWarehouseData() {
+            inventoryTable.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 30px;">جاري تحميل ومزامنة البيانات المالية لحسابات مكتب حاج فاضل...</td></tr>`;
             
             try {
-                const querySnapshot = await getDocs(collection(db, "warehouse_inventory"));
+                const querySnapshot = await getDocs(collection(db, "warehouse_inventory_v2"));
                 inventoryTable.innerHTML = '';
                 
                 let totalItems = 0;
                 let alertItems = 0;
-                let totalQuantity = 0;
+                let totalCostValue = 0;
+                let totalExpectedProfit = 0;
 
                 if(querySnapshot.empty) {
-                    inventoryTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">المستودع فارغ حالياً. أضف أول مادة بالأعلى.</td></tr>`;
+                    inventoryTable.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 30px;">لا يوجد مواد في مخازنكم حالياً. الرجاء تعبئة النموذج بالأعلى للإدراج.</td></tr>`;
                 }
 
                 querySnapshot.forEach((documentSnapshot) => {
                     const item = documentSnapshot.data();
                     const itemId = documentSnapshot.id;
                     
+                    const qty = parseInt(item.qty || 0);
+                    const cost = parseFloat(item.cost || 0);
+                    const price = parseFloat(item.price || 0);
+                    const minQty = parseInt(item.minQty || 0);
+
+                    // العمليات الحسابية لكل صنف
+                    const itemTotalCost = qty * cost;
+                    const itemTotalProfit = qty * (price - cost);
+
                     totalItems++;
-                    totalQuantity += parseInt(item.qty || 0);
+                    totalCostValue += itemTotalCost;
+                    totalExpectedProfit += itemTotalProfit;
                     
-                    const isLow = parseInt(item.qty) <= parseInt(item.minQty);
+                    const isLow = qty <= minQty;
                     if(isLow) alertItems++;
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${item.code}</td>
+                        <td><span style="font-weight:600; color:var(--text-muted);">${item.code}</span></td>
                         <td><strong>${item.name}</strong></td>
-                        <td style="font-weight:700;">${item.qty}</td>
-                        <td>${item.minQty}</td>
+                        <td style="font-weight:700; color:${isLow ? 'var(--danger-red)' : 'var(--text-dark)'}">${qty} قطعة</td>
+                        <td>${cost.toFixed(2)} $</td>
+                        <td>${price.toFixed(2)} $</td>
+                        <td style="font-weight:600;">${itemTotalCost.toFixed(2)} $</td>
+                        <td style="color:var(--success-green); font-weight:600;">${itemTotalProfit.toFixed(2)} $</td>
                         <td>
                             <span class="badge ${isLow ? 'badge-danger' : 'badge-success'}">
-                                ${isLow ? '⚠️ رصيد منخفض' : '✅ آمن'}
+                                ${isLow ? '⚠️ مخزون حرج' : '✅ آمن مستقر'}
                             </span>
                         </td>
                         <td>
-                            <button class="btn-action" style="background-color:var(--success-green);" onclick="adjustStock('${itemId}', ${item.qty}, 'in')">+ وارد</button>
-                            <button class="btn-action" style="background-color:var(--danger-red);" onclick="adjustStock('${itemId}', ${item.qty}, 'out')">- صادر</button>
-                            <button class="btn-action" style="background-color:#7f8c8d;" onclick="removeItem('${itemId}')">حذف</button>
+                            <button class="btn-action btn-stock-in" data-id="${itemId}" data-qty="${qty}" style="background-color:var(--success-green);">+ وارد (شراء)</button>
+                            <button class="btn-action btn-stock-out" data-id="${itemId}" data-qty="${qty}" style="background-color:var(--primary-purple);">- صادر (بيع)</button>
+                            <button class="btn-action btn-stock-delete" data-id="${itemId}" style="background-color:#7f8c8d;">شطب</button>
                         </td>
                     `;
                     inventoryTable.appendChild(row);
                 });
 
-                // تحديث العدادات الفوقية في النظام
+                // تحديث واجهة كروت الحسابات النقدية والمخزنية الفوقية
                 totalItemsEl.innerText = totalItems;
+                totalCostValueEl.innerText = totalCostValue.toFixed(2) + " $";
+                totalExpectedProfitEl.innerText = totalExpectedProfit.toFixed(2) + " $";
                 alertItemsEl.innerText = alertItems;
-                totalQtyEl.innerText = totalQuantity;
+
+                // إعادة ربط أحداث العمليات المالية على أزرار المخازن المنتجة ديناميكياً
+                attachAccountingEvents();
 
             } catch (error) {
-                console.error("حدث خطأ أثناء جلب البيانات: ", error);
-                inventoryTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">خطأ في الاتصال بقاعدة بيانات Firebase.</td></tr>`;
+                console.error("خطأ جلب البيانات المالية: ", error);
+                inventoryTable.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red; padding:30px;">فشل الاتصال الآمن مع Firebase. تفقد الـ Rules وسجل الاتصال.</td></tr>`;
             }
         }
 
-        // معالجة إضافة صنف جديد
+        // ربط الأحداث والعمليات المالية والحسابية (بيع / شراء) للجدول
+        function attachAccountingEvents() {
+            // معالجة الوارد (عملية شراء للمخزن تزيد الكمية)
+            document.querySelectorAll('.btn-stock-in').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const currentQty = parseInt(e.target.getAttribute('data-qty'));
+
+                    let amount = prompt("أدخل الكمية الواردة الجديدة (شراء أو توريد مضاف للمخازن):");
+                    if (!amount || isNaN(amount) || parseInt(amount) <= 0) return;
+                    
+                    const newQty = currentQty + parseInt(amount);
+
+                    try {
+                        const itemRef = doc(db, "warehouse_inventory_v2", id);
+                        await updateDoc(itemRef, { qty: newQty });
+                        fetchAccountingWarehouseData();
+                    } catch (err) {
+                        alert("فشل تحديث التوريد: " + err.message);
+                    }
+                });
+            });
+
+            // معالجة الصادر (عملية مبيعات أو تالف تخصم من الكمية)
+            document.querySelectorAll('.btn-stock-out').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const currentQty = parseInt(e.target.getAttribute('data-qty'));
+
+                    let amount = prompt("أدخل الكمية الصادرة المراد إخراجها (مبيعات أو سحب دفاتر ومندوبين):");
+                    if (!amount || isNaN(amount) || parseInt(amount) <= 0) return;
+                    
+                    const subAmount = parseInt(amount);
+                    if (currentQty - subAmount < 0) {
+                        alert("خطأ محاسبي: كمية الصادر المطلوبة تتجاوز الرصيد الحالي المتوفر في المخزن!");
+                        return;
+                    }
+
+                    const newQty = currentQty - subAmount;
+
+                    try {
+                        const itemRef = doc(db, "warehouse_inventory_v2", id);
+                        await updateDoc(itemRef, { qty: newQty });
+                        fetchAccountingWarehouseData();
+                    } catch (err) {
+                        alert("فشل تحديث الصرف المالي والمخزني: " + err.message);
+                    }
+                });
+            });
+
+            // حذف أو شطب الصنف نهائياً
+            document.querySelectorAll('.btn-stock-delete').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    if(confirm("هل أنت متأكد محاسبياً وقانونياً من إعدام وشطب هذا الصنف من قيود المستودع؟")) {
+                        try {
+                            await deleteDoc(doc(db, "warehouse_inventory_v2", id));
+                            fetchAccountingWarehouseData();
+                        } catch (err) {
+                            alert("حدث خطأ أثناء الشطب: " + err.message);
+                        }
+                    }
+                });
+            });
+        }
+
+        // معالجة استمارة الإضافة للأصناف الجديدة مع الفايربيس وتخزين هيكل البيانات المطور
         stockForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const code = document.getElementById('item-code').value;
             const name = document.getElementById('item-name').value;
             const qty = parseInt(document.getElementById('item-qty').value);
+            const cost = parseFloat(document.getElementById('item-cost').value);
+            const price = parseFloat(document.getElementById('item-price').value);
             const minQty = parseInt(document.getElementById('item-min').value);
 
             try {
-                await addDoc(collection(db, "warehouse_inventory"), {
+                await addDoc(collection(db, "warehouse_inventory_v2"), {
                     code,
                     name,
                     qty,
+                    cost,
+                    price,
                     minQty,
                     createdAt: new Date()
                 });
                 stockForm.reset();
-                fetchWarehouseData();
+                fetchAccountingWarehouseData();
             } catch (err) {
-                alert("خطأ أثناء الحفظ في الفايربيس: " + err.message);
+                alert("خطأ أثناء ترحيل الصنف المالي للفايربيس: " + err.message);
             }
         });
 
-        // جعل الدوال متاحة للعمليات المباشرة داخل الجدول
-        window.adjustStock = async function(id, currentQty, type) {
-            let amount = prompt(type === 'in' ? "أدخل الكمية الواردة المضافة للمستودع:" : "أدخل الكمية الصادرة المسحوبة:");
-            if (!amount || isNaN(amount) || parseInt(amount) <= 0) return;
-            
-            amount = parseInt(amount);
-            let newQty = type === 'in' ? currentQty + amount : currentQty - amount;
-            
-            if (newQty < 0) {
-                alert("خطأ: الكمية الصادرة أكبر من المخزون المتوفر!");
-                return;
-            }
-
-            const itemRef = doc(db, "warehouse_inventory", id);
-            await updateDoc(itemRef, { qty: newQty });
-            fetchWarehouseData();
-        };
-
-        window.removeItem = async function(id) {
-            if(confirm("هل أنت متأكد من حذف هذا الصنف نهائياً من المستودع الحسابي؟")) {
-                await deleteDoc(doc(db, "warehouse_inventory", id));
-                fetchWarehouseData();
-            }
-        };
-
-        // تشغيل الجرد تلقائياً فور فتح النظام
-        fetchWarehouseData();
+        // تفعيل الجرد التلقائي الشامل فور فتح شاشة العرض الاحترافية
+        fetchAccountingWarehouseData();
     </script>
 </body>
 </html>
