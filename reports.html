@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقارير - نظام المخازن</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
+        body{background:linear-gradient(135deg,#1e3c72,#2a5298);padding:20px}
+        .container{max-width:1400px;margin:auto;background:white;border-radius:20px;padding:25px}
+        h2{color:#1e3c72;border-right:4px solid #e67e22;padding-right:15px;margin-bottom:20px}
+        .report-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:25px}
+        .report-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:15px;text-align:center;cursor:pointer;transition:0.3s}
+        .report-card:hover{transform:translateY(-5px)}
+        .report-card i{font-size:40px;margin-bottom:10px}
+        .report-card .num{font-size:28px;font-weight:bold}
+        .report-card .label{font-size:13px;opacity:0.9}
+        .report-card.green{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+        .report-card.orange{background:linear-gradient(135deg,#f39c12,#e67e22)}
+        .report-card.red{background:linear-gradient(135deg,#e74c3c,#c0392b)}
+        .report-card.purple{background:linear-gradient(135deg,#9b59b6,#8e44ad)}
+        table{width:100%;border-collapse:collapse;margin-top:15px}
+        th,td{border:1px solid #ddd;padding:10px;text-align:center}
+        th{background:#1e3c72;color:white}
+        .filter-bar{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px}
+        .filter-bar input,.filter-bar select{padding:10px;border:1px solid #ddd;border-radius:8px}
+        @media(max-width:768px){th,td{font-size:11px;padding:6px}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2><i class="fas fa-chart-pie"></i> التقارير والإحصائيات</h2>
+    
+    <div class="filter-bar">
+        <input type="date" id="reportFrom">
+        <input type="date" id="reportTo">
+        <select id="reportType">
+            <option value="sales">المبيعات</option>
+            <option value="purchases">المشتريات</option>
+            <option value="inventory">المخزون</option>
+            <option value="customers">العملاء</option>
+        </select>
+        <button onclick="generateReport()" style="background:#3498db">عرض التقرير</button>
+        <button onclick="exportReport()" style="background:#27ae60"><i class="fas fa-file-excel"></i> تصدير</button>
+    </div>
+    
+    <div class="report-cards">
+        <div class="report-card"><i class="fas fa-coins"></i><div class="num" id="totalSales">0</div><div class="label">إجمالي المبيعات</div></div>
+        <div class="report-card green"><i class="fas fa-truck"></i><div class="num" id="totalPurchases">0</div><div class="label">إجمالي المشتريات</div></div>
+        <div class="report-card orange"><i class="fas fa-boxes"></i><div class="num" id="totalItems">0</div><div class="label">إجمالي الأصناف</div></div>
+        <div class="report-card red"><i class="fas fa-users"></i><div class="num" id="totalCustomers">0</div><div class="label">إجمالي العملاء</div></div>
+        <div class="report-card purple"><i class="fas fa-truck"></i><div class="num" id="totalSuppliers">0</div><div class="label">إجمالي الموردين</div></div>
+    </div>
+    
+    <h3>📋 تفاصيل التقرير</h3>
+    <div style="overflow-x:auto;">
+        <table id="reportTable">
+            <thead><tr><th>#</th><th>التاريخ</th><th>الرقم</th><th>العميل/المورد</th><th>المبلغ</th></tr></thead>
+            <tbody id="reportBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"; else loadStats();});
+    
+    async function loadStats(){
+        const salesSnap=await db.collection('sales').get();
+        let totalSales=0; salesSnap.forEach(d=>totalSales+=d.data().total||0);
+        document.getElementById('totalSales').innerText=totalSales.toFixed(0);
+        
+        const purchSnap=await db.collection('purchases').get();
+        let totalPurch=0; purchSnap.forEach(d=>totalPurch+=d.data().total||0);
+        document.getElementById('totalPurchases').innerText=totalPurch.toFixed(0);
+        
+        document.getElementById('totalItems').innerText=(await db.collection('inventory').get()).size;
+        document.getElementById('totalCustomers').innerText=(await db.collection('customers').get()).size;
+        document.getElementById('totalSuppliers').innerText=(await db.collection('suppliers').get()).size;
+        generateReport();
+    }
+    
+    window.generateReport=async()=>{
+        const type=document.getElementById('reportType').value;
+        const from=document.getElementById('reportFrom').value;
+        const to=document.getElementById('reportTo').value;
+        let collectionName=type==='sales'?'sales':type==='purchases'?'purchases':type==='inventory'?'inventory':'customers';
+        const snapshot=await db.collection(collectionName).get();
+        const tbody=document.getElementById('reportBody');
+        let html='', i=1;
+        snapshot.forEach(doc=>{
+            const d=doc.data();
+            const date=d.date||d.createdAt?.toDate?.()?.toLocaleDateString('ar-EG')||'-';
+            const name=d.customerName||d.supplierName||d.name||d.itemName||'-';
+            const amount=d.total||d.sellingPrice||d.costPrice||0;
+            html+=`<tr><td>${i++}</td><td>${date}</td><td>${d.invoiceNumber||d.barcode||'-'}</td><td>${name}</td><td>${amount.toFixed(2)} د.ع</td></tr>`;
+        });
+        tbody.innerHTML=html||'<tr><td colspan="5">لا توجد بيانات</td></tr>';
+    };
+    
+    window.exportReport=()=>{
+        let csv='التاريخ,الرقم,الاسم,المبلغ\n';
+        document.querySelectorAll('#reportBody tr').forEach(row=>{
+            const cells=row.querySelectorAll('td');
+            if(cells.length>1) csv+=`${cells[1].innerText},${cells[2].innerText},${cells[3].innerText},${cells[4].innerText}\n`;
+        });
+        const blob=new Blob(["\uFEFF"+csv],{type:'text/csv;charset=utf-8'});
+        const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='تقرير.csv'; link.click();
+    };
+</script>
+</body>
+</html>
