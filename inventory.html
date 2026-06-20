@@ -13,22 +13,40 @@
         body{background:linear-gradient(135deg,#1e3c72,#2a5298);padding:20px}
         .container{max-width:1400px;margin:auto;background:white;border-radius:20px;padding:25px}
         h2{color:#1e3c72;border-right:4px solid #e74c3c;padding-right:15px;margin-bottom:20px}
+        
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
+        .stat-box{background:#f8f9fa;padding:15px;border-radius:12px;text-align:center}
+        .stat-box .num{font-size:24px;font-weight:bold;color:#1e3c72}
+        .stat-box .label{color:#666;font-size:12px}
+        
         .form-card{background:#f8f9fa;padding:20px;border-radius:15px;margin-bottom:20px}
         .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
-        input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px}
-        button{padding:10px 20px;background:#27ae60;color:white;border:none;border-radius:8px;cursor:pointer}
+        .form-group label{display:block;font-size:12px;color:#666;margin-bottom:5px}
+        .form-group input,.form-group select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px}
+        
         .search-bar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
-        .search-bar input,.search-bar select{flex:1;padding:10px;border:1px solid #ddd;border-radius:8px}
-        table{width:100%;border-collapse:collapse;margin-top:15px}
+        .search-bar input,.search-bar select{flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;min-width:150px}
+        
+        table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px}
         th,td{border:1px solid #ddd;padding:10px;text-align:center}
-        th{background:#1e3c72;color:white}
+        th{background:#1e3c72;color:white;position:sticky;top:0}
+        tr:hover{background:#f5f5f5}
+        
+        button{padding:10px 20px;background:#27ae60;color:white;border:none;border-radius:8px;cursor:pointer;transition:0.3s}
+        button:hover{transform:translateY(-2px);filter:brightness(1.05)}
         .btn-danger{background:#e74c3c}
-        .btn-sm{padding:5px 10px;font-size:12px}
         .btn-warning{background:#e67e22}
-        .badge{padding:3px 8px;border-radius:12px;font-size:10px}
-        .badge-green{background:#e8f8f5;color:#27ae60}
-        .badge-red{background:#fee;color:#e74c3c}
-        .badge-orange{background:#ffeaa7;color:#e67e22}
+        .btn-sm{padding:5px 10px;font-size:12px}
+        .btn-info{background:#3498db}
+        
+        .badge{padding:3px 10px;border-radius:12px;font-size:10px}
+        .badge-green{background:#d4edda;color:#155724}
+        .badge-red{background:#f8d7da;color:#721c24}
+        .badge-orange{background:#ffeaa7;color:#856404}
+        
+        .profit-positive{color:#27ae60;font-weight:bold}
+        .profit-negative{color:#e74c3c;font-weight:bold}
+        
         @media(max-width:768px){th,td{font-size:11px;padding:6px}}
     </style>
 </head>
@@ -36,52 +54,178 @@
 <div class="container">
     <h2><i class="fas fa-boxes"></i> إدارة الأصناف</h2>
     
+    <!-- إحصائيات -->
+    <div class="stats-row">
+        <div class="stat-box"><div class="num" id="totalItems">0</div><div class="label">إجمالي الأصناف</div></div>
+        <div class="stat-box"><div class="num" id="totalStockValue">0</div><div class="label">قيمة المخزون</div></div>
+        <div class="stat-box"><div class="num" id="lowStockCount">0</div><div class="label">منخفضة المخزون</div></div>
+        <div class="stat-box"><div class="num" id="outStockCount">0</div><div class="label">نفذت الكمية</div></div>
+        <div class="stat-box"><div class="num" id="totalProfit">0</div><div class="label">إجمالي الأرباح المتوقعة</div></div>
+    </div>
+    
+    <!-- نموذج إضافة صنف -->
     <div class="form-card">
         <h3>➕ إضافة صنف جديد</h3>
         <div class="form-grid">
-            <input type="text" id="itemName" placeholder="اسم الصنف *">
-            <input type="text" id="barcode" placeholder="الباركود">
-            <select id="category"><option value="">الفئة</option><option value="مواد غذائية">مواد غذائية</option><option value="إلكترونيات">إلكترونيات</option><option value="ملابس">ملابس</option><option value="أخرى">أخرى</option></select>
-            <select id="unit"><option value="قطعة">قطعة</option><option value="كرتون">كرتون</option><option value="كيلو">كيلو</option><option value="متر">متر</option><option value="لتر">لتر</option></select>
-            <input type="number" id="quantity" placeholder="الكمية" value="0">
-            <input type="number" id="costPrice" placeholder="سعر الشراء" step="0.01">
-            <input type="number" id="sellingPrice" placeholder="سعر البيع" step="0.01">
-            <input type="number" id="minStock" placeholder="حد الطلب الأدنى" value="10">
+            <div class="form-group"><label>اسم الصنف *</label><input type="text" id="itemName" placeholder="اسم الصنف"></div>
+            <div class="form-group"><label>الباركود</label><input type="text" id="barcode" placeholder="باركود"></div>
+            
+            <!-- المجموعة الرئيسية -->
+            <div class="form-group"><label>📂 المجموعة الرئيسية</label>
+                <select id="mainCategory">
+                    <option value="">اختر المجموعة</option>
+                    <option value="مواد غذائية">مواد غذائية</option>
+                    <option value="إلكترونيات">إلكترونيات</option>
+                    <option value="ملابس">ملابس</option>
+                    <option value="أدوات منزلية">أدوات منزلية</option>
+                    <option value="مواد بناء">مواد بناء</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+            
+            <!-- المجموعة الفرعية -->
+            <div class="form-group"><label>📂 المجموعة الفرعية</label>
+                <select id="subCategory">
+                    <option value="">اختر المجموعة الفرعية</option>
+                    <option value="سكر">سكر</option>
+                    <option value="رز">رز</option>
+                    <option value="زيوت">زيوت</option>
+                    <option value="معلبات">معلبات</option>
+                    <option value="أجهزة">أجهزة</option>
+                    <option value="موبايلات">موبايلات</option>
+                    <option value="كمبيوتر">كمبيوتر</option>
+                    <option value="رجالي">رجالي</option>
+                    <option value="نسائي">نسائي</option>
+                    <option value="أطفال">أطفال</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+            
+            <div class="form-group"><label>وحدة القياس</label>
+                <select id="unit">
+                    <option value="قطعة">قطعة</option>
+                    <option value="كرتون">كرتون</option>
+                    <option value="كيلو">كيلو</option>
+                    <option value="متر">متر</option>
+                    <option value="لتر">لتر</option>
+                    <option value="طرد">طرد</option>
+                </select>
+            </div>
+            <div class="form-group"><label>الكمية (الرصيد)</label><input type="number" id="quantity" value="0" min="0"></div>
+            <div class="form-group"><label>سعر الشراء</label><input type="number" id="costPrice" step="0.01" placeholder="سعر الشراء"></div>
+            <div class="form-group"><label>سعر البيع</label><input type="number" id="sellingPrice" step="0.01" placeholder="سعر البيع"></div>
+            <div class="form-group"><label>الحد الأدنى</label><input type="number" id="minStock" value="10"></div>
+            <div class="form-group"><label>موقع التخزين</label><input type="text" id="location" placeholder="رقم الرف"></div>
+            
+            <!-- ربط المورد -->
+            <div class="form-group"><label>🏪 المورد</label>
+                <select id="supplierId"><option value="">-- اختر مورد --</option></select>
+            </div>
+            
+            <div class="form-group"><label>الحالة</label>
+                <select id="status">
+                    <option value="نشط">نشط</option>
+                    <option value="غير نشط">غير نشط</option>
+                    <option value="منتهي">منتهي</option>
+                </select>
+            </div>
         </div>
         <button onclick="addItem()" style="margin-top:15px;"><i class="fas fa-save"></i> إضافة صنف</button>
+        <button onclick="cancelEdit()" id="cancelBtn" style="display:none;background:#95a5a6;margin-right:10px;">❌ إلغاء التعديل</button>
     </div>
     
+    <!-- بحث -->
     <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="🔍 بحث عن صنف...">
-        <select id="categoryFilter"><option value="all">جميع الفئات</option></select>
-        <select id="stockFilter"><option value="all">جميع الأصناف</option><option value="low">منخفضة المخزون</option></select>
+        <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم أو الباركود...">
+        <select id="categoryFilter"><option value="all">جميع المجموعات</option></select>
+        <select id="stockFilter">
+            <option value="all">جميع الأصناف</option>
+            <option value="low">منخفضة المخزون</option>
+            <option value="out">نفذت الكمية</option>
+        </select>
+        <button onclick="exportInventory()" style="background:#3498db"><i class="fas fa-file-excel"></i> تصدير</button>
     </div>
     
-    <table>
-        <thead><tr><th>الصنف</th><th>الباركود</th><th>الفئة</th><th>الوحدة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-        <tbody id="inventoryList"></tbody>
-    </table>
+    <!-- جدول الأصناف -->
+    <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th><th>الصنف</th><th>الباركود</th><th>المجموعة الرئيسية</th><th>المجموعة الفرعية</th>
+                    <th>الوحدة</th><th>الرصيد</th><th>سعر الشراء</th><th>سعر البيع</th><th>الربح</th>
+                    <th>المورد</th><th>الحالة</th><th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryList"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    const firebaseConfig = {apiKey:"AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",authDomain:"haj-fadel-accounting.firebaseapp.com",projectId:"haj-fadel-accounting",storageBucket:"haj-fadel-accounting.firebasestorage.app",messagingSenderId:"449205985318",appId:"1:449205985318:web:2dece1e1412165b01f46e7"};
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    let allItems=[];
-    auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"; else loadItems();});
+    let allItems = [], allSuppliers = [];
+    let editingId = null;
+    
+    auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"; else {loadSuppliers(); loadItems();}});
+    
+    // جلب الموردين
+    async function loadSuppliers(){
+        const snapshot=await db.collection('suppliers').get();
+        allSuppliers=[];
+        let html='<option value="">-- اختر مورد --</option>';
+        snapshot.forEach(d=>{
+            allSuppliers.push({id:d.id,...d.data()});
+            html+=`<option value="${d.id}">${d.data().name}</option>`;
+        });
+        document.getElementById('supplierId').innerHTML=html;
+    }
     
     async function loadItems(){
         const snapshot=await db.collection('inventory').get();
-        allItems=[]; let html='';
-        snapshot.forEach(doc=>{allItems.push({id:doc.id,...doc.data()});});
+        allItems=[]; snapshot.forEach(d=>allItems.push({id:d.id,...d.data()}));
         displayItems(allItems);
-        // تحديث فئات الفلتر
-        const cats=new Set(allItems.map(i=>i.category).filter(Boolean));
-        const filter=document.getElementById('categoryFilter');
-        filter.innerHTML='<option value="all">جميع الفئات</option>';
-        cats.forEach(c=>filter.innerHTML+=`<option value="${c}">${c}</option>`);
+        updateStats();
+        updateCategoryFilter();
+    }
+    
+    function updateStats(){
+        let total=0, stockValue=0, low=0, out=0, totalProfit=0;
+        allItems.forEach(i=>{
+            const qty=i.quantity||0;
+            total++;
+            stockValue += (i.costPrice||0) * qty;
+            totalProfit += ((i.sellingPrice||0) - (i.costPrice||0)) * qty;
+            if(qty<=0) out++;
+            else if(qty<=(i.minStock||10)) low++;
+        });
+        document.getElementById('totalItems').innerText=total;
+        document.getElementById('totalStockValue').innerText=stockValue.toFixed(2);
+        document.getElementById('lowStockCount').innerText=low;
+        document.getElementById('outStockCount').innerText=out;
+        document.getElementById('totalProfit').innerText=totalProfit.toFixed(2);
+    }
+    
+    function updateCategoryFilter(){
+        const cats=new Set(allItems.map(i=>i.mainCategory).filter(Boolean));
+        const select=document.getElementById('categoryFilter');
+        select.innerHTML='<option value="all">جميع المجموعات</option>';
+        cats.forEach(c=>select.innerHTML+=`<option value="${c}">${c}</option>`);
+    }
+    
+    function getSupplierName(supplierId){
+        const sup=allSuppliers.find(s=>s.id===supplierId);
+        return sup?sup.name:'-';
     }
     
     function displayItems(items){
@@ -90,45 +234,137 @@
         const stockFilter=document.getElementById('stockFilter').value;
         let filtered=items.filter(i=>{
             let match=true;
-            if(search && !(i.itemName||'').toLowerCase().includes(search)) match=false;
-            if(catFilter!=='all' && i.category!==catFilter) match=false;
-            if(stockFilter==='low' && (i.quantity||0)>10) match=false;
+            if(search && !(i.itemName||'').toLowerCase().includes(search) && !(i.barcode||'').includes(search)) match=false;
+            if(catFilter!=='all' && i.mainCategory!==catFilter) match=false;
+            if(stockFilter==='low' && (i.quantity||0)>(i.minStock||10)) match=false;
+            if(stockFilter==='out' && (i.quantity||0)>0) match=false;
             return match;
         });
         let html='';
-        filtered.forEach(p=>{
+        filtered.forEach((p,idx)=>{
             const qty=p.quantity||0;
-            let badge=qty<=3?'<span class="badge badge-red">حرج</span>':qty<=10?'<span class="badge badge-orange">منخفض</span>':'<span class="badge badge-green">جيد</span>';
-            html+=`<tr><td><strong>${p.itemName||p.name}</strong></td><td>${p.barcode||'-'}</td><td>${p.category||'-'}</td><td>${p.unit||'قطعة'}</td><td>${qty}</td><td>${(p.costPrice||0).toFixed(2)}</td><td>${(p.sellingPrice||0).toFixed(2)}</td><td>${badge}</td><td><button class="btn-sm btn-warning" onclick="editItem('${p.id}')">✏️</button><button class="btn-sm btn-danger" onclick="deleteItem('${p.id}')">🗑️</button></td></tr>`;
+            const cost=p.costPrice||0;
+            const sell=p.sellingPrice||0;
+            const profit=sell-cost;
+            let badge=qty<=0?'<span class="badge badge-red">نفذت</span>':
+                      qty<=(p.minStock||10)?'<span class="badge badge-orange">منخفض</span>':
+                      '<span class="badge badge-green">جيد</span>';
+            let statusBadge=p.status==='نشط'?'<span class="badge badge-green">نشط</span>':
+                           p.status==='غير نشط'?'<span class="badge badge-gray">غير نشط</span>':
+                           '<span class="badge badge-red">منتهي</span>';
+            html+=`<tr>
+                <td>${idx+1}</td>
+                <td><strong>${p.itemName||p.name}</strong></td>
+                <td>${p.barcode||'-'}</td>
+                <td>${p.mainCategory||'-'}</td>
+                <td>${p.subCategory||'-'}</td>
+                <td>${p.unit||'قطعة'}</td>
+                <td>${qty}</td>
+                <td>${cost.toFixed(2)}</td>
+                <td>${sell.toFixed(2)}</td>
+                <td class="${profit>=0?'profit-positive':'profit-negative'}">${profit.toFixed(2)}</td>
+                <td><strong>${getSupplierName(p.supplierId)}</strong></td>
+                <td>${badge}<br>${statusBadge}</td>
+                <td>
+                    <button class="btn-sm btn-warning" onclick="editItem('${p.id}')">✏️</button>
+                    <button class="btn-sm btn-danger" onclick="deleteItem('${p.id}')">🗑️</button>
+                </td>
+            </tr>`;
         });
-        document.getElementById('inventoryList').innerHTML=html||'<tr><td colspan="9">لا توجد أصناف</td></tr>';
+        document.getElementById('inventoryList').innerHTML=html||'<tr><td colspan="13">لا توجد أصناف</td></tr>';
     }
     
     window.addItem=async()=>{
         const name=document.getElementById('itemName').value.trim();
         if(!name) return alert('اسم الصنف مطلوب');
-        await db.collection('inventory').add({
+        const data={
             itemName:name,name:name,
             barcode:document.getElementById('barcode').value,
-            category:document.getElementById('category').value||'أخرى',
+            mainCategory:document.getElementById('mainCategory').value||'أخرى',
+            subCategory:document.getElementById('subCategory').value||'',
             unit:document.getElementById('unit').value,
             quantity:parseInt(document.getElementById('quantity').value)||0,
             costPrice:parseFloat(document.getElementById('costPrice').value)||0,
             sellingPrice:parseFloat(document.getElementById('sellingPrice').value)||0,
             minStock:parseInt(document.getElementById('minStock').value)||10,
+            location:document.getElementById('location').value,
+            supplierId:document.getElementById('supplierId').value,
+            supplierName:getSupplierName(document.getElementById('supplierId').value),
+            status:document.getElementById('status').value,
             createdAt:new Date()
-        });
-        alert('تمت الإضافة');
-        document.getElementById('itemName').value='';
-        document.getElementById('barcode').value='';
-        document.getElementById('quantity').value='0';
-        document.getElementById('costPrice').value='';
-        document.getElementById('sellingPrice').value='';
+        };
+        if(editingId){
+            await db.collection('inventory').doc(editingId).update({...data, updatedAt:new Date()});
+            alert('✅ تم التحديث');
+            cancelEdit();
+        }else{
+            await db.collection('inventory').add(data);
+            alert('✅ تمت الإضافة');
+        }
+        clearForm();
         loadItems();
     };
     
-    window.deleteItem=async(id)=>{if(confirm('حذف الصنف؟')){await db.collection('inventory').doc(id).delete(); loadItems();}};
-    window.editItem=(id)=>{alert('سيتم إضافة التعديل قريباً');};
+    window.editItem=(id)=>{
+        const item=allItems.find(i=>i.id===id);
+        if(!item) return;
+        editingId=id;
+        document.getElementById('itemName').value=item.itemName||item.name;
+        document.getElementById('barcode').value=item.barcode||'';
+        document.getElementById('mainCategory').value=item.mainCategory||'';
+        document.getElementById('subCategory').value=item.subCategory||'';
+        document.getElementById('unit').value=item.unit||'قطعة';
+        document.getElementById('quantity').value=item.quantity||0;
+        document.getElementById('costPrice').value=item.costPrice||'';
+        document.getElementById('sellingPrice').value=item.sellingPrice||'';
+        document.getElementById('minStock').value=item.minStock||10;
+        document.getElementById('location').value=item.location||'';
+        document.getElementById('supplierId').value=item.supplierId||'';
+        document.getElementById('status').value=item.status||'نشط';
+        document.querySelector('.form-card h3').innerHTML='✏️ تعديل صنف';
+        document.querySelector('.form-card button').innerHTML='<i class="fas fa-save"></i> تحديث صنف';
+        document.getElementById('cancelBtn').style.display='inline-block';
+        window.scrollTo({top:0,behavior:'smooth'});
+    };
+    
+    window.cancelEdit=()=>{
+        editingId=null;
+        clearForm();
+        document.querySelector('.form-card h3').innerHTML='➕ إضافة صنف جديد';
+        document.querySelector('.form-card button').innerHTML='<i class="fas fa-save"></i> إضافة صنف';
+        document.getElementById('cancelBtn').style.display='none';
+    };
+    
+    window.deleteItem=async(id)=>{
+        if(confirm('⚠️ هل أنت متأكد من حذف هذا الصنف نهائياً؟')){
+            await db.collection('inventory').doc(id).delete();
+            loadItems();
+        }
+    };
+    
+    window.exportInventory=()=>{
+        let csv='الاسم,الباركود,المجموعة الرئيسية,المجموعة الفرعية,الوحدة,الرصيد,سعر الشراء,سعر البيع,الربح,المورد\n';
+        allItems.forEach(i=>{
+            csv+=`${i.itemName||i.name},${i.barcode||''},${i.mainCategory||''},${i.subCategory||''},${i.unit||''},${i.quantity||0},${i.costPrice||0},${i.sellingPrice||0},${(i.sellingPrice||0)-(i.costPrice||0)},${getSupplierName(i.supplierId)}\n`;
+        });
+        const blob=new Blob(["\uFEFF"+csv],{type:'text/csv;charset=utf-8'});
+        const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='الأصناف.csv'; link.click();
+    };
+    
+    function clearForm(){
+        document.getElementById('itemName').value='';
+        document.getElementById('barcode').value='';
+        document.getElementById('mainCategory').value='';
+        document.getElementById('subCategory').value='';
+        document.getElementById('unit').value='قطعة';
+        document.getElementById('quantity').value='0';
+        document.getElementById('costPrice').value='';
+        document.getElementById('sellingPrice').value='';
+        document.getElementById('minStock').value='10';
+        document.getElementById('location').value='';
+        document.getElementById('supplierId').value='';
+        document.getElementById('status').value='نشط';
+    }
     
     document.getElementById('searchInput').addEventListener('input',()=>displayItems(allItems));
     document.getElementById('categoryFilter').addEventListener('change',()=>displayItems(allItems));
