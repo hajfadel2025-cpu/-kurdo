@@ -82,45 +82,139 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    let allProducts=[], allSuppliers=[], cart=[];
+    let allProducts = [], allSuppliers = [], cart = [];
     
-    auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"; else {loadProducts(); loadSuppliers(); loadPurchases();}});
+    auth.onAuthStateChanged(user => {
+        if(!user) window.location.href = "login.html";
+        else { loadProducts(); loadSuppliers(); loadPurchases(); }
+    });
     
     async function loadProducts() {
-        const snapshot=await db.collection('inventory').get();
-        allProducts=[]; snapshot.forEach(d=>allProducts.push({id:d.id,...d.data()}));
-        const select=document.getElementById('productSelect');
-        select.innerHTML='<option value="">-- اختر منتج --</option>';
-        allProducts.forEach(p=>select.innerHTML+=`<option value="${p.id}" data-price="${p.costPrice||0}">${p.itemName||p.name}</option>`);
-        document.getElementById('productSelect').onchange=function(){document.getElementById('purchasePrice').value=this.options[this.selectedIndex]?.getAttribute('data-price')||0;};
+        const snapshot = await db.collection('inventory').get();
+        allProducts = [];
+        snapshot.forEach(d => allProducts.push({ id: d.id, ...d.data() }));
+        const select = document.getElementById('productSelect');
+        select.innerHTML = '<option value="">-- اختر منتج --</option>';
+        allProducts.forEach(p => {
+            select.innerHTML += `<option value="${p.id}" data-price="${p.costPrice || 0}">${p.itemName || p.name}</option>`;
+        });
+        document.getElementById('productSelect').onchange = function() {
+            document.getElementById('purchasePrice').value = this.options[this.selectedIndex]?.getAttribute('data-price') || 0;
+        };
     }
     
+    // ========== دالة جلب الموردين (الربط مع suppliers) ==========
     async function loadSuppliers() {
-        const snapshot=await db.collection('suppliers').get();
-        allSuppliers=[]; let html='<option value="">-- اختر مورد --</option>';
-        snapshot.forEach(d=>{allSuppliers.push({id:d.id,...d.data()}); html+=`<option value="${d.id}">${d.data().name}</option>`;});
-        document.getElementById('supplierId').innerHTML=html;
+        const snapshot = await db.collection('suppliers').get();
+        allSuppliers = [];
+        let html = '<option value="">-- اختر مورد --</option>';
+        snapshot.forEach(doc => {
+            allSuppliers.push({ id: doc.id, ...doc.data() });
+            html += `<option value="${doc.id}">${doc.data().name}</option>`;
+        });
+        document.getElementById('supplierId').innerHTML = html;
+        console.log('تم جلب الموردين:', allSuppliers.length); // للتأكد من عملها
     }
+    // =========================================================
     
-    window.addToCart=()=>{
-        const productId=document.getElementById('productSelect').value;
-        const product=allProducts.find(p=>p.id===productId);
+    window.addToCart = () => {
+        const productId = document.getElementById('productSelect').value;
+        const product = allProducts.find(p => p.id === productId);
         if(!product) return alert('اختر منتجاً');
-        const qty=parseInt(document.getElementById('quantity').value);
-        const price=parseFloat(document.getElementById('purchasePrice').value);
-        if(!qty||qty<=0) return alert('أدخل كمية صحيحة');
-        if(!price||price<=0) return alert('أدخل سعر شراء صحيح');
-        const existing=cart.find(i=>i.productId===productId);
-        if(existing){existing.quantity+=qty; existing.total=existing.price*existing.quantity;}
-        else cart.push({productId,name:product.itemName||product.name,price,quantity:qty,total:price*qty});
+        const qty = parseInt(document.getElementById('quantity').value);
+        const price = parseFloat(document.getElementById('purchasePrice').value);
+        if(!qty || qty <= 0) return alert('أدخل كمية صحيحة');
+        if(!price || price <= 0) return alert('أدخل سعر شراء صحيح');
+        const existing = cart.find(i => i.productId === productId);
+        if(existing) { existing.quantity += qty; existing.total = existing.price * existing.quantity; }
+        else cart.push({ productId, name: product.itemName || product.name, price, quantity: qty, total: price * qty });
         renderCart();
-        document.getElementById('quantity').value='1';
+        document.getElementById('quantity').value = '1';
     };
     
-    function renderCart(){
-        const container=document.getElementById('cart');
-        let total=0;
-        if(cart.length===0){container.innerHTML='<p style="text-align:center;color:#999;">السلة فارغة</p>'; document.getElementById('cartTotal').innerText='0.00'; return;}
-        let html='';
-        cart.forEach((item,idx)=>{total+=item.total; html+=`<div class="cart-item"><div><strong>${item.name}</strong><br>${item.price} د.ع</div><div>الكمية: ${item.quantity}</div><div>${item.total.toFixed(2)} د.ع</div><div><button onclick="removeFromCart(${idx})" style="background:#e74c3c;padding:3px 8px;border-radius:5px;color:white;">✖</button></div></div>`;});
-       
+    function renderCart() {
+        const container = document.getElementById('cart');
+        let total = 0;
+        if(cart.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;">السلة فارغة</p>';
+            document.getElementById('cartTotal').innerText = '0.00';
+            return;
+        }
+        let html = '';
+        cart.forEach((item, idx) => {
+            total += item.total;
+            html += `<div class="cart-item">
+                <div><strong>${item.name}</strong><br>${item.price} د.ع</div>
+                <div>الكمية: <button onclick="changeQty(${idx}, -1)">-</button> ${item.quantity} <button onclick="changeQty(${idx}, 1)">+</button></div>
+                <div>${item.total.toFixed(2)} د.ع</div>
+                <div><button onclick="removeFromCart(${idx})" style="background:#e74c3c;padding:3px 8px;border-radius:5px;color:white;">✖</button></div>
+            </div>`;
+        });
+        container.innerHTML = html;
+        document.getElementById('cartTotal').innerText = total.toFixed(2);
+    }
+    
+    window.changeQty = (idx, delta) => {
+        const newQty = cart[idx].quantity + delta;
+        if(newQty < 1) { removeFromCart(idx); return; }
+        cart[idx].quantity = newQty;
+        cart[idx].total = cart[idx].price * newQty;
+        renderCart();
+    };
+    
+    window.removeFromCart = (idx) => { cart.splice(idx, 1); renderCart(); };
+    
+    window.savePurchase = async () => {
+        const supplierId = document.getElementById('supplierId').value;
+        const supplier = allSuppliers.find(s => s.id === supplierId);
+        if(!supplierId) return alert('اختر المورد');
+        if(cart.length === 0) return alert('لا توجد منتجات');
+        const total = cart.reduce((s, i) => s + i.total, 0);
+        try {
+            const batch = db.batch();
+            for(const item of cart) {
+                const productRef = db.collection('inventory').doc(item.productId);
+                const docSnap = await productRef.get();
+                const oldQty = docSnap.data().quantity || 0;
+                batch.update(productRef, { quantity: oldQty + item.quantity });
+            }
+            const purchaseRef = db.collection('purchases').doc();
+            batch.set(purchaseRef, {
+                supplierId: supplierId,
+                supplierName: supplier?.name || '',
+                invoiceNumber: document.getElementById('invoiceNumber').value || 'PU-' + Date.now(),
+                date: document.getElementById('invoiceDate').value || new Date().toISOString().split('T')[0],
+                items: cart,
+                total: total,
+                timestamp: new Date()
+            });
+            await batch.commit();
+            alert('✅ تم حفظ فاتورة الشراء');
+            cart = []; renderCart();
+            document.getElementById('supplierId').value = '';
+            document.getElementById('invoiceNumber').value = '';
+            document.getElementById('invoiceDate').value = '';
+            await loadProducts();
+            await loadPurchases();
+        } catch(error) { alert('❌ خطأ: ' + error.message); }
+    };
+    
+    async function loadPurchases() {
+        const snapshot = await db.collection('purchases').orderBy('timestamp', 'desc').get();
+        const tbody = document.getElementById('purchasesBody');
+        if(snapshot.empty) { tbody.innerHTML = '<tr><td colspan="4">لا توجد مشتريات</td></tr>'; return; }
+        let html = '';
+        snapshot.forEach(doc => {
+            const p = doc.data();
+            html += `<tr>
+                <td>${p.date || '-'}</td>
+                <td>${p.invoiceNumber || '-'}</td>
+                <td>${p.supplierName || '-'}</td>
+                <td>${(p.total || 0).toFixed(2)} د.ع</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+</script>
+</body>
+</html>
