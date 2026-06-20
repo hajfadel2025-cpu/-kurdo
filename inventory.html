@@ -14,6 +14,7 @@
         .container{max-width:1400px;margin:auto;background:white;border-radius:20px;padding:25px}
         h2{color:#1e3c72;border-right:4px solid #e74c3c;padding-right:15px;margin-bottom:20px}
         
+        /* إحصائيات */
         .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
         .stat-box{background:#f8f9fa;padding:15px;border-radius:12px;text-align:center}
         .stat-box .num{font-size:24px;font-weight:bold;color:#1e3c72}
@@ -27,9 +28,11 @@
         .search-bar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
         .search-bar input,.search-bar select{flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;min-width:150px}
         
-        table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px}
-        th,td{border:1px solid #ddd;padding:10px;text-align:center}
-        th{background:#1e3c72;color:white;position:sticky;top:0}
+        /* جدول مع تمرير */
+        .table-wrapper{overflow-x:auto;max-height:500px;overflow-y:auto;border-radius:10px;border:1px solid #ddd}
+        table{width:100%;border-collapse:collapse;font-size:13px;min-width:1200px}
+        th,td{border:1px solid #ddd;padding:10px;text-align:center;white-space:nowrap}
+        th{background:#1e3c72;color:white;position:sticky;top:0;z-index:10}
         tr:hover{background:#f5f5f5}
         
         button{padding:10px 20px;background:#27ae60;color:white;border:none;border-radius:8px;cursor:pointer;transition:0.3s}
@@ -39,10 +42,11 @@
         .btn-sm{padding:5px 10px;font-size:12px}
         .btn-info{background:#3498db}
         
-        .badge{padding:3px 10px;border-radius:12px;font-size:10px}
+        .badge{padding:3px 10px;border-radius:12px;font-size:10px;display:inline-block}
         .badge-green{background:#d4edda;color:#155724}
         .badge-red{background:#f8d7da;color:#721c24}
         .badge-orange{background:#ffeaa7;color:#856404}
+        .badge-gray{background:#e9ecef;color:#6c757d}
         
         .profit-positive{color:#27ae60;font-weight:bold}
         .profit-negative{color:#e74c3c;font-weight:bold}
@@ -60,7 +64,7 @@
         <div class="stat-box"><div class="num" id="totalStockValue">0</div><div class="label">قيمة المخزون</div></div>
         <div class="stat-box"><div class="num" id="lowStockCount">0</div><div class="label">منخفضة المخزون</div></div>
         <div class="stat-box"><div class="num" id="outStockCount">0</div><div class="label">نفذت الكمية</div></div>
-        <div class="stat-box"><div class="num" id="totalProfit">0</div><div class="label">إجمالي الأرباح المتوقعة</div></div>
+        <div class="stat-box"><div class="num" id="totalProfit">0</div><div class="label">إجمالي الأرباح</div></div>
     </div>
     
     <!-- نموذج إضافة صنف -->
@@ -69,8 +73,6 @@
         <div class="form-grid">
             <div class="form-group"><label>اسم الصنف *</label><input type="text" id="itemName" placeholder="اسم الصنف"></div>
             <div class="form-group"><label>الباركود</label><input type="text" id="barcode" placeholder="باركود"></div>
-            
-            <!-- المجموعة الرئيسية -->
             <div class="form-group"><label>📂 المجموعة الرئيسية</label>
                 <select id="mainCategory">
                     <option value="">اختر المجموعة</option>
@@ -82,8 +84,6 @@
                     <option value="أخرى">أخرى</option>
                 </select>
             </div>
-            
-            <!-- المجموعة الفرعية -->
             <div class="form-group"><label>📂 المجموعة الفرعية</label>
                 <select id="subCategory">
                     <option value="">اختر المجموعة الفرعية</option>
@@ -100,7 +100,6 @@
                     <option value="أخرى">أخرى</option>
                 </select>
             </div>
-            
             <div class="form-group"><label>وحدة القياس</label>
                 <select id="unit">
                     <option value="قطعة">قطعة</option>
@@ -111,17 +110,14 @@
                     <option value="طرد">طرد</option>
                 </select>
             </div>
-            <div class="form-group"><label>الكمية (الرصيد)</label><input type="number" id="quantity" value="0" min="0"></div>
+            <div class="form-group"><label>📊 الكمية (الرصيد)</label><input type="number" id="quantity" value="0" min="0"></div>
             <div class="form-group"><label>سعر الشراء</label><input type="number" id="costPrice" step="0.01" placeholder="سعر الشراء"></div>
             <div class="form-group"><label>سعر البيع</label><input type="number" id="sellingPrice" step="0.01" placeholder="سعر البيع"></div>
             <div class="form-group"><label>الحد الأدنى</label><input type="number" id="minStock" value="10"></div>
             <div class="form-group"><label>موقع التخزين</label><input type="text" id="location" placeholder="رقم الرف"></div>
-            
-            <!-- ربط المورد -->
             <div class="form-group"><label>🏪 المورد</label>
                 <select id="supplierId"><option value="">-- اختر مورد --</option></select>
             </div>
-            
             <div class="form-group"><label>الحالة</label>
                 <select id="status">
                     <option value="نشط">نشط</option>
@@ -146,14 +142,24 @@
         <button onclick="exportInventory()" style="background:#3498db"><i class="fas fa-file-excel"></i> تصدير</button>
     </div>
     
-    <!-- جدول الأصناف -->
-    <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
+    <!-- جدول الأصناف مع تمرير -->
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th>#</th><th>الصنف</th><th>الباركود</th><th>المجموعة الرئيسية</th><th>المجموعة الفرعية</th>
-                    <th>الوحدة</th><th>الرصيد</th><th>سعر الشراء</th><th>سعر البيع</th><th>الربح</th>
-                    <th>المورد</th><th>الحالة</th><th>إجراءات</th>
+                    <th>#</th>
+                    <th>الصنف</th>
+                    <th>الباركود</th>
+                    <th>المجموعة الرئيسية</th>
+                    <th>المجموعة الفرعية</th>
+                    <th>الوحدة</th>
+                    <th style="background:#e74c3c;color:white;font-weight:bold;">📊 الرصيد</th>
+                    <th>سعر الشراء</th>
+                    <th>سعر البيع</th>
+                    <th>الربح</th>
+                    <th>المورد</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
                 </tr>
             </thead>
             <tbody id="inventoryList"></tbody>
@@ -259,7 +265,7 @@
                 <td>${p.mainCategory||'-'}</td>
                 <td>${p.subCategory||'-'}</td>
                 <td>${p.unit||'قطعة'}</td>
-                <td>${qty}</td>
+                <td style="font-weight:bold;color:#1e3c72;font-size:16px;">${qty}</td>
                 <td>${cost.toFixed(2)}</td>
                 <td>${sell.toFixed(2)}</td>
                 <td class="${profit>=0?'profit-positive':'profit-negative'}">${profit.toFixed(2)}</td>
