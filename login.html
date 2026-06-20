@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - نظام المخازن</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
+        body{background:linear-gradient(135deg,#1e3c72,#2a5298);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+        .container{background:white;padding:40px;border-radius:30px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+        .logo{text-align:center;margin-bottom:30px}
+        .logo i{font-size:70px;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .logo h2{color:#333;margin-top:10px}
+        .logo p{color:#666;font-size:14px}
+        .form-group{margin-bottom:20px}
+        label{display:block;margin-bottom:8px;color:#333;font-weight:500}
+        .input-group{position:relative}
+        .input-group i{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#999}
+        input{width:100%;padding:12px 40px 12px 15px;border:2px solid #ddd;border-radius:12px;font-size:16px;transition:0.3s}
+        input:focus{outline:none;border-color:#667eea}
+        button{width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer;transition:0.3s}
+        button:hover{transform:translateY(-2px);filter:brightness(1.05)}
+        .alert{padding:12px;border-radius:12px;margin-bottom:20px;display:none;background:#f8d7da;color:#721c24}
+        .register-link{text-align:center;margin-top:20px;border-top:1px solid #eee;padding-top:20px}
+        .register-link a{color:#667eea;text-decoration:none}
+        .forgot-link{text-align:center;margin-top:10px}
+        .forgot-link a{color:#999;text-decoration:none;font-size:13px}
+        .version{text-align:center;margin-top:20px;color:#ccc;font-size:11px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">
+        <i class="fas fa-warehouse"></i>
+        <h2>نظام إدارة المخازن</h2>
+        <p>إدارة متكاملة للمخزون والمبيعات والمشتريات</p>
+    </div>
+    <div id="alert" class="alert"></div>
+    <form id="loginForm">
+        <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="example@company.com" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>كلمة المرور</label>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="********" required>
+            </div>
+        </div>
+        <button type="submit">تسجيل الدخول</button>
+    </form>
+    <div class="forgot-link">
+        <a href="#" onclick="forgotPassword()">نسيت كلمة المرور؟</a>
+    </div>
+    <div class="register-link">
+        ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a>
+    </div>
+    <div class="version">الإصدار 2.0 - نظام مخازن متكامل</div>
+</div>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            const usersRef = db.collection('users');
+            const q = usersRef.where('uid', '==', user.uid);
+            const querySnapshot = await q.get();
+            let role = 'مندوب';
+            querySnapshot.forEach((doc) => { role = doc.data().accountType || doc.data().role || 'مندوب'; });
+            if (role === 'مدير' || role === 'admin') { window.location.href = 'dashboard.html'; } 
+            else { window.location.href = 'sales.html'; }
+        } catch (error) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.style.display = 'block';
+            alertDiv.innerText = error.code === 'auth/user-not-found' ? 'البريد الإلكتروني غير مسجل' : 'كلمة المرور غير صحيحة';
+        }
+    });
+    
+    window.forgotPassword = async () => {
+        const email = prompt('الرجاء إدخال بريدك الإلكتروني لإعادة تعيين كلمة المرور:');
+        if (email) {
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert('تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني');
+            } catch (error) {
+                alert('خطأ: ' + error.message);
+            }
+        }
+    };
+</script>
+</body>
+</html>
