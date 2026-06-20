@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحاسبة - نظام المخازن</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
+        body{background:linear-gradient(135deg,#1e3c72,#2a5298);padding:20px}
+        .container{max-width:1400px;margin:auto;background:white;border-radius:20px;padding:25px}
+        h2{color:#1e3c72;border-right:4px solid #2c3e50;padding-right:15px;margin-bottom:20px}
+        .accounts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px}
+        .account-card{background:#f8f9fa;padding:20px;border-radius:15px;text-align:center;border-right:4px solid #667eea}
+        .account-card .num{font-size:24px;font-weight:bold;color:#1e3c72}
+        .account-card .label{color:#666;font-size:12px}
+        .account-card.green{border-color:#27ae60}
+        .account-card.red{border-color:#e74c3c}
+        table{width:100%;border-collapse:collapse;margin-top:20px}
+        th,td{border:1px solid #ddd;padding:10px;text-align:center}
+        th{background:#1e3c72;color:white}
+        .balance-positive{color:#27ae60;font-weight:bold}
+        .balance-negative{color:#e74c3c;font-weight:bold}
+        @media(max-width:768px){th,td{font-size:11px;padding:6px}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2><i class="fas fa-calculator"></i> المحاسبة والقوائم المالية</h2>
+    
+    <div class="accounts-grid">
+        <div class="account-card"><div class="num" id="totalRevenue">0</div><div class="label">إجمالي الإيرادات</div></div>
+        <div class="account-card green"><div class="num" id="totalPurchasesCost">0</div><div class="label">إجمالي تكلفة المشتريات</div></div>
+        <div class="account-card red"><div class="num" id="totalProfit">0</div><div class="label">صافي الأرباح</div></div>
+        <div class="account-card"><div class="num" id="totalDebts">0</div><div class="label">إجمالي الديون</div></div>
+    </div>
+    
+    <h3>📊 ملخص الحسابات</h3>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead><tr><th>الحساب</th><th>الرصيد</th></tr></thead>
+            <tbody>
+                <tr><td>المبيعات النقدية</td><td id="cashSales">0 د.ع</td></tr>
+                <tr><td>المبيعات الآجلة</td><td id="creditSales">0 د.ع</td></tr>
+                <tr><td>المشتريات</td><td id="purchasesTotal">0 د.ع</td></tr>
+                <tr><td>ديون العملاء</td><td id="customersDebt">0 د.ع</td></tr>
+                <tr><td>ديون الموردين</td><td id="suppliersDebt">0 د.ع</td></tr>
+                <tr><td>صافي الربح</td><td id="netProfit">0 د.ع</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    auth.onAuthStateChanged(async user=>{
+        if(!user)window.location.href="login.html";
+        else await loadAccounting();
+    });
+    
+    async function loadAccounting(){
+        let totalRevenue=0, cashSales=0, creditSales=0;
+        const salesSnap=await db.collection('sales').get();
+        salesSnap.forEach(d=>{
+            const total=d.data().total||0;
+            totalRevenue+=total;
+            if(d.data().paymentMethod==='نقدي') cashSales+=total;
+            else creditSales+=total;
+        });
+        document.getElementById('totalRevenue').innerText=totalRevenue.toFixed(0);
+        document.getElementById('cashSales').innerText=cashSales.toFixed(2)+' د.ع';
+        document.getElementById('creditSales').innerText=creditSales.toFixed(2)+' د.ع';
+        
+        let purchasesTotal=0;
+        const purchSnap=await db.collection('purchases').get();
+        purchSnap.forEach(d=>purchasesTotal+=d.data().total||0);
+        document.getElementById('purchasesTotal').innerText=purchasesTotal.toFixed(2)+' د.ع';
+        document.getElementById('totalPurchasesCost').innerText=purchasesTotal.toFixed(0);
+        
+        const profit=totalRevenue-purchasesTotal;
+        document.getElementById('totalProfit').innerText=profit.toFixed(0);
+        document.getElementById('netProfit').innerText=profit.toFixed(2)+' د.ع';
+        
+        let customersDebt=0;
+        const custSnap=await db.collection('customers').get();
+        custSnap.forEach(d=>customersDebt+=d.data().totalDebt||0);
+        document.getElementById('customersDebt').innerText=customersDebt.toFixed(2)+' د.ع';
+        document.getElementById('totalDebts').innerText=customersDebt.toFixed(0);
+        
+        let suppliersDebt=0;
+        const supSnap=await db.collection('suppliers').get();
+        supSnap.forEach(d=>suppliersDebt+=d.data().balance||0);
+        document.getElementById('suppliersDebt').innerText=suppliersDebt.toFixed(2)+' د.ع';
+    }
+</script>
+</body>
+</html>
