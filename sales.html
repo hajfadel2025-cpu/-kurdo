@@ -185,15 +185,24 @@
     }
     
     // ===== جلب المنتجات =====
-    async function loadProducts(){
-        const snapshot=await db.collection('inventory').get();
-        allProducts=[]; snapshot.forEach(d=>allProducts.push({id:d.id,...d.data()}));
-        const select=document.getElementById('productSelect');
-        select.innerHTML='<option value="">-- اختر منتج --</option>';
-        allProducts.forEach(p=>{
-            const stock=p.quantity||0;
-            select.innerHTML+=`<option value="${p.id}" data-price="${p.sellingPrice||0}" data-stock="${stock}">${p.itemName||p.name} (${stock})</option>`;
+    async function loadProducts() {
+    try {
+        console.log('🔄 جاري جلب المنتجات...');
+        const snapshot = await db.collection('inventory').get();
+        allProducts = [];
+        snapshot.forEach(d => allProducts.push({ id: d.id, ...d.data() }));
+        console.log('✅ تم جلب المنتجات:', allProducts.length);
+        
+        const select = document.getElementById('productSelect');
+        select.innerHTML = '<option value="">-- اختر منتج --</option>';
+        allProducts.forEach(p => {
+            const stock = p.quantity || 0;
+            select.innerHTML += `<option value="${p.id}" data-price="${p.sellingPrice||0}" data-stock="${stock}">${p.itemName||p.name} (${stock})</option>`;
         });
+    } catch(e) {
+        console.error('❌ خطأ في جلب المنتجات:', e);
+    }
+} });
         document.getElementById('productSelect').onchange=function(){
             const price=this.options[this.selectedIndex]?.getAttribute('data-price')||0;
             const stock=this.options[this.selectedIndex]?.getAttribute('data-stock')||0;
@@ -203,15 +212,22 @@
     }
     
     // ===== جلب العملاء =====
-    async function loadCustomers(){
-        const snapshot=await db.collection('customers').get();
-        allCustomers=[]; let html='<option value="">-- اختر عميل --</option>';
-        snapshot.forEach(d=>{allCustomers.push({id:d.id,...d.data()}); html+=`<option value="${d.id}">${d.data().customerName||d.data().name}</option>`;});
-        document.getElementById('customerId').innerHTML=html;
-        let ph='<option value="">-- اختر عميل --</option>';
-        allCustomers.forEach(c=>ph+=`<option value="${c.id}">${c.customerName||c.name}</option>`);
-        document.getElementById('paymentCustomerId').innerHTML=ph;
+    async function loadCustomers() {
+    try {
+        console.log('🔄 جاري جلب العملاء...');
+        const snapshot = await db.collection('customers').get();
+        allCustomers = [];
+        let html = '<option value="">-- اختر عميل --</option>';
+        snapshot.forEach(d => {
+            allCustomers.push({ id: d.id, ...d.data() });
+            html += `<option value="${d.id}">${d.data().customerName || d.data().name}</option>`;
+        });
+        document.getElementById('customerId').innerHTML = html;
+        console.log('✅ تم جلب العملاء:', allCustomers.length);
+    } catch(e) {
+        console.error('❌ خطأ في جلب العملاء:', e);
     }
+}
     
     // ===== إضافة للسلة =====
     window.addToCart=()=>{
