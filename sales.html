@@ -10,29 +10,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
-        body{background:linear-gradient(135deg,#0c1445,#1a2a6c);padding:20px;min-height:100vh}
+        body{background:linear-gradient(135deg,#0c1445,#1a2a6c);padding:20px}
         .container{max-width:1400px;margin:auto;background:white;border-radius:25px;padding:25px}
         h2{color:#0c1445;border-right:4px solid #f39c12;padding-right:15px;margin-bottom:20px}
         .form-card{background:#f8f9fa;padding:20px;border-radius:15px;margin-bottom:20px}
-        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px}
         .form-group label{display:block;font-size:12px;color:#495057;margin-bottom:5px;font-weight:600}
         .form-group input,.form-group select{width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:14px}
-        .form-group input:focus,.form-group select:focus{outline:none;border-color:#667eea}
-        button{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-weight:600;transition:0.3s}
-        button:hover{transform:translateY(-2px)}
+        button{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-weight:600}
         .btn-success{background:#27ae60;color:white}
-        .btn-danger{background:#e74c3c;color:white}
         .btn-warning{background:#f39c12;color:white}
+        .btn-danger{background:#e74c3c;color:white}
         .btn-info{background:#3498db;color:white}
         .btn-primary{background:#667eea;color:white}
         .btn-sm{padding:5px 12px;font-size:11px}
-        .cart-item{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #e9ecef;flex-wrap:wrap;gap:10px;align-items:center}
+        .cart-item{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;flex-wrap:wrap;gap:10px}
         table{width:100%;border-collapse:collapse;font-size:13px}
-        th,td{padding:12px 10px;text-align:center;border-bottom:1px solid #e9ecef}
-        th{background:#0c1445;color:white;font-weight:600}
-        tr:hover{background:#f8f9fa}
-        .table-wrapper{overflow-x:auto;border-radius:15px;border:1px solid #e9ecef}
-        .badge{padding:4px 12px;border-radius:20px;font-size:11px;display:inline-block}
+        th,td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+        th{background:#0c1445;color:white}
+        .badge{padding:3px 10px;border-radius:15px;font-size:11px;display:inline-block}
         .badge-success{background:#d4edda;color:#155724}
         .badge-warning{background:#fff3cd;color:#856404}
         .filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
@@ -40,7 +36,7 @@
         .stock-good{color:#27ae60;font-weight:bold}
         .stock-warning{color:#e74c3c;font-weight:bold}
         .total{font-size:20px;color:#27ae60;font-weight:bold}
-        @media(max-width:768px){th,td{font-size:11px;padding:8px}}
+        @media(max-width:768px){th,td{font-size:11px;padding:6px}}
     </style>
 </head>
 <body>
@@ -59,7 +55,6 @@
                 <select id="paymentMethod"><option value="نقدي">نقدي</option><option value="أجل">أجل</option></select>
             </div>
         </div>
-        <input type="hidden" id="editInvoiceId">
         <button onclick="cancelEdit()" id="cancelBtn" style="display:none;background:#e67e22;margin-top:10px;">❌ إلغاء</button>
     </div>
 
@@ -72,12 +67,12 @@
             <div class="form-group"><label>🔢 الكمية</label><input type="number" id="quantity" value="1" min="1"></div>
             <div class="form-group"><label>💰 سعر البيع</label><input type="number" id="salePrice" step="0.01"></div>
         </div>
-        <div style="margin-top:10px;font-size:14px;"><span id="stockDisplay">📊 المخزون: <span class="stock-good">0</span></span></div>
+        <div style="margin-top:10px;"><span id="stockDisplay">📊 المخزون: <span class="stock-good">0</span></span></div>
         <button onclick="addToCart()" style="margin-top:15px;background:#667eea;color:white;"><i class="fas fa-plus"></i> إضافة للسلة</button>
     </div>
 
     <h3>🛒 السلة <span id="cartCount">(0)</span></h3>
-    <div id="cart" style="max-height:250px;overflow-y:auto;margin-bottom:15px;border:2px dashed #e9ecef;border-radius:12px;padding:10px;"></div>
+    <div id="cart" style="max-height:200px;overflow-y:auto;margin-bottom:15px;border:1px solid #eee;border-radius:12px;padding:10px;"></div>
     <div style="margin:15px 0;padding:15px;background:#f8f9fa;border-radius:12px;">
         <strong>الإجمالي: <span id="cartTotal" class="total">0.00</span> د.ع</strong>
     </div>
@@ -93,7 +88,7 @@
     </div>
 
     <h3>📋 سجل المبيعات</h3>
-    <div class="table-wrapper">
+    <div style="overflow-x:auto;">
         <table>
             <thead><tr><th>#</th><th>التاريخ</th><th>رقم</th><th>العميل</th><th>المبلغ</th><th>الدفع</th><th>إجراءات</th></tr></thead>
             <tbody id="salesBody"><tr><td colspan="7">جاري التحميل...</td></tr></tbody>
@@ -122,15 +117,13 @@
         else { loadProducts(); loadCustomers(); loadSales(); }
     });
 
-    // ===== جلب المنتجات مع رسائل Console =====
+    // جلب المنتجات
     async function loadProducts() {
         try {
-            console.log('🔄 جاري جلب المنتجات من المخزن...');
             const snapshot = await db.collection('inventory').get();
             allProducts = [];
             snapshot.forEach(d => allProducts.push({ id: d.id, ...d.data() }));
-            console.log('✅ تم جلب المنتجات:', allProducts.length);
-
+            
             const select = document.getElementById('productSelect');
             select.innerHTML = '<option value="">-- اختر منتج --</option>';
             allProducts.forEach(p => {
@@ -144,16 +137,12 @@
                 document.getElementById('salePrice').value = price;
                 document.getElementById('stockDisplay').innerHTML = `📊 المخزون: <span class="${stock <= 0 ? 'stock-warning' : 'stock-good'}">${stock}</span>`;
             };
-        } catch(e) {
-            console.error('❌ خطأ في جلب المنتجات:', e);
-            alert('خطأ في جلب المنتجات: ' + e.message);
-        }
+        } catch(e) { console.error(e); }
     }
 
-    // ===== جلب العملاء مع رسائل Console =====
+    // جلب العملاء
     async function loadCustomers() {
         try {
-            console.log('🔄 جاري جلب العملاء...');
             const snapshot = await db.collection('customers').get();
             allCustomers = [];
             let html = '<option value="">-- اختر عميل --</option>';
@@ -162,11 +151,7 @@
                 html += `<option value="${d.id}">${d.data().customerName || d.data().name}</option>`;
             });
             document.getElementById('customerId').innerHTML = html;
-            console.log('✅ تم جلب العملاء:', allCustomers.length);
-        } catch(e) {
-            console.error('❌ خطأ في جلب العملاء:', e);
-            alert('خطأ في جلب العملاء: ' + e.message);
-        }
+        } catch(e) { console.error(e); }
     }
 
     window.addToCart = () => {
@@ -247,15 +232,13 @@
             for (const item of cart) {
                 const productRef = db.collection('inventory').doc(item.productId);
                 const docSnap = await productRef.get();
-                const oldQty = docSnap.data().quantity || 0;
-                batch.update(productRef, { quantity: oldQty - item.quantity });
+                batch.update(productRef, { quantity: (docSnap.data().quantity || 0) - item.quantity });
             }
 
             if (document.getElementById('paymentMethod').value === 'أجل') {
                 const custRef = db.collection('customers').doc(customerId);
                 const custSnap = await custRef.get();
-                const oldDebt = custSnap.data().totalDebt || 0;
-                batch.update(custRef, { totalDebt: oldDebt + total });
+                batch.update(custRef, { totalDebt: (custSnap.data().totalDebt || 0) + total });
             }
 
             const saleRef = editingId ? db.collection('sales').doc(editingId) : db.collection('sales').doc();
