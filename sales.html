@@ -149,10 +149,14 @@
     </div>
 
     <div class="action-bar">
-        <button onclick="saveSale()" class="btn btn-success"><i class="fas fa-save"></i> حفظ</button>
-        <button onclick="clearCart()" class="btn btn-danger"><i class="fas fa-trash"></i> تفريغ</button>
-        <button onclick="exportExcel()" class="btn btn-info"><i class="fas fa-file-excel"></i> Excel</button>
-    </div>
+    <button onclick="saveSale()" class="btn btn-success"><i class="fas fa-save"></i> حفظ</button>
+    <button onclick="clearCart()" class="btn btn-danger"><i class="fas fa-trash"></i> تفريغ</button>
+    <button onclick="printInvoice()" class="btn btn-primary"><i class="fas fa-print"></i> طباعة</button>
+    <button onclick="showReturnModal()" class="btn btn-purple" style="background:#9b59b6;color:white;"><i class="fas fa-undo"></i> مرتجع</button>
+    <button onclick="showPaymentModal()" class="btn btn-warning"><i class="fas fa-hand-holding-usd"></i> تحصيل دين</button>
+    <button onclick="showReportModal()" class="btn btn-info"><i class="fas fa-chart-bar"></i> تقرير</button>
+    <button onclick="exportExcel()" class="btn btn-info"><i class="fas fa-file-excel"></i> Excel</button>
+</div>
 
     <!-- بحث -->
     <div class="filter-bar">
