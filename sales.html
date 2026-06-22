@@ -487,5 +487,72 @@
     document.getElementById('searchInput').addEventListener('input', loadSales);
     document.getElementById('paymentFilter').addEventListener('change', loadSales);
 </script>
+<!-- ===== نافذة المرتجع ===== -->
+<div id="returnModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-undo" style="color:#e74c3c;"></i> مرتجع مبيعات</h3>
+            <span class="close-modal" onclick="closeReturnModal()">&times;</span>
+        </div>
+        <div class="form-group"><label>📞 رقم الفاتورة</label>
+            <select id="returnInvoiceId"><option value="">-- اختر فاتورة --</option></select>
+        </div>
+        <div class="form-group"><label>📝 سبب المرتجع</label><input type="text" id="returnReason" placeholder="سبب المرتجع"></div>
+        <button onclick="processReturn()" class="btn btn-danger" style="width:100%;"><i class="fas fa-undo"></i> تنفيذ المرتجع</button>
+    </div>
+</div>
+
+<!-- ===== نافذة تحصيل الدين ===== -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-hand-holding-usd" style="color:#f39c12;"></i> تحصيل دين</h3>
+            <span class="close-modal" onclick="closePaymentModal()">&times;</span>
+        </div>
+        <div class="form-group"><label>👤 العميل</label>
+            <select id="paymentCustomerId"><option value="">-- اختر عميل --</option></select>
+        </div>
+        <div class="form-group"><label>💰 المبلغ</label><input type="number" id="paymentAmount" step="0.01" placeholder="المبلغ"></div>
+        <div class="form-group"><label>📝 البيان</label><input type="text" id="paymentNote" placeholder="بيان السداد"></div>
+        <button onclick="processPayment()" class="btn btn-success" style="width:100%;"><i class="fas fa-save"></i> تسجيل السداد</button>
+    </div>
+</div>
+
+<!-- ===== نافذة التقرير ===== -->
+<div id="reportModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-chart-bar" style="color:#e74c3c;"></i> تقرير المبيعات</h3>
+            <span class="close-modal" onclick="closeReportModal()">&times;</span>
+        </div>
+        <div id="reportContent"></div>
+    </div>
+</div>
+
+<!-- ===== منطقة الطباعة ===== -->
+<div id="printArea" class="print-area">
+    <div style="text-align:center;margin-bottom:15px;">
+        <h2>مكتب حاج فاضل</h2>
+        <p>فاتورة مبيعات</p>
+        <p>رقم الفاتورة: <span id="printInvoiceNum"></span></p>
+        <p>التاريخ: <span id="printDate"></span></p>
+    </div>
+    <div style="margin-bottom:10px;">
+        <p><strong>العميل:</strong> <span id="printCustomer"></span></p>
+        <p><strong>طريقة الدفع:</strong> <span id="printPayment"></span></p>
+    </div>
+    <table>
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+        <tbody id="printItems"></tbody>
+        <tfoot>
+            <tr class="total-row"><td colspan="3">الإجمالي</td><td id="printTotal"></td></tr>
+            <tr class="total-row"><td colspan="3">الخصم</td><td id="printDiscount"></td></tr>
+            <tr class="total-row"><td colspan="3"><strong>الصافي</strong></td><td id="printNet"></td></tr>
+        </tfoot>
+    </table>
+    <div style="text-align:center;margin-top:15px;border-top:2px solid #ddd;padding-top:10px;">
+        <p>شكراً لتعاملكم معنا</p>
+    </div>
+</div>
 </body>
 </html>
