@@ -3,26 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المبيعات - نظام المخازن</title>
+    <title>المبيعات</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
-        body{background:linear-gradient(135deg,#0c1445,#1a2a6c);padding:20px;min-height:100vh}
+        body{background:linear-gradient(135deg,#0c1445,#1a2a6c);padding:20px}
         .container{max-width:1400px;margin:auto;background:white;border-radius:25px;padding:25px}
         h2{color:#0c1445;border-right:4px solid #f39c12;padding-right:15px;margin-bottom:20px}
         .form-card{background:#f8f9fa;padding:20px;border-radius:15px;margin-bottom:20px}
         .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
         .form-group label{display:block;font-size:12px;color:#495057;margin-bottom:5px;font-weight:600}
         .form-group input,.form-group select{width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:14px}
-        .cart-item{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #e9ecef;flex-wrap:wrap;gap:10px;align-items:center}
-        .table-wrapper{overflow-x:auto;border-radius:15px;border:1px solid #e9ecef}
-        table{width:100%;border-collapse:collapse;font-size:13px;min-width:1000px}
-        th,td{padding:12px 10px;text-align:center;border-bottom:1px solid #e9ecef}
-        th{background:#0c1445;color:white;font-weight:600}
-        tr:hover{background:#f8f9fa}
         button{padding:10px 25px;border:none;border-radius:10px;cursor:pointer;font-weight:600;transition:0.3s}
         button:hover{transform:translateY(-2px)}
         .btn-success{background:#27ae60;color:white}
@@ -31,17 +25,23 @@
         .btn-info{background:#3498db;color:white}
         .btn-primary{background:#667eea;color:white}
         .btn-sm{padding:5px 12px;font-size:11px;border-radius:8px}
+        .cart-item{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #e9ecef;flex-wrap:wrap;gap:10px;align-items:center;background:white;border-radius:8px;margin-bottom:5px}
         .badge{padding:4px 12px;border-radius:20px;font-size:11px;display:inline-block}
         .badge-success{background:#d4edda;color:#155724}
         .badge-warning{background:#fff3cd;color:#856404}
         .stock-good{color:#27ae60;font-weight:bold}
         .stock-warning{color:#e74c3c;font-weight:bold}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        th,td{padding:12px 10px;text-align:center;border-bottom:1px solid #e9ecef}
+        th{background:#0c1445;color:white}
+        tr:hover{background:#f8f9fa}
+        .table-wrapper{overflow-x:auto;border-radius:15px;border:1px solid #e9ecef}
+        .filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+        .filter-bar input,.filter-bar select{padding:10px 15px;border:2px solid #e9ecef;border-radius:10px;flex:1;min-width:150px}
         .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:1000}
         .modal-content{background:white;border-radius:25px;width:95%;max-width:1000px;max-height:90vh;overflow-y:auto;padding:30px}
         .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #f39c12;padding-bottom:15px}
         .close-modal{cursor:pointer;font-size:28px;color:#999}
-        .filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
-        .filter-bar input,.filter-bar select{padding:10px 15px;border:2px solid #e9ecef;border-radius:10px;flex:1;min-width:150px}
         @media(max-width:768px){th,td{font-size:11px;padding:8px}}
     </style>
 </head>
@@ -49,7 +49,6 @@
 <div class="container">
     <h2><i class="fas fa-chart-line"></i> المبيعات</h2>
     
-    <!-- نموذج فاتورة جديدة -->
     <div class="form-card">
         <h3 id="formTitle">➕ فاتورة مبيعات جديدة</h3>
         <div class="form-grid">
@@ -66,7 +65,6 @@
         <button onclick="cancelEdit()" id="cancelEditBtn" style="display:none;background:#e67e22;margin-top:10px;">❌ إلغاء التعديل</button>
     </div>
     
-    <!-- إضافة منتج -->
     <div class="form-card">
         <h3>➕ إضافة منتج</h3>
         <div class="form-grid">
@@ -76,31 +74,26 @@
             <div class="form-group"><label>🔢 الكمية</label><input type="number" id="quantity" value="1" min="1"></div>
             <div class="form-group"><label>💰 سعر البيع</label><input type="number" id="salePrice" step="0.01"></div>
         </div>
-        <div style="margin-top:10px;font-size:14px;">
-            <span id="stockDisplay">📊 المخزون: <span class="stock-good">0</span></span>
-        </div>
+        <div style="margin-top:10px;font-size:14px;"><span id="stockDisplay">📊 المخزون: <span class="stock-good">0</span></span></div>
         <button onclick="addToCart()" style="margin-top:15px;background:#667eea;color:white;"><i class="fas fa-plus"></i> إضافة للسلة</button>
     </div>
     
-    <!-- سلة المبيعات -->
     <h3>🛒 سلة المبيعات <span id="cartCount">(0)</span></h3>
     <div id="cart" style="max-height:250px;overflow-y:auto;margin-bottom:15px;border:2px dashed #e9ecef;border-radius:12px;padding:10px;"></div>
-    <div style="margin:15px 0;padding:15px;background:#f8f9fa;border-radius:12px;display:flex;flex-wrap:wrap;gap:25px;justify-content:space-between;">
-        <div><strong>الإجمالي:</strong> <span id="cartTotal" style="font-size:22px;color:#27ae60;">0.00</span> د.ع</div>
+    <div style="margin:15px 0;padding:15px;background:#f8f9fa;border-radius:12px;">
+        <strong>الإجمالي: <span id="cartTotal" style="font-size:22px;color:#27ae60;">0.00</span> د.ع</strong>
     </div>
     
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
-        <button onclick="saveSale()" class="btn-success"><i class="fas fa-save"></i> حفظ الفاتورة</button>
+        <button onclick="saveSale()" class="btn-success"><i class="fas fa-save"></i> حفظ</button>
         <button onclick="exportExcel()" class="btn-info"><i class="fas fa-file-excel"></i> تصدير Excel</button>
     </div>
     
-    <!-- بحث -->
     <div class="filter-bar">
         <input type="text" id="searchInput" placeholder="🔍 بحث...">
         <select id="paymentFilter"><option value="all">الكل</option><option value="نقدي">نقدي</option><option value="أجل">أجل</option></select>
     </div>
     
-    <!-- سجل المبيعات -->
     <h3>📋 سجل المبيعات</h3>
     <div class="table-wrapper">
         <table>
@@ -131,14 +124,10 @@
         else { loadProducts(); loadCustomers(); loadSales(); }
     });
     
-    // ===== جلب المنتجات من المخزن =====
     async function loadProducts() {
-        console.log('جاري جلب المنتجات...');
         const snapshot = await db.collection('inventory').get();
         allProducts = [];
         snapshot.forEach(d => allProducts.push({ id: d.id, ...d.data() }));
-        console.log('تم جلب المنتجات:', allProducts.length);
-        
         const select = document.getElementById('productSelect');
         select.innerHTML = '<option value="">-- اختر منتج --</option>';
         allProducts.forEach(p => {
@@ -153,9 +142,7 @@
         };
     }
     
-    // ===== جلب العملاء =====
     async function loadCustomers() {
-        console.log('جاري جلب العملاء...');
         const snapshot = await db.collection('customers').get();
         allCustomers = [];
         let html = '<option value="">-- اختر عميل --</option>';
@@ -164,10 +151,8 @@
             html += `<option value="${d.id}">${d.data().customerName || d.data().name}</option>`;
         });
         document.getElementById('customerId').innerHTML = html;
-        console.log('تم جلب العملاء:', allCustomers.length);
     }
     
-    // ===== إضافة للسلة =====
     window.addToCart = () => {
         const productId = document.getElementById('productSelect').value;
         const product = allProducts.find(p => p.id === productId);
@@ -228,7 +213,6 @@
     window.removeFromCart = (idx) => { cart.splice(idx, 1); renderCart(); };
     window.clearCart = () => { if(confirm('تفريغ السلة؟')) { cart = []; renderCart(); } };
     
-    // ===== حفظ الفاتورة =====
     window.saveSale = async () => {
         const customerId = document.getElementById('customerId').value;
         const customer = allCustomers.find(c => c.id === customerId);
@@ -268,55 +252,6 @@
         } catch (error) { alert('❌ خطأ: ' + error.message); }
     };
     
-    // ===== تحميل المبيعات =====
-    async function loadSales() {
-        console.log('جاري جلب المبيعات...');
-        const snapshot = await db.collection('sales').orderBy('timestamp', 'desc').get();
-        allSales = [];
-        snapshot.forEach(d => allSales.push({ id: d.id, ...d.data() }));
-        console.log('تم جلب المبيعات:', allSales.length);
-        
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const paymentFilter = document.getElementById('paymentFilter').value;
-        let filtered = allSales;
-        if (search) filtered = filtered.filter(s => 
-            (s.invoiceNumber || '').toLowerCase().includes(search) || 
-            (s.customerName || '').toLowerCase().includes(search)
-        );
-        if (paymentFilter !== 'all') filtered = filtered.filter(s => s.paymentMethod === paymentFilter);
-        
-        const tbody = document.getElementById('salesBody');
-        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7">لا توجد مبيعات</td></tr>'; return; }
-        let html = '';
-        filtered.forEach((s, idx) => {
-            const statusClass = s.paymentMethod === 'نقدي' ? 'badge-success' : 'badge-warning';
-            html += `<tr>
-                <td>${idx + 1}</td>
-                <td>${s.date || '-'}</td>
-                <td>${s.invoiceNumber || '-'}</td>
-                <td><strong>${s.customerName || '-'}</strong></td>
-                <td>${(s.total || 0).toFixed(2)}</td>
-                <td><span class="badge ${statusClass}">${s.paymentMethod || '-'}</span></td>
-                <td>
-                    <button class="btn-sm btn-info" onclick="showDetails('${s.id}')"><i class="fas fa-eye"></i></button>
-                    <button class="btn-sm btn-warning" onclick="editInvoice('${s.id}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn-sm btn-danger" onclick="deleteInvoice('${s.id}')"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-    }
-    
-    // ===== عرض التفاصيل =====
-    window.showDetails = (id) => {
-        const invoice = allSales.find(s => s.id === id);
-        if (!invoice) return;
-        let items = '';
-        invoice.items.forEach(i => items += `${i.name} × ${i.quantity} = ${i.total.toFixed(2)} د.ع\n`);
-        alert(`📄 تفاصيل الفاتورة\n\nرقم: ${invoice.invoiceNumber}\nالتاريخ: ${invoice.date}\nالعميل: ${invoice.customerName}\nطريقة الدفع: ${invoice.paymentMethod}\n\nالمنتجات:\n${items}\nالإجمالي: ${invoice.total.toFixed(2)} د.ع`);
-    };
-    
-    // ===== تعديل الفاتورة =====
     window.editInvoice = (id) => {
         const invoice = allSales.find(s => s.id === id);
         if (!invoice) return;
@@ -342,7 +277,6 @@
         document.getElementById('invoiceDate').value = '';
     };
     
-    // ===== حذف الفاتورة =====
     window.deleteInvoice = async (id) => {
         if (!confirm('⚠️ هل أنت متأكد من حذف هذه الفاتورة؟')) return;
         const invoice = allSales.find(s => s.id === id);
@@ -366,7 +300,45 @@
         } catch (error) { alert('❌ خطأ: ' + error.message); }
     };
     
-    // ===== تصدير Excel =====
+    async function loadSales() {
+        const snapshot = await db.collection('sales').orderBy('timestamp', 'desc').get();
+        allSales = [];
+        snapshot.forEach(d => allSales.push({ id: d.id, ...d.data() }));
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const paymentFilter = document.getElementById('paymentFilter').value;
+        let filtered = allSales;
+        if (search) filtered = filtered.filter(s => (s.invoiceNumber || '').toLowerCase().includes(search) || (s.customerName || '').toLowerCase().includes(search));
+        if (paymentFilter !== 'all') filtered = filtered.filter(s => s.paymentMethod === paymentFilter);
+        const tbody = document.getElementById('salesBody');
+        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7">لا توجد مبيعات</td></tr>'; return; }
+        let html = '';
+        filtered.forEach((s, idx) => {
+            const statusClass = s.paymentMethod === 'نقدي' ? 'badge-success' : 'badge-warning';
+            html += `<tr>
+                <td>${idx + 1}</td>
+                <td>${s.date || '-'}</td>
+                <td>${s.invoiceNumber || '-'}</td>
+                <td><strong>${s.customerName || '-'}</strong></td>
+                <td>${(s.total || 0).toFixed(2)}</td>
+                <td><span class="badge ${statusClass}">${s.paymentMethod || '-'}</span></td>
+                <td>
+                    <button class="btn-sm btn-info" onclick="showDetails('${s.id}')"><i class="fas fa-eye"></i></button>
+                    <button class="btn-sm btn-warning" onclick="editInvoice('${s.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn-sm btn-danger" onclick="deleteInvoice('${s.id}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+    
+    window.showDetails = (id) => {
+        const invoice = allSales.find(s => s.id === id);
+        if (!invoice) return;
+        let items = '';
+        invoice.items.forEach(i => items += `${i.name} × ${i.quantity} = ${i.total.toFixed(2)} د.ع\n`);
+        alert(`📄 تفاصيل الفاتورة\n\nرقم: ${invoice.invoiceNumber}\nالتاريخ: ${invoice.date}\nالعميل: ${invoice.customerName}\nطريقة الدفع: ${invoice.paymentMethod}\n\nالمنتجات:\n${items}\nالإجمالي: ${invoice.total.toFixed(2)} د.ع`);
+    };
+    
     window.exportExcel = () => {
         if (allSales.length === 0) return alert('لا توجد بيانات للتصدير');
         let csv = 'رقم الفاتورة,التاريخ,العميل,طريقة الدفع,الإجمالي,المنتجات\n';
@@ -382,7 +354,6 @@
         alert('✅ تم تصدير الملف بنجاح');
     };
     
-    // ===== البحث =====
     document.getElementById('searchInput').addEventListener('input', loadSales);
     document.getElementById('paymentFilter').addEventListener('change', loadSales);
 </script>
