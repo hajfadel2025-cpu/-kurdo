@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المشتريات - نظام المخازن المتكامل</title>
+    <title>المشتريات - نظام المخازن</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -36,21 +36,18 @@
         .btn-warning{background:#e67e22}
         .btn-sm{padding:5px 10px;font-size:12px}
         .btn-info{background:#3498db}
-        .btn-success{background:#2ecc71}
         
         .badge{padding:3px 10px;border-radius:12px;font-size:10px;display:inline-block}
         .badge-green{background:#d4edda;color:#155724}
         .badge-red{background:#f8d7da;color:#721c24}
         .badge-orange{background:#ffeaa7;color:#856404}
         
-        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:1000}
-        .modal-content{background:white;border-radius:20px;width:90%;max-width:900px;max-height:85vh;overflow-y:auto;padding:25px}
-        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #2ecc71;padding-bottom:10px}
-        .close-modal{cursor:pointer;font-size:24px;color:#999}
-        .close-modal:hover{color:#e74c3c}
-        
         .status-paid{background:#d4edda;color:#155724;padding:3px 10px;border-radius:12px}
         .status-credit{background:#ffeaa7;color:#856404;padding:3px 10px;border-radius:12px}
+        
+        .stock-info{font-size:12px;color:#666;margin-right:10px}
+        .stock-warning{color:#e74c3c;font-weight:bold}
+        .stock-good{color:#27ae60;font-weight:bold}
         
         @media(max-width:768px){th,td{font-size:11px;padding:6px}}
     </style>
@@ -59,7 +56,6 @@
 <div class="container">
     <h2><i class="fas fa-truck"></i> المشتريات - فواتير الشراء</h2>
     
-    <!-- نموذج فاتورة شراء جديدة -->
     <div class="form-card">
         <h3 id="formTitle">➕ فاتورة شراء جديدة</h3>
         <div class="form-grid">
@@ -79,7 +75,6 @@
         <input type="hidden" id="editInvoiceId">
     </div>
     
-    <!-- إضافة منتج -->
     <div class="form-card">
         <h3>➕ إضافة منتج للفاتورة</h3>
         <div class="form-grid">
@@ -88,12 +83,14 @@
             </div>
             <div class="form-group"><label>🔢 الكمية</label><input type="number" id="quantity" value="1" min="1"></div>
             <div class="form-group"><label>💰 سعر الشراء</label><input type="number" id="purchasePrice" step="0.01"></div>
-            <div class="form-group"><label>🏷️ الخصم</label><input type="number" id="discount" value="0" step="0.01" placeholder="خصم"></div>
+            <div class="form-group"><label>🏷️ الخصم</label><input type="number" id="discount" value="0" step="0.01" placeholder="خصم %"></div>
+        </div>
+        <div style="margin-top:10px;font-size:14px;color:#666;">
+            <span id="stockDisplay">📊 المخزون الحالي: 0</span>
         </div>
         <button onclick="addToCart()" style="margin-top:15px;"><i class="fas fa-plus"></i> إضافة للسلة</button>
     </div>
     
-    <!-- سلة المشتريات -->
     <h3>🛒 سلة المشتريات</h3>
     <div id="cart" style="max-height:250px;overflow-y:auto;margin-bottom:15px;border:1px solid #eee;border-radius:10px;padding:10px;"></div>
     <div style="margin:15px 0;padding:10px;background:#f0f0f0;border-radius:10px;">
@@ -108,14 +105,12 @@
         <button onclick="cancelEdit()" id="cancelEditBtn" style="display:none;background:#e67e22;flex:1;">❌ إلغاء التعديل</button>
     </div>
     
-    <!-- بحث وتصفية -->
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="🔍 بحث برقم الفاتورة أو المورد...">
         <select id="paymentFilter"><option value="all">جميع طرق الدفع</option><option value="نقدي">نقدي</option><option value="أجل">أجل</option><option value="شبكة">شبكة</option></select>
         <button onclick="exportPurchases()" style="background:#3498db"><i class="fas fa-file-excel"></i> تصدير Excel</button>
     </div>
     
-    <!-- جدول المشتريات -->
     <h3>📋 سجل المشتريات</h3>
     <div class="table-wrapper">
         <table id="purchasesTable">
@@ -127,17 +122,6 @@
             </thead>
             <tbody id="purchasesBody"></tbody>
         </table>
-    </div>
-</div>
-
-<!-- نافذة تعديل الفاتورة -->
-<div id="editModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-edit"></i> تعديل فاتورة الشراء</h3>
-            <span class="close-modal" onclick="closeEditModal()">&times;</span>
-        </div>
-        <div id="editContent"></div>
     </div>
 </div>
 
@@ -172,41 +156,72 @@
         const select=document.getElementById('productSelect');
         select.innerHTML='<option value="">-- اختر منتج --</option>';
         allProducts.forEach(p=>{
-            select.innerHTML+=`<option value="${p.id}" data-price="${p.costPrice||0}">${p.itemName||p.name} (${p.quantity||0})</option>`;
+            const stock = p.quantity || 0;
+            select.innerHTML+=`<option value="${p.id}" data-price="${p.costPrice||0}" data-stock="${stock}">${p.itemName||p.name} (المتبقي: ${stock})</option>`;
         });
         document.getElementById('productSelect').onchange=function(){
-            document.getElementById('purchasePrice').value=this.options[this.selectedIndex]?.getAttribute('data-price')||0;
+            const price=this.options[this.selectedIndex]?.getAttribute('data-price')||0;
+            const stock=this.options[this.selectedIndex]?.getAttribute('data-stock')||0;
+            document.getElementById('purchasePrice').value=price;
+            document.getElementById('stockDisplay').innerHTML=`📊 المخزون الحالي: <span class="${stock<=5?'stock-warning':'stock-good'}">${stock}</span>`;
         };
     }
     
-    window.addToCart=()=>{
-        const productId=document.getElementById('productSelect').value;
-        const product=allProducts.find(p=>p.id===productId);
-        if(!product) return alert('اختر منتجاً');
-        const qty=parseInt(document.getElementById('quantity').value);
-        const price=parseFloat(document.getElementById('purchasePrice').value);
-        const discount=parseFloat(document.getElementById('discount').value)||0;
-        if(!qty||qty<=0) return alert('أدخل كمية صحيحة');
-        if(!price||price<=0) return alert('أدخل سعر شراء صحيح');
+    // ========== دالة الإضافة مع التحقق من الكمية ==========
+    window.addToCart = () => {
+        const productId = document.getElementById('productSelect').value;
+        const product = allProducts.find(p => p.id === productId);
+        if (!product) return alert('اختر منتجاً');
+        
+        const qty = parseInt(document.getElementById('quantity').value);
+        const price = parseFloat(document.getElementById('purchasePrice').value);
+        const discount = parseFloat(document.getElementById('discount').value) || 0;
+        
+        if (!qty || qty <= 0) return alert('أدخل كمية صحيحة');
+        if (!price || price <= 0) return alert('أدخل سعر شراء صحيح');
+        
+        // ===== التحقق من الكمية =====
+        const currentStock = product.quantity || 0;
+        const existingItem = cart.find(i => i.productId === productId);
+        const existingQty = existingItem ? existingItem.quantity : 0;
+        const totalQty = qty + existingQty;
+        
+        // إذا كانت الكمية المطلوبة أكبر من الموجودة
+        if (totalQty > currentStock) {
+            const confirmMsg = `⚠️ تنبيه:\n\nالكمية الموجودة في المخزن: ${currentStock}\nالكمية المطلوبة: ${totalQty}\nالزيادة: ${totalQty - currentStock}\n\nهل تريد المتابعة؟`;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+        }
+        // =================================
+        
         const total = price * qty;
-        const discAmount = total * (discount/100);
+        const discAmount = total * (discount / 100);
         const net = total - discAmount;
-        const existing=cart.find(i=>i.productId===productId);
-        if(existing){
-            const oldTotal = existing.price * existing.quantity;
-            const oldDisc = oldTotal * (existing.discount/100);
-            existing.quantity += qty;
-            existing.total = existing.price * existing.quantity;
-            existing.discount = discount;
-            existing.discAmount = existing.total * (discount/100);
-            existing.net = existing.total - existing.discAmount;
-        }else{
-            cart.push({productId, name:product.itemName||product.name, price, quantity:qty, total, discount, discAmount, net});
+        
+        if (existingItem) {
+            existingItem.quantity += qty;
+            existingItem.total = existingItem.price * existingItem.quantity;
+            existingItem.discount = discount;
+            existingItem.discAmount = existingItem.total * (discount / 100);
+            existingItem.net = existingItem.total - existingItem.discAmount;
+        } else {
+            cart.push({
+                productId,
+                name: product.itemName || product.name,
+                price,
+                quantity: qty,
+                total,
+                discount,
+                discAmount,
+                net
+            });
         }
         renderCart();
-        document.getElementById('quantity').value='1';
-        document.getElementById('discount').value='0';
+        document.getElementById('quantity').value = '1';
+        document.getElementById('discount').value = '0';
     };
+    // ==================================================
     
     function renderCart(){
         const container=document.getElementById('cart');
