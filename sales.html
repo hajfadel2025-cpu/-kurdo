@@ -484,8 +484,179 @@
         alert('تم التصدير');
     };
 
-    document.getElementById('searchInput').addEventListener('input', loadSales);
+      document.getElementById('searchInput').addEventListener('input', loadSales);
     document.getElementById('paymentFilter').addEventListener('change', loadSales);
+
+    // ===== طباعة الفاتورة =====
+    window.printInvoice = () => {
+        if (cart.length === 0) return alert('لا توجد منتجات للطباعة');
+        const total = cart.reduce((s, i) => s + i.total, 0);
+        const discount = parseFloat(document.getElementById('discountPercent').value) || 0;
+        const discAmount = total * (discount / 100);
+        const netTotal = total - discAmount;
+        
+        document.getElementById('printInvoiceNum').innerText = document.getElementById('invoiceNumber').value || 'INV-' + Date.now();
+        document.getElementById('printDate').innerText = document.getElementById('invoiceDate').value || new Date().toLocaleDateString('ar-EG');
+        document.getElementById('printCustomer').innerText = document.getElementById('customerId').selectedOptions[0]?.text || '-';
+        document.getElementById('printPayment').innerText = document.getElementById('paymentMethod').value;
+        
+        let itemsHtml = '';
+        cart.forEach(item => {
+            itemsHtml += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.price.toFixed(2)}</td><td>${item.total.toFixed(2)}</td></tr>`;
+        });
+        document.getElementById('printItems').innerHTML = itemsHtml;
+        document.getElementById('printTotal').innerText = total.toFixed(2);
+        document.getElementById('printDiscount').innerText = discAmount.toFixed(2);
+        document.getElementById('printNet').innerText = netTotal.toFixed(2);
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html dir="rtl">
+            <head><title>فاتورة مبيعات</title>
+            <style>
+                body{font-family:'Cairo',sans-serif;padding:30px}
+                table{width:100%;border-collapse:collapse;margin:15px 0}
+                th,td{border:1px solid #ddd;padding:8px;text-align:center}
+                .header{text-align:center;margin-bottom:20px}
+                .total-row{font-weight:bold;background:#f0f0f0}
+            </style>
+            </head>
+            <body>
+                ${document.getElementById('printArea').innerHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        setTimeout(() => { printWindow.print(); }, 500);
+    };
+
+    // ===== مرتجع مبيعات =====
+    window.showReturnModal = () => {
+        updateReturnInvoices();
+        document.getElementById('returnModal').style.display = 'flex';
+    };
+    window.closeReturnModal = () => { document.getElementById('returnModal').style.display = 'none'; };
+    
+    async function updateReturnInvoices() {
+        const snapshot = await db.collection('sales').orderBy('timestamp', 'desc').get();
+        const select = document.getElementById('returnInvoiceId');
+        select.innerHTML = '<option value="">-- اختر فاتورة --</option>';
+        snapshot.forEach(d => {
+            const s = d.data();
+            select.innerHTML += `<option value="${d.id}">${s.invoiceNumber} - ${s.customerName} (${(s.netTotal || s.total || 0).toFixed(2)})</option>`;
+        });
+    }
+    
+    window.processReturn = async () => {
+        const invoiceId = document.getElementById('returnInvoiceId').value;
+        const reason = document.getElementById('returnReason').value.trim();
+        if (!invoiceId) return alert('اختر فاتورة');
+        const invoice = allSales.find(s => s.id === invoiceId);
+        if (!invoice) return alert('الفاتورة غير موجودة');
+        if (!confirm(`مرتجع فاتورة ${invoice.invoiceNumber}؟`)) return;
+        try {
+            const batch = db.batch();
+            for (const item of invoice.items) {
+                const productRef = db.collection('inventory').doc(item.productId);
+                const docSnap = await productRef.get();
+                if (docSnap.exists) batch.update(productRef, { quantity: (docSnap.data().quantity || 0) + item.quantity });
+            }
+            if (invoice.paymentMethod === 'أجل' && invoice.customerId) {
+                const custRef = db.collection('customers').doc(invoice.customerId);
+                const custSnap = await custRef.get();
+                if (custSnap.exists) batch.update(custRef, { totalDebt: (custSnap.data().totalDebt || 0) - (invoice.netTotal || 0) });
+            }
+            const returnRef = db.collection('returns').doc();
+            batch.set(returnRef, {
+                invoiceId, invoiceNumber: invoice.invoiceNumber,
+                customerId: invoice.customerId, customerName: invoice.customerName,
+                items: invoice.items, total: invoice.total, reason,
+                date: new Date().toISOString().split('T')[0], timestamp: new Date()
+            });
+            await batch.commit();
+            alert('✅ تم تنفيذ المرتجع بنجاح');
+            closeReturnModal();
+            document.getElementById('returnReason').value = '';
+            await loadSales();
+        } catch (error) { alert('❌ خطأ: ' + error.message); }
+    };
+
+    // ===== تحصيل دين =====
+    window.showPaymentModal = () => { document.getElementById('paymentModal').style.display = 'flex'; };
+    window.closePaymentModal = () => { document.getElementById('paymentModal').style.display = 'none'; };
+    window.processPayment = async () => {
+        const customerId = document.getElementById('paymentCustomerId').value;
+        const amount = parseFloat(document.getElementById('paymentAmount').value);
+        const note = document.getElementById('paymentNote').value.trim();
+        if (!customerId) return alert('اختر العميل');
+        if (!amount || amount <= 0) return alert('أدخل مبلغ صحيح');
+        try {
+            const custRef = db.collection('customers').doc(customerId);
+            const custSnap = await custRef.get();
+            const oldDebt = custSnap.data().totalDebt || 0;
+            if (amount > oldDebt) return alert(`⚠️ الدين المطلوب (${oldDebt.toFixed(2)}) أقل من المبلغ المدخل`);
+            await custRef.update({ totalDebt: oldDebt - amount });
+            await db.collection('payments').add({
+                customerId, customerName: custSnap.data().customerName || '',
+                amount, note, date: new Date().toISOString().split('T')[0],
+                timestamp: new Date()
+            });
+            alert('✅ تم تسجيل السداد بنجاح');
+            closePaymentModal();
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentNote').value = '';
+            await loadCustomers();
+            await loadSales();
+        } catch (error) { alert('❌ خطأ: ' + error.message); }
+    };
+
+    // ===== تقرير المبيعات =====
+    window.showReportModal = () => {
+        generateReport();
+        document.getElementById('reportModal').style.display = 'flex';
+    };
+    window.closeReportModal = () => { document.getElementById('reportModal').style.display = 'none'; };
+    
+    function generateReport() {
+        const today = new Date();
+        const todayStr = today.toDateString();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+        
+        let todayTotal = 0, monthTotal = 0, yearTotal = 0;
+        let todayCount = 0, monthCount = 0, yearCount = 0;
+        let debtTotal = 0;
+        
+        allSales.forEach(s => {
+            const d = new Date(s.date);
+            const amount = s.netTotal || s.total || 0;
+            if (d.toDateString() === todayStr) { todayTotal += amount; todayCount++; }
+            if (d.getMonth() === month && d.getFullYear() === year) { monthTotal += amount; monthCount++; }
+            if (d.getFullYear() === year) { yearTotal += amount; yearCount++; }
+            if (s.paymentMethod === 'أجل') debtTotal += amount;
+        });
+        
+        document.getElementById('reportContent').innerHTML = `
+            <div class="report-section">
+                <h4 style="color:#0c1445;margin-bottom:10px;">📊 ملخص المبيعات</h4>
+                <div class="report-item"><span>📅 مبيعات اليوم</span><span><strong>${todayCount}</strong> فاتورة - <strong>${todayTotal.toFixed(2)}</strong> د.ع</span></div>
+                <div class="report-item"><span>📅 مبيعات الشهر</span><span><strong>${monthCount}</strong> فاتورة - <strong>${monthTotal.toFixed(2)}</strong> د.ع</span></div>
+                <div class="report-item"><span>📅 مبيعات السنة</span><span><strong>${yearCount}</strong> فاتورة - <strong>${yearTotal.toFixed(2)}</strong> د.ع</span></div>
+                <div class="report-item" style="border-bottom:2px solid #0c1445;"><span>💰 إجمالي الديون</span><span style="color:#e74c3c;font-weight:bold;">${debtTotal.toFixed(2)} د.ع</span></div>
+                <div class="report-total">إجمالي المبيعات: ${(todayTotal + monthTotal + yearTotal).toFixed(2)} د.ع</div>
+            </div>
+            <div style="margin-top:15px;">
+                <h4 style="color:#0c1445;margin-bottom:10px;">📋 آخر الفواتير</h4>
+                ${allSales.slice(0, 5).map(s => `
+                    <div class="report-item">
+                        <span>${s.invoiceNumber || '-'}</span>
+                        <span>${s.customerName || '-'}</span>
+                        <span style="font-weight:bold;color:#0c1445;">${(s.netTotal || s.total || 0).toFixed(2)} د.ع</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
 </script>
 <!-- ===== نافذة المرتجع ===== -->
 <div id="returnModal" class="modal">
