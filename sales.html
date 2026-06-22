@@ -25,6 +25,9 @@
         .badge{padding:3px 10px;border-radius:12px;font-size:11px}
         .badge-success{background:#d4edda;color:#155724}
         .badge-warning{background:#ffeaa7;color:#856404}
+        .stock-info{font-size:12px;color:#666;margin-right:10px}
+        .stock-warning{color:#e74c3c;font-weight:bold}
+        .stock-good{color:#27ae60;font-weight:bold}
         @media(max-width:768px){th,td{font-size:11px;padding:6px}}
     </style>
 </head>
@@ -54,6 +57,9 @@
             </div>
             <div class="form-group"><label>🔢 الكمية</label><input type="number" id="quantity" value="1" min="1"></div>
             <div class="form-group"><label>💰 سعر البيع</label><input type="number" id="salePrice" step="0.01"></div>
+        </div>
+        <div style="margin-top:10px;font-size:14px;color:#666;">
+            <span id="stockDisplay">📊 المخزون الحالي: 0</span>
         </div>
         <button onclick="addToCart()" style="margin-top:15px;"><i class="fas fa-plus"></i> إضافة للسلة</button>
     </div>
@@ -88,97 +94,180 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    let allProducts=[], allCustomers=[], cart=[];
+    let allProducts = [], allCustomers = [], cart = [];
     
     auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"; else {loadProducts(); loadCustomers(); loadSales();}});
     
     async function loadProducts() {
         const snapshot = await db.collection('inventory').get();
-        allProducts=[]; snapshot.forEach(d=>allProducts.push({id:d.id,...d.data()}));
-        const select=document.getElementById('productSelect');
-        select.innerHTML='<option value="">-- اختر منتج --</option>';
-        allProducts.forEach(p=>select.innerHTML+=`<option value="${p.id}" data-price="${p.sellingPrice||0}" data-stock="${p.quantity||0}">${p.itemName||p.name} (المتبقي: ${p.quantity||0})</option>`);
-        document.getElementById('productSelect').onchange=function(){document.getElementById('salePrice').value=this.options[this.selectedIndex]?.getAttribute('data-price')||0;};
+        allProducts = [];
+        snapshot.forEach(d => allProducts.push({ id: d.id, ...d.data() }));
+        const select = document.getElementById('productSelect');
+        select.innerHTML = '<option value="">-- اختر منتج --</option>';
+        allProducts.forEach(p => {
+            const stock = p.quantity || 0;
+            const stockText = stock <= 0 ? '🔴 نفذت' : stock <= 5 ? '🟡 منخفض' : '🟢 متوفر';
+            select.innerHTML += `<option value="${p.id}" data-price="${p.sellingPrice || 0}" data-stock="${stock}">${p.itemName || p.name} (${stockText} - ${stock})</option>`;
+        });
+        document.getElementById('productSelect').onchange = function() {
+            const price = this.options[this.selectedIndex]?.getAttribute('data-price') || 0;
+            const stock = this.options[this.selectedIndex]?.getAttribute('data-stock') || 0;
+            document.getElementById('salePrice').value = price;
+            document.getElementById('stockDisplay').innerHTML = `📊 المخزون الحالي: <span class="${stock <= 0 ? 'stock-warning' : 'stock-good'}">${stock}</span>`;
+        };
     }
     
     async function loadCustomers() {
-        const snapshot=await db.collection('customers').get();
-        allCustomers=[]; let html='<option value="">-- اختر عميل --</option>';
-        snapshot.forEach(d=>{allCustomers.push({id:d.id,...d.data()}); html+=`<option value="${d.id}">${d.data().customerName||d.data().name}</option>`;});
-        document.getElementById('customerId').innerHTML=html;
+        const snapshot = await db.collection('customers').get();
+        allCustomers = [];
+        let html = '<option value="">-- اختر عميل --</option>';
+        snapshot.forEach(d => { allCustomers.push({ id: d.id, ...d.data() }); html += `<option value="${d.id}">${d.data().customerName || d.data().name}</option>`; });
+        document.getElementById('customerId').innerHTML = html;
     }
     
-    window.addToCart=()=>{
-        const productId=document.getElementById('productSelect').value;
-        const product=allProducts.find(p=>p.id===productId);
-        if(!product) return alert('اختر منتجاً');
-        const qty=parseInt(document.getElementById('quantity').value);
-        const price=parseFloat(document.getElementById('salePrice').value);
-        if(!qty||qty<=0) return alert('أدخل كمية صحيحة');
-        if(qty>(product.quantity||0)) return alert(`الكمية غير متوفرة، المتوفر: ${product.quantity}`);
-        const existing=cart.find(i=>i.productId===productId);
-        if(existing){existing.quantity+=qty; existing.total=existing.price*existing.quantity;}
-        else cart.push({productId,name:product.itemName||product.name,price,quantity:qty,total:price*qty});
+    // ========== دالة الإضافة مع التحقق من الكمية ==========
+    window.addToCart = () => {
+        const productId = document.getElementById('productSelect').value;
+        const product = allProducts.find(p => p.id === productId);
+        if (!product) return alert('اختر منتجاً');
+        
+        const qty = parseInt(document.getElementById('quantity').value);
+        const price = parseFloat(document.getElementById('salePrice').value);
+        
+        if (!qty || qty <= 0) return alert('أدخل كمية صحيحة');
+        if (!price || price <= 0) return alert('أدخل سعر بيع صحيح');
+        
+        // ===== التحقق من الكمية المتوفرة =====
+        const currentStock = product.quantity || 0;
+        
+        // إذا كان المنتج غير متوفر (الكمية = 0)
+        if (currentStock === 0) {
+            alert(`❌ المنتج "${product.itemName || product.name}" غير متوفر في المخزن حالياً!`);
+            return;
+        }
+        
+        // إذا كانت الكمية المطلوبة أكبر من المتوفرة
+        if (qty > currentStock) {
+            alert(`⚠️ الكمية غير متوفرة!\n\nالمنتج: ${product.itemName || product.name}\nالمتوفر: ${currentStock}\nالمطلوب: ${qty}`);
+            return;
+        }
+        // =======================================
+        
+        const existing = cart.find(i => i.productId === productId);
+        if (existing) {
+            // التحقق من الكمية الإجمالية بعد الإضافة
+            const totalQty = existing.quantity + qty;
+            if (totalQty > currentStock) {
+                alert(`⚠️ الكمية الإجمالية (${totalQty}) أكبر من المتوفرة (${currentStock})`);
+                return;
+            }
+            existing.quantity += qty;
+            existing.total = existing.price * existing.quantity;
+        } else {
+            cart.push({
+                productId,
+                name: product.itemName || product.name,
+                price: price,
+                quantity: qty,
+                total: price * qty
+            });
+        }
         renderCart();
-        document.getElementById('quantity').value='1';
+        document.getElementById('quantity').value = '1';
+    };
+    // ==================================================
+    
+    function renderCart() {
+        const container = document.getElementById('cart');
+        let total = 0;
+        if (cart.length === 0) { container.innerHTML = '<p style="text-align:center;color:#999;">السلة فارغة</p>'; document.getElementById('cartTotal').innerText = '0.00'; return; }
+        let html = '';
+        cart.forEach((item, idx) => {
+            total += item.total;
+            html += `<div class="cart-item">
+                <div><strong>${item.name}</strong><br>${item.price} د.ع</div>
+                <div>الكمية: <button onclick="changeQty(${idx}, -1)">-</button> ${item.quantity} <button onclick="changeQty(${idx}, 1)">+</button></div>
+                <div>${item.total.toFixed(2)} د.ع</div>
+                <div><button onclick="removeFromCart(${idx})" style="background:#e74c3c;padding:3px 8px;border-radius:5px;color:white;">✖</button></div>
+            </div>`;
+        });
+        container.innerHTML = html;
+        document.getElementById('cartTotal').innerText = total.toFixed(2);
+    }
+    
+    window.changeQty = (idx, delta) => {
+        const newQty = cart[idx].quantity + delta;
+        if (newQty < 1) { removeFromCart(idx); return; }
+        // التحقق من الكمية عند تغيير الكمية
+        const product = allProducts.find(p => p.id === cart[idx].productId);
+        if (product && newQty > (product.quantity || 0)) {
+            alert(`⚠️ الكمية غير متوفرة، المتوفر: ${product.quantity}`);
+            return;
+        }
+        cart[idx].quantity = newQty;
+        cart[idx].total = cart[idx].price * newQty;
+        renderCart();
     };
     
-    function renderCart(){
-        const container=document.getElementById('cart');
-        let total=0;
-        if(cart.length===0){container.innerHTML='<p style="text-align:center;color:#999;">السلة فارغة</p>'; document.getElementById('cartTotal').innerText='0.00'; return;}
-        let html='';
-        cart.forEach((item,idx)=>{total+=item.total; html+=`<div class="cart-item"><div><strong>${item.name}</strong><br>${item.price} د.ع</div><div>الكمية: ${item.quantity}</div><div>${item.total.toFixed(2)} د.ع</div><div><button onclick="removeFromCart(${idx})" style="background:#e74c3c;padding:3px 8px;border-radius:5px;color:white;">✖</button></div></div>`;});
-        container.innerHTML=html;
-        document.getElementById('cartTotal').innerText=total.toFixed(2);
-    }
+    window.removeFromCart = (idx) => { cart.splice(idx, 1); renderCart(); };
     
-    window.removeFromCart=(idx)=>{cart.splice(idx,1); renderCart();};
-    
-    window.saveSale=async()=>{
-        const customerId=document.getElementById('customerId').value;
-        const customer=allCustomers.find(c=>c.id===customerId);
-        if(!customerId) return alert('اختر العميل');
-        if(cart.length===0) return alert('لا توجد منتجات');
-        const total=cart.reduce((s,i)=>s+i.total,0);
-        try{
-            const batch=db.batch();
-            for(const item of cart){
-                const productRef=db.collection('inventory').doc(item.productId);
-                const docSnap=await productRef.get();
-                const oldQty=docSnap.data().quantity||0;
-                batch.update(productRef,{quantity:oldQty-item.quantity});
+    window.saveSale = async () => {
+        const customerId = document.getElementById('customerId').value;
+        const customer = allCustomers.find(c => c.id === customerId);
+        if (!customerId) return alert('اختر العميل');
+        if (cart.length === 0) return alert('لا توجد منتجات');
+        const total = cart.reduce((s, i) => s + i.total, 0);
+        try {
+            const batch = db.batch();
+            for (const item of cart) {
+                const productRef = db.collection('inventory').doc(item.productId);
+                const docSnap = await productRef.get();
+                const oldQty = docSnap.data().quantity || 0;
+                if (oldQty < item.quantity) {
+                    throw new Error(`المنتج ${item.name} غير متوفر بالكمية المطلوبة`);
+                }
+                batch.update(productRef, { quantity: oldQty - item.quantity });
             }
-            if(document.getElementById('paymentMethod').value==='أجل' && customer){
-                const custRef=db.collection('customers').doc(customerId);
-                const custSnap=await custRef.get();
-                batch.update(custRef,{totalDebt:(custSnap.data().totalDebt||0)+total});
+            if (document.getElementById('paymentMethod').value === 'أجل' && customer) {
+                const custRef = db.collection('customers').doc(customerId);
+                const custSnap = await custRef.get();
+                batch.update(custRef, { totalDebt: (custSnap.data().totalDebt || 0) + total });
             }
-            const saleRef=db.collection('sales').doc();
-            batch.set(saleRef,{
-                customerId, customerName:customer?.customerName||customer?.name||'',
-                invoiceNumber:document.getElementById('invoiceNumber').value||'INV-'+Date.now(),
-                date:document.getElementById('invoiceDate').value||new Date().toISOString().split('T')[0],
-                paymentMethod:document.getElementById('paymentMethod').value,
-                items:cart, total, timestamp:new Date()
+            const saleRef = db.collection('sales').doc();
+            batch.set(saleRef, {
+                customerId, customerName: customer?.customerName || customer?.name || '',
+                invoiceNumber: document.getElementById('invoiceNumber').value || 'INV-' + Date.now(),
+                date: document.getElementById('invoiceDate').value || new Date().toISOString().split('T')[0],
+                paymentMethod: document.getElementById('paymentMethod').value,
+                items: cart, total, timestamp: new Date()
             });
             await batch.commit();
             alert('✅ تم حفظ فاتورة البيع');
-            cart=[]; renderCart();
-            document.getElementById('customerId').value='';
-            document.getElementById('invoiceNumber').value='';
-            document.getElementById('invoiceDate').value='';
-            await loadProducts(); await loadSales();
-        }catch(error){alert('❌ خطأ: '+error.message);}
+            cart = []; renderCart();
+            document.getElementById('customerId').value = '';
+            document.getElementById('invoiceNumber').value = '';
+            document.getElementById('invoiceDate').value = '';
+            await loadProducts();
+            await loadSales();
+        } catch (error) { alert('❌ خطأ: ' + error.message); }
     };
     
-    async function loadSales(){
-        const snapshot=await db.collection('sales').orderBy('timestamp','desc').get();
-        const tbody=document.getElementById('salesBody');
-        if(snapshot.empty){tbody.innerHTML='<tr><td colspan="5">لا توجد مبيعات</td></tr>'; return;}
-        let html='';
-        snapshot.forEach(doc=>{const s=doc.data(); html+=`<tr><td>${s.date||'-'}</td><td>${s.invoiceNumber||'-'}</td><td>${s.customerName||'-'}</td><td>${(s.total||0).toFixed(2)} د.ع</td><td><span class="badge ${s.paymentMethod==='نقدي'?'badge-success':'badge-warning'}">${s.paymentMethod||'-'}</span></td></tr>`;});
-        tbody.innerHTML=html;
+    async function loadSales() {
+        const snapshot = await db.collection('sales').orderBy('timestamp', 'desc').get();
+        const tbody = document.getElementById('salesBody');
+        if (snapshot.empty) { tbody.innerHTML = '<tr><td colspan="5">لا توجد مبيعات</td></tr>'; return; }
+        let html = '';
+        snapshot.forEach(doc => {
+            const s = doc.data();
+            html += `<tr>
+                <td>${s.date || '-'}</td>
+                <td>${s.invoiceNumber || '-'}</td>
+                <td>${s.customerName || '-'}</td>
+                <td>${(s.total || 0).toFixed(2)} د.ع</td>
+                <td><span class="badge ${s.paymentMethod === 'نقدي' ? 'badge-success' : 'badge-warning'}">${s.paymentMethod || '-'}</span></td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
     }
 </script>
 </body>
