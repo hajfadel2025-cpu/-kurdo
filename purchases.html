@@ -275,6 +275,7 @@
         const invoiceNumber=document.getElementById('invoiceNumber').value.trim();
         const invoiceDate=document.getElementById('invoiceDate').value||new Date().toISOString().split('T')[0];
         const paymentMethod=document.getElementById('paymentMethod').value;
+     currency: document.getElementById('currency').value,
         if(!supplierId) return alert('اختر المورد');
         if(cart.length===0) return alert('لا توجد منتجات');
         const total=cart.reduce((s,i)=>s+i.total,0);
