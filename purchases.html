@@ -25,7 +25,7 @@
         .cart-item{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;flex-wrap:wrap;gap:10px;align-items:center}
         
         .table-wrapper{overflow-x:auto;max-height:500px;overflow-y:auto;border-radius:10px;border:1px solid #ddd}
-        table{width:100%;border-collapse:collapse;font-size:13px;min-width:1000px}
+        table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
         th,td{border:1px solid #ddd;padding:10px;text-align:center;white-space:nowrap}
         th{background:#1e3c72;color:white;position:sticky;top:0;z-index:10}
         tr:hover{background:#f5f5f5}
@@ -49,6 +49,10 @@
         .stock-warning{color:#e74c3c;font-weight:bold}
         .stock-good{color:#27ae60;font-weight:bold}
         
+        .currency-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold}
+        .currency-iqd{background:#d4edda;color:#155724}
+        .currency-usd{background:#cce5ff;color:#004085}
+        
         @media(max-width:768px){th,td{font-size:11px;padding:6px}}
     </style>
 </head>
@@ -65,16 +69,16 @@
             <div class="form-group"><label>📞 رقم الفاتورة</label><input type="text" id="invoiceNumber" placeholder="رقم الفاتورة"></div>
             <div class="form-group"><label>📅 التاريخ</label><input type="date" id="invoiceDate"></div>
             <div class="form-group"><label>💳 طريقة الدفع</label>
-              <div class="form-group"><label>💰 العملة</label>
-    <select id="currency">
-        <option value="دينار">دينار عراقي</option>
-        <option value="دولار">دولار أمريكي</option>
-    </select>
-</div>
                 <select id="paymentMethod">
                     <option value="نقدي">نقدي</option>
                     <option value="أجل">أجل</option>
                     <option value="شبكة">شبكة</option>
+                </select>
+            </div>
+            <div class="form-group"><label>💰 العملة</label>
+                <select id="currency">
+                    <option value="دينار">دينار عراقي</option>
+                    <option value="دولار">دولار أمريكي</option>
                 </select>
             </div>
         </div>
@@ -86,6 +90,9 @@
         <div class="form-grid">
             <div class="form-group"><label>📦 المنتج</label>
                 <select id="productSelect"><option value="">-- اختر منتج --</option></select>
+            </div>
+            <div class="form-group"><label>🏪 المخزن</label>
+                <select id="warehouseSelect"><option value="">-- اختر مخزن --</option></select>
             </div>
             <div class="form-group"><label>🔢 الكمية</label><input type="number" id="quantity" value="1" min="1"></div>
             <div class="form-group"><label>💰 سعر الشراء</label><input type="number" id="purchasePrice" step="0.01"></div>
@@ -123,7 +130,7 @@
             <thead>
                 <tr>
                     <th>#</th><th>التاريخ</th><th>رقم الفاتورة</th><th>المورد</th>
-                    <th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>طريقة الدفع</th><th>إجراءات</th>
+                    <th>العملة</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>طريقة الدفع</th><th>إجراءات</th>
                 </tr>
             </thead>
             <tbody id="purchasesBody"></tbody>
@@ -144,40 +151,95 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    let allProducts = [], allSuppliers = [], allPurchases = [];
+    let allProducts = [], allSuppliers = [], allPurchases = [], allWarehouses = [];
     let cart = [], editingId = null;
     
-    auth.onAuthStateChanged(user=>{if(!user)window.location.href="login.html"; else {loadSuppliers(); loadProducts(); loadPurchases();}});
+    auth.onAuthStateChanged(user=>{
+        if(!user) window.location.href="login.html"; 
+        else {
+            loadSuppliers(); 
+            loadProducts(); 
+            loadWarehouses();
+            loadPurchases();
+        }
+    });
     
+    // ===== تحميل الموردين =====
     async function loadSuppliers(){
         const snapshot=await db.collection('suppliers').get();
-        allSuppliers=[]; let html='<option value="">-- اختر مورد --</option>';
-        snapshot.forEach(d=>{allSuppliers.push({id:d.id,...d.data()}); html+=`<option value="${d.id}">${d.data().name}</option>`;});
+        allSuppliers=[]; 
+        let html='<option value="">-- اختر مورد --</option>';
+        snapshot.forEach(d=>{
+            allSuppliers.push({id:d.id,...d.data()}); 
+            html+=`<option value="${d.id}">${d.data().name}</option>`;
+        });
         document.getElementById('supplierId').innerHTML=html;
     }
     
+    // ===== تحميل المنتجات =====
     async function loadProducts(){
         const snapshot=await db.collection('inventory').get();
-        allProducts=[]; snapshot.forEach(d=>allProducts.push({id:d.id,...d.data()}));
+        allProducts=[]; 
+        snapshot.forEach(d=>allProducts.push({id:d.id,...d.data()}));
         const select=document.getElementById('productSelect');
         select.innerHTML='<option value="">-- اختر منتج --</option>';
         allProducts.forEach(p=>{
-            const stock = p.quantity || 0;
-            select.innerHTML+=`<option value="${p.id}" data-price="${p.costPrice||0}" data-stock="${stock}">${p.itemName||p.name} (المتبقي: ${stock})</option>`;
+            // حساب إجمالي الكمية من جميع المخازن
+            let totalStock = 0;
+            if (p.warehouses) {
+                totalStock = Object.values(p.warehouses).reduce((sum, qty) => sum + qty, 0);
+            } else {
+                totalStock = p.quantity || 0;
+            }
+            select.innerHTML+=`<option value="${p.id}" data-price="${p.costPrice||0}" data-stock="${totalStock}">${p.itemName||p.name} (المتبقي: ${totalStock})</option>`;
         });
         document.getElementById('productSelect').onchange=function(){
             const price=this.options[this.selectedIndex]?.getAttribute('data-price')||0;
             const stock=this.options[this.selectedIndex]?.getAttribute('data-stock')||0;
             document.getElementById('purchasePrice').value=price;
             document.getElementById('stockDisplay').innerHTML=`📊 المخزون الحالي: <span class="${stock<=5?'stock-warning':'stock-good'}">${stock}</span>`;
+            // تحديث المخازن المتاحة لهذا المنتج
+            updateWarehouseOptionsForProduct(this.value);
         };
     }
     
-    // ========== دالة الإضافة مع التحقق من الكمية ==========
+    // ===== تحميل المخازن =====
+    async function loadWarehouses(){
+        const snapshot=await db.collection('warehouses').get();
+        allWarehouses=[];
+        const select=document.getElementById('warehouseSelect');
+        select.innerHTML='<option value="">-- اختر مخزن --</option>';
+        snapshot.forEach(d=>{
+            const w=d.data();
+            if(w.status!=='غير نشط'){
+                allWarehouses.push({id:d.id,...w});
+                select.innerHTML+=`<option value="${d.id}">${w.name}</option>`;
+            }
+        });
+    }
+    
+    // ===== تحديث المخازن المتاحة للمنتج المختار =====
+    function updateWarehouseOptionsForProduct(productId){
+        const product = allProducts.find(p => p.id === productId);
+        const select = document.getElementById('warehouseSelect');
+        if (!product) {
+            select.innerHTML = '<option value="">-- اختر مخزن --</option>';
+            return;
+        }
+        // إعادة تعيين قائمة المخازن
+        select.innerHTML = '<option value="">-- اختر مخزن --</option>';
+        allWarehouses.forEach(w => {
+            select.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+        });
+    }
+    
+    // ===== دالة الإضافة مع التحقق من الكمية والمخزن =====
     window.addToCart = () => {
         const productId = document.getElementById('productSelect').value;
+        const warehouseId = document.getElementById('warehouseSelect').value;
         const product = allProducts.find(p => p.id === productId);
         if (!product) return alert('اختر منتجاً');
+        if (!warehouseId) return alert('اختر المخزن');
         
         const qty = parseInt(document.getElementById('quantity').value);
         const price = parseFloat(document.getElementById('purchasePrice').value);
@@ -186,24 +248,33 @@
         if (!qty || qty <= 0) return alert('أدخل كمية صحيحة');
         if (!price || price <= 0) return alert('أدخل سعر شراء صحيح');
         
-        // ===== التحقق من الكمية =====
-        const currentStock = product.quantity || 0;
-        const existingItem = cart.find(i => i.productId === productId);
+        // الحصول على الكمية من المخزن المحدد
+        let currentStock = 0;
+        if (product.warehouses && product.warehouses[warehouseId]) {
+            currentStock = product.warehouses[warehouseId];
+        } else {
+            currentStock = product.quantity || 0;
+        }
+        
+        const existingItem = cart.find(i => i.productId === productId && i.warehouseId === warehouseId);
         const existingQty = existingItem ? existingItem.quantity : 0;
         const totalQty = qty + existingQty;
         
         // إذا كانت الكمية المطلوبة أكبر من الموجودة
-        if (totalQty > currentStock) {
+        if (totalQty > currentStock && currentStock > 0) {
             const confirmMsg = `⚠️ تنبيه:\n\nالكمية الموجودة في المخزن: ${currentStock}\nالكمية المطلوبة: ${totalQty}\nالزيادة: ${totalQty - currentStock}\n\nهل تريد المتابعة؟`;
             if (!confirm(confirmMsg)) {
                 return;
             }
         }
-        // =================================
         
         const total = price * qty;
         const discAmount = total * (discount / 100);
         const net = total - discAmount;
+        
+        // جلب اسم المخزن
+        const warehouse = allWarehouses.find(w => w.id === warehouseId);
+        const warehouseName = warehouse ? warehouse.name : warehouseId;
         
         if (existingItem) {
             existingItem.quantity += qty;
@@ -214,6 +285,8 @@
         } else {
             cart.push({
                 productId,
+                warehouseId,
+                warehouseName: warehouseName,
                 name: product.itemName || product.name,
                 price,
                 quantity: qty,
@@ -227,22 +300,28 @@
         document.getElementById('quantity').value = '1';
         document.getElementById('discount').value = '0';
     };
-    // ==================================================
     
+    // ===== عرض السلة =====
     function renderCart(){
         const container=document.getElementById('cart');
         let total=0, totalDisc=0, netTotal=0;
-        if(cart.length===0){container.innerHTML='<p style="text-align:center;color:#999;">السلة فارغة</p>'; updateTotals(0,0,0); return;}
+        const currency = document.getElementById('currency').value === 'دولار' ? '$' : 'د.ع';
+        
+        if(cart.length===0){
+            container.innerHTML='<p style="text-align:center;color:#999;">السلة فارغة</p>'; 
+            updateTotals(0,0,0); 
+            return;
+        }
         let html='';
         cart.forEach((item,idx)=>{
             total+=item.total;
             totalDisc+=item.discAmount||0;
             netTotal+=item.net||item.total;
             html+=`<div class="cart-item">
-                <div><strong>${item.name}</strong><br>${item.price} د.ع</div>
+                <div><strong>${item.name}</strong><br>${item.warehouseName || 'مخزن'}<br>${item.price.toFixed(2)} ${currency}</div>
                 <div>الكمية: <button onclick="changeQty(${idx},-1)">-</button> ${item.quantity} <button onclick="changeQty(${idx},1)">+</button></div>
                 <div>الخصم: ${item.discount||0}%</div>
-                <div>${item.net.toFixed(2)} د.ع</div>
+                <div>${item.net.toFixed(2)} ${currency}</div>
                 <div><button onclick="removeFromCart(${idx})" style="background:#e74c3c;padding:3px 8px;border-radius:5px;color:white;">✖</button></div>
             </div>`;
         });
@@ -251,9 +330,10 @@
     }
     
     function updateTotals(total, disc, net){
-        document.getElementById('cartTotal').innerText=total.toFixed(2);
-        document.getElementById('totalDiscount').innerText=disc.toFixed(2);
-        document.getElementById('netTotal').innerText=net.toFixed(2);
+        const currency = document.getElementById('currency').value === 'دولار' ? '$' : 'د.ع';
+        document.getElementById('cartTotal').innerText=total.toFixed(2) + ' ' + currency;
+        document.getElementById('totalDiscount').innerText=disc.toFixed(2) + ' ' + currency;
+        document.getElementById('netTotal').innerText=net.toFixed(2) + ' ' + currency;
     }
     
     window.changeQty=(idx,delta)=>{
@@ -269,34 +349,49 @@
     window.removeFromCart=(idx)=>{cart.splice(idx,1); renderCart();};
     window.clearCart=()=>{if(confirm('تفريغ السلة؟')){cart=[]; renderCart();}};
     
+    // ===== حفظ فاتورة الشراء =====
     window.savePurchase=async()=>{
         const supplierId=document.getElementById('supplierId').value;
         const supplier=allSuppliers.find(s=>s.id===supplierId);
         const invoiceNumber=document.getElementById('invoiceNumber').value.trim();
         const invoiceDate=document.getElementById('invoiceDate').value||new Date().toISOString().split('T')[0];
         const paymentMethod=document.getElementById('paymentMethod').value;
-     currency: document.getElementById('currency').value,
+        const currency = document.getElementById('currency').value;
+        
         if(!supplierId) return alert('اختر المورد');
         if(cart.length===0) return alert('لا توجد منتجات');
+        
         const total=cart.reduce((s,i)=>s+i.total,0);
         const totalDisc=cart.reduce((s,i)=>s+(i.discAmount||0),0);
         const netTotal=cart.reduce((s,i)=>s+(i.net||i.total),0);
+        
         try{
             const batch=db.batch();
             for(const item of cart){
                 const productRef=db.collection('inventory').doc(item.productId);
                 const docSnap=await productRef.get();
-                const oldQty=docSnap.data().quantity||0;
-                batch.update(productRef,{quantity:oldQty+item.quantity});
+                const data = docSnap.data();
+                let warehouses = data.warehouses || {};
+                let currentQty = warehouses[item.warehouseId] || 0;
+                warehouses[item.warehouseId] = currentQty + item.quantity;
+                batch.update(productRef, { warehouses });
             }
+            
             const purchaseRef=editingId?db.collection('purchases').doc(editingId):db.collection('purchases').doc();
             const data={
-                supplierId, supplierName:supplier?.name||'',
+                supplierId, 
+                supplierName:supplier?.name||'',
                 invoiceNumber:invoiceNumber||'PU-'+Date.now(),
-                date:invoiceDate, paymentMethod,
-                items:cart, total, discount:totalDisc, netTotal,
+                date:invoiceDate, 
+                paymentMethod: paymentMethod,
+                currency: currency,
+                items:cart, 
+                total, 
+                discount:totalDisc, 
+                netTotal,
                 timestamp:new Date()
             };
+            
             if(editingId){
                 await purchaseRef.update({...data, updatedAt:new Date()});
                 alert('✅ تم تحديث فاتورة الشراء');
@@ -309,10 +404,14 @@
             document.getElementById('supplierId').value='';
             document.getElementById('invoiceNumber').value='';
             document.getElementById('invoiceDate').value='';
-            await loadProducts(); await loadPurchases();
+            document.getElementById('currency').value='دينار';
+            document.getElementById('warehouseSelect').value='';
+            await loadProducts(); 
+            await loadPurchases();
         }catch(error){alert('❌ خطأ: '+error.message);}
     };
     
+    // ===== تعديل فاتورة =====
     window.editPurchase=async(id)=>{
         const purchase=allPurchases.find(p=>p.id===id);
         if(!purchase) return;
@@ -321,6 +420,7 @@
         document.getElementById('invoiceNumber').value=purchase.invoiceNumber||'';
         document.getElementById('invoiceDate').value=purchase.date||'';
         document.getElementById('paymentMethod').value=purchase.paymentMethod||'نقدي';
+        document.getElementById('currency').value=purchase.currency||'دينار';
         cart=purchase.items.map(item=>({...item}));
         renderCart();
         document.getElementById('formTitle').innerHTML='✏️ تعديل فاتورة شراء';
@@ -328,6 +428,7 @@
         window.scrollTo({top:0,behavior:'smooth'});
     };
     
+    // ===== إلغاء التعديل =====
     window.cancelEdit=()=>{
         editingId=null;
         cart=[]; renderCart();
@@ -336,8 +437,11 @@
         document.getElementById('supplierId').value='';
         document.getElementById('invoiceNumber').value='';
         document.getElementById('invoiceDate').value='';
+        document.getElementById('currency').value='دينار';
+        document.getElementById('warehouseSelect').value='';
     };
     
+    // ===== حذف فاتورة =====
     window.deletePurchase=async(id)=>{
         if(!confirm('⚠️ هل أنت متأكد من حذف هذه الفاتورة؟')) return;
         const purchase=allPurchases.find(p=>p.id===id);
@@ -347,7 +451,17 @@
                 for(const item of purchase.items){
                     const productRef=db.collection('inventory').doc(item.productId);
                     const docSnap=await productRef.get();
-                    if(docSnap.exists) await productRef.update({quantity:(docSnap.data().quantity||0)-item.quantity});
+                    if(docSnap.exists){
+                        const data = docSnap.data();
+                        let warehouses = data.warehouses || {};
+                        const warehouseId = item.warehouseId || 'default';
+                        let currentQty = warehouses[warehouseId] || 0;
+                        if (currentQty >= item.quantity) {
+                            warehouses[warehouseId] = currentQty - item.quantity;
+                            if (warehouses[warehouseId] === 0) delete warehouses[warehouseId];
+                            await productRef.update({ warehouses });
+                        }
+                    }
                 }
             }
             await db.collection('purchases').doc(id).delete();
@@ -356,36 +470,42 @@
         }catch(error){alert('❌ خطأ: '+error.message);}
     };
     
+    // ===== تصدير فاتورة =====
     window.exportPurchaseInvoice=async(id)=>{
         const purchase=allPurchases.find(p=>p.id===id);
         if(!purchase) return;
-        let csv='المنتج,الكمية,سعر الشراء,الخصم,الصافي\n';
+        const currency = purchase.currency === 'دولار' ? '$' : 'د.ع';
+        let csv='المنتج,المخزن,الكمية,سعر الشراء,الخصم,الصافي\n';
         purchase.items.forEach(item=>{
-            csv+=`${item.name},${item.quantity},${item.price},${item.discount||0}%,${(item.net||item.total).toFixed(2)}\n`;
+            csv+=`${item.name},${item.warehouseName||item.warehouseId||'-'},${item.quantity},${item.price.toFixed(2)},${item.discount||0}%,${(item.net||item.total).toFixed(2)}\n`;
         });
-        csv+=`\nالإجمالي: ${purchase.total.toFixed(2)}\nالخصم: ${(purchase.discount||0).toFixed(2)}\nالصافي: ${purchase.netTotal.toFixed(2)}`;
+        csv+=`\nالإجمالي: ${purchase.total.toFixed(2)} ${currency}\nالخصم: ${(purchase.discount||0).toFixed(2)} ${currency}\nالصافي: ${purchase.netTotal.toFixed(2)} ${currency}`;
         const blob=new Blob(["\uFEFF"+csv],{type:'text/csv;charset=utf-8'});
         const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`فاتورة_${purchase.invoiceNumber||'purchase'}.csv`; link.click();
     };
     
+    // ===== تحميل المشتريات =====
     async function loadPurchases(){
         const snapshot=await db.collection('purchases').orderBy('timestamp','desc').get();
-        allPurchases=[]; snapshot.forEach(d=>allPurchases.push({id:d.id,...d.data()}));
+        allPurchases=[]; 
+        snapshot.forEach(d=>allPurchases.push({id:d.id,...d.data()}));
         const search=document.getElementById('searchInput')?.value.toLowerCase()||'';
         const paymentFilter=document.getElementById('paymentFilter')?.value||'all';
         let filtered=allPurchases;
         if(search) filtered=filtered.filter(p=>(p.invoiceNumber||'').toLowerCase().includes(search)||(p.supplierName||'').toLowerCase().includes(search));
         if(paymentFilter!=='all') filtered=filtered.filter(p=>p.paymentMethod===paymentFilter);
         const tbody=document.getElementById('purchasesBody');
-        if(filtered.length===0){tbody.innerHTML='<tr><td colspan="9">لا توجد مشتريات</td></tr>'; return;}
+        if(filtered.length===0){tbody.innerHTML='<tr><td colspan="10">لا توجد مشتريات</td></tr>'; return;}
         let html='';
         filtered.forEach((p,idx)=>{
             const statusClass=p.paymentMethod==='نقدي'?'status-paid':'status-credit';
+            const currencyBadge = p.currency === 'دولار' ? 'currency-usd' : 'currency-iqd';
             html+=`<tr>
                 <td>${idx+1}</td>
                 <td>${p.date||'-'}</td>
                 <td>${p.invoiceNumber||'-'}</td>
                 <td><strong>${p.supplierName||'-'}</strong></td>
+                <td><span class="currency-badge ${currencyBadge}">${p.currency||'دينار'}</span></td>
                 <td>${(p.total||0).toFixed(2)}</td>
                 <td>${(p.discount||0).toFixed(2)}</td>
                 <td style="font-weight:bold;color:#1e3c72;">${(p.netTotal||p.total||0).toFixed(2)}</td>
@@ -400,17 +520,22 @@
         tbody.innerHTML=html;
     }
     
+    // ===== تصدير جميع المشتريات =====
     window.exportPurchases=()=>{
-        let csv='#,التاريخ,رقم الفاتورة,المورد,الإجمالي,الخصم,الصافي,طريقة الدفع\n';
+        let csv='#,التاريخ,رقم الفاتورة,المورد,العملة,الإجمالي,الخصم,الصافي,طريقة الدفع\n';
         allPurchases.forEach((p,idx)=>{
-            csv+=`${idx+1},${p.date||''},${p.invoiceNumber||''},${p.supplierName||''},${(p.total||0).toFixed(2)},${(p.discount||0).toFixed(2)},${(p.netTotal||p.total||0).toFixed(2)},${p.paymentMethod||''}\n`;
+            csv+=`${idx+1},${p.date||''},${p.invoiceNumber||''},${p.supplierName||''},${p.currency||'دينار'},${(p.total||0).toFixed(2)},${(p.discount||0).toFixed(2)},${(p.netTotal||p.total||0).toFixed(2)},${p.paymentMethod||''}\n`;
         });
         const blob=new Blob(["\uFEFF"+csv],{type:'text/csv;charset=utf-8'});
         const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='المشتريات.csv'; link.click();
     };
     
+    // ===== مستمعات الأحداث =====
     document.getElementById('searchInput')?.addEventListener('input',()=>loadPurchases());
     document.getElementById('paymentFilter')?.addEventListener('change',()=>loadPurchases());
+    
+    // ===== تحديث العملة في السلة عند تغييرها =====
+    document.getElementById('currency')?.addEventListener('change', renderCart);
 </script>
 </body>
 </html>
