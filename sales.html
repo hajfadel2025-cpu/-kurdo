@@ -137,9 +137,6 @@
             <div class="form-group"><label>📦 المنتج</label>
                 <select id="productSelect"><option value="">-- اختر منتج --</option></select>
             </div>
-            <div class="form-group"><label>🏪 المخزن</label>
-                <select id="warehouseSelect"><option value="">-- اختر مخزن --</option></select>
-            </div>
             <div class="form-group"><label>🔢 الكمية</label><input type="number" id="quantity" value="1" min="1"></div>
             <div class="form-group"><label>💰 سعر البيع</label><input type="number" id="salePrice" step="0.01"></div>
         </div>
@@ -194,9 +191,6 @@
         <div class="form-group"><label>📞 رقم الفاتورة</label>
             <select id="returnInvoiceId"><option value="">-- اختر فاتورة --</option></select>
         </div>
-        <div class="form-group"><label>🏪 المخزن للمرتجع</label>
-            <select id="returnWarehouseId"><option value="">-- اختر مخزن --</option></select>
-        </div>
         <div class="form-group"><label>📝 سبب المرتجع</label><input type="text" id="returnReason" placeholder="سبب المرتجع"></div>
         <button onclick="processReturn()" class="btn btn-danger" style="width:100%;"><i class="fas fa-undo"></i> تنفيذ المرتجع</button>
     </div>
@@ -243,12 +237,12 @@
         <p><strong>العملة:</strong> <span id="printCurrency"></span></p>
     </div>
     <table>
-        <thead><tr><th>المنتج</th><th>المخزن</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
         <tbody id="printItems"></tbody>
         <tfoot>
-            <tr class="total-row"><td colspan="4">الإجمالي</td><td id="printTotal"></td></tr>
-            <tr class="total-row"><td colspan="4">الخصم</td><td id="printDiscount"></td></tr>
-            <tr class="total-row"><td colspan="4"><strong>الصافي</strong></td><td id="printNet"></td></tr>
+            <tr class="total-row"><td colspan="3">الإجمالي</td><td id="printTotal"></td></tr>
+            <tr class="total-row"><td colspan="3">الخصم</td><td id="printDiscount"></td></tr>
+            <tr class="total-row"><td colspan="3"><strong>الصافي</strong></td><td id="printNet"></td></tr>
         </tfoot>
     </table>
     <div style="text-align:center;margin-top:15px;border-top:2px solid #ddd;padding-top:10px;">
@@ -269,7 +263,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    let allProducts = [], allCustomers = [], allSales = [], allWarehouses = [];
+    let allProducts = [], allCustomers = [], allSales = [];
     let cart = [], editingId = null;
 
     auth.onAuthStateChanged(user => {
@@ -277,12 +271,11 @@
         else { 
             loadProducts(); 
             loadCustomers(); 
-            loadWarehouses();
             loadSales(); 
-            loadReturnWarehouses();
         }
     });
 
+    // ===== تحميل المنتجات (الكود القديم الذي كان يعمل) =====
     async function loadProducts() {
         try {
             const snapshot = await db.collection('inventory').get();
@@ -292,13 +285,8 @@
             const select = document.getElementById('productSelect');
             select.innerHTML = '<option value="">-- اختر منتج --</option>';
             allProducts.forEach(p => {
-                let totalStock = 0;
-                if (p.warehouses) {
-                    totalStock = Object.values(p.warehouses).reduce((sum, qty) => sum + qty, 0);
-                } else {
-                    totalStock = p.quantity || 0;
-                }
-                select.innerHTML += `<option value="${p.id}" data-price="${p.sellingPrice||0}" data-stock="${totalStock}">${p.itemName||p.name} (${totalStock})</option>`;
+                const stock = p.quantity || 0;
+                select.innerHTML += `<option value="${p.id}" data-price="${p.sellingPrice||0}" data-stock="${stock}">${p.itemName||p.name} (${stock})</option>`;
             });
             updateProductInfo();
         } catch(e) { console.error(e); }
@@ -310,10 +298,10 @@
             const stock = this.options[this.selectedIndex]?.getAttribute('data-stock') || 0;
             document.getElementById('salePrice').value = price;
             document.getElementById('stockDisplay').innerHTML = `📊 المخزون: <span class="${stock <= 0 ? 'stock-warning' : 'stock-good'}">${stock}</span>`;
-            updateWarehouseOptionsForProduct(this.value);
         };
     }
 
+    // ===== تحميل العملاء (الكود القديم الذي كان يعمل) =====
     async function loadCustomers() {
         try {
             const snapshot = await db.collection('customers').get();
@@ -334,86 +322,29 @@
         } catch(e) { console.error(e); }
     }
 
-    async function loadWarehouses() {
-        try {
-            const snapshot = await db.collection('warehouses').get();
-            allWarehouses = [];
-            const select = document.getElementById('warehouseSelect');
-            select.innerHTML = '<option value="">-- اختر مخزن --</option>';
-            snapshot.forEach(d => {
-                const w = d.data();
-                if (w.status !== 'غير نشط') {
-                    allWarehouses.push({ id: d.id, ...w });
-                    select.innerHTML += `<option value="${d.id}">${w.name}</option>`;
-                }
-            });
-        } catch(e) { console.error(e); }
-    }
-
-    async function loadReturnWarehouses() {
-        try {
-            const snapshot = await db.collection('warehouses').get();
-            const select = document.getElementById('returnWarehouseId');
-            select.innerHTML = '<option value="">-- اختر مخزن --</option>';
-            snapshot.forEach(d => {
-                const w = d.data();
-                if (w.status !== 'غير نشط') {
-                    select.innerHTML += `<option value="${d.id}">${w.name}</option>`;
-                }
-            });
-        } catch(e) { console.error(e); }
-    }
-
-    function updateWarehouseOptionsForProduct(productId) {
-        const product = allProducts.find(p => p.id === productId);
-        const select = document.getElementById('warehouseSelect');
-        if (!product) {
-            select.innerHTML = '<option value="">-- اختر مخزن --</option>';
-            return;
-        }
-        select.innerHTML = '<option value="">-- اختر مخزن --</option>';
-        allWarehouses.forEach(w => {
-            const stockQty = product.warehouses ? (product.warehouses[w.id] || 0) : 0;
-            const hasStock = stockQty > 0;
-            select.innerHTML += `<option value="${w.id}" ${!hasStock ? 'style="color:#999;"' : ''}>${w.name} ${hasStock ? '('+stockQty+')' : '(0)'}</option>`;
-        });
-    }
-
+    // ===== إضافة للسلة (الكود القديم) =====
     window.addToCart = () => {
         const productId = document.getElementById('productSelect').value;
-        const warehouseId = document.getElementById('warehouseSelect').value;
         const product = allProducts.find(p => p.id === productId);
         if (!product) return alert('اختر منتجاً');
-        if (!warehouseId) return alert('اختر المخزن');
 
         const qty = parseInt(document.getElementById('quantity').value);
         const price = parseFloat(document.getElementById('salePrice').value);
         if (!qty || qty <= 0) return alert('أدخل كمية');
         if (!price || price <= 0) return alert('أدخل سعر');
 
-        let stock = 0;
-        if (product.warehouses && product.warehouses[warehouseId]) {
-            stock = product.warehouses[warehouseId];
-        } else {
-            stock = product.quantity || 0;
-        }
-        
-        if (stock === 0) return alert('المنتج غير متوفر في هذا المخزن');
-        if (qty > stock) return alert(`المتوفر في هذا المخزن: ${stock}`);
+        const stock = product.quantity || 0;
+        if (stock === 0) return alert('المنتج غير متوفر');
+        if (qty > stock) return alert(`المتوفر: ${stock}`);
 
-        const warehouse = allWarehouses.find(w => w.id === warehouseId);
-        const warehouseName = warehouse ? warehouse.name : warehouseId;
-
-        const existing = cart.find(i => i.productId === productId && i.warehouseId === warehouseId);
+        const existing = cart.find(i => i.productId === productId);
         if (existing) {
-            if (existing.quantity + qty > stock) return alert(`المتوفر في هذا المخزن: ${stock}`);
+            if (existing.quantity + qty > stock) return alert(`المتوفر: ${stock}`);
             existing.quantity += qty;
             existing.total = existing.price * existing.quantity;
         } else {
             cart.push({ 
                 productId, 
-                warehouseId,
-                warehouseName: warehouseName,
                 name: product.itemName || product.name, 
                 price, 
                 quantity: qty, 
@@ -424,6 +355,7 @@
         document.getElementById('quantity').value = '1';
     };
 
+    // ===== عرض السلة مع العملة =====
     function renderCart() {
         const container = document.getElementById('cart');
         const currency = document.getElementById('currency').value === 'دولار' ? '$' : 'د.ع';
@@ -438,8 +370,8 @@
         cart.forEach((item, idx) => {
             total += item.total;
             html += `<div class="cart-item">
-                <div><strong>${item.name}</strong><br>${item.warehouseName || 'مخزن'}</div>
-                <div>${item.quantity} × ${item.price.toFixed(2)} ${currency}</div>
+                <div><strong>${item.name}</strong> × ${item.quantity}</div>
+                <div>${item.price.toFixed(2)} ${currency}</div>
                 <div style="font-weight:bold;color:#0c1445;">${item.total.toFixed(2)} ${currency}</div>
                 <div>
                     <button onclick="changeQty(${idx}, -1)" class="btn btn-sm" style="background:#3498db;color:white;">-</button>
@@ -467,13 +399,7 @@
         const newQty = cart[idx].quantity + delta;
         if (newQty < 1) { removeFromCart(idx); return; }
         const product = allProducts.find(p => p.id === cart[idx].productId);
-        let stock = 0;
-        if (product && product.warehouses && product.warehouses[cart[idx].warehouseId]) {
-            stock = product.warehouses[cart[idx].warehouseId];
-        } else if (product) {
-            stock = product.quantity || 0;
-        }
-        if (product && newQty > stock) { alert(`المتوفر في المخزن: ${stock}`); return; }
+        if (product && newQty > (product.quantity || 0)) { alert(`المتوفر: ${product.quantity}`); return; }
         cart[idx].quantity = newQty;
         cart[idx].total = cart[idx].price * newQty;
         renderCart();
@@ -484,24 +410,12 @@
     document.getElementById('discountPercent').addEventListener('input', renderCart);
     document.getElementById('currency').addEventListener('change', renderCart);
 
+    // ===== حفظ الفاتورة مع العملة =====
     window.saveSale = async () => {
         const customerId = document.getElementById('customerId').value;
         const customer = allCustomers.find(c => c.id === customerId);
         if (!customerId) return alert('اختر العميل');
         if (cart.length === 0) return alert('لا توجد منتجات');
-
-        for (const item of cart) {
-            const product = allProducts.find(p => p.id === item.productId);
-            let stock = 0;
-            if (product && product.warehouses && product.warehouses[item.warehouseId]) {
-                stock = product.warehouses[item.warehouseId];
-            } else if (product) {
-                stock = product.quantity || 0;
-            }
-            if (item.quantity > stock) {
-                return alert(`⚠️ المنتج "${item.name}" غير متوفر بكمية كافية في المخزن المحدد.\nالمتوفر: ${stock}\nالمطلوب: ${item.quantity}`);
-            }
-        }
 
         const total = cart.reduce((s, i) => s + i.total, 0);
         const discount = parseFloat(document.getElementById('discountPercent').value) || 0;
@@ -514,12 +428,7 @@
             for (const item of cart) {
                 const productRef = db.collection('inventory').doc(item.productId);
                 const docSnap = await productRef.get();
-                const data = docSnap.data();
-                let warehouses = data.warehouses || {};
-                let currentQty = warehouses[item.warehouseId] || 0;
-                warehouses[item.warehouseId] = currentQty - item.quantity;
-                if (warehouses[item.warehouseId] === 0) delete warehouses[item.warehouseId];
-                batch.update(productRef, { warehouses });
+                batch.update(productRef, { quantity: (docSnap.data().quantity || 0) - item.quantity });
             }
 
             if (document.getElementById('paymentMethod').value === 'أجل') {
@@ -543,3 +452,82 @@
                 items: cart, 
                 notes: document.getElementById('notes').value,
                 timestamp: new Date()
+            };
+
+            if (editingId) {
+                await saleRef.update({ ...data, updatedAt: new Date() });
+                alert('تم التحديث');
+                cancelEdit();
+            } else {
+                await saleRef.set(data);
+                alert('تم حفظ الفاتورة');
+            }
+
+            cart = []; renderCart();
+            document.getElementById('customerId').value = '';
+            document.getElementById('invoiceNumber').value = '';
+            document.getElementById('invoiceDate').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('discountPercent').value = '0';
+            document.getElementById('currency').value = 'دينار';
+            await loadProducts();
+            await loadSales();
+        } catch (error) {
+            alert('خطأ: ' + error.message);
+        }
+    };
+
+    // ===== تحميل المبيعات مع العملة =====
+    async function loadSales() {
+        try {
+            const snapshot = await db.collection('sales').orderBy('timestamp', 'desc').get();
+            allSales = [];
+            snapshot.forEach(d => allSales.push({ id: d.id, ...d.data() }));
+
+            let total = 0, items = 0;
+            allSales.forEach(s => {
+                total += s.netTotal || s.total || 0;
+                if (s.items) s.items.forEach(i => items += i.quantity || 0);
+            });
+            document.getElementById('statInvoices').innerText = allSales.length;
+            document.getElementById('statTotal').innerText = total.toFixed(0);
+            document.getElementById('statItems').innerText = items;
+
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filter = document.getElementById('paymentFilter').value;
+            let filtered = allSales;
+            if (search) filtered = filtered.filter(s => (s.invoiceNumber || '').toLowerCase().includes(search) || (s.customerName || '').toLowerCase().includes(search));
+            if (filter !== 'all') filtered = filtered.filter(s => s.paymentMethod === filter);
+
+            const tbody = document.getElementById('salesBody');
+            if (filtered.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="10" style="padding:15px;color:#999;">لا توجد مبيعات</td></tr>'; 
+                return; 
+            }
+            let html = '';
+            filtered.forEach((s, idx) => {
+                const badge = s.paymentMethod === 'نقدي' ? 'badge-success' : 'badge-warning';
+                const currencyBadge = s.currency === 'دولار' ? 'currency-usd' : 'currency-iqd';
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${s.date || '-'}</td>
+                    <td>${s.invoiceNumber || '-'}</td>
+                    <td>${s.customerName || '-'}</td>
+                    <td><span class="currency-badge ${currencyBadge}">${s.currency || 'دينار'}</span></td>
+                    <td>${(s.total || 0).toFixed(2)}</td>
+                    <td>${(s.discountAmount || 0).toFixed(2)}</td>
+                    <td style="font-weight:bold;color:#0c1445;">${(s.netTotal || s.total || 0).toFixed(2)}</td>
+                    <td><span class="badge ${badge}">${s.paymentMethod || '-'}</span></td>
+                    <td>
+                        <button onclick="editInvoice('${s.id}')" class="btn btn-sm btn-warning" title="تعديل"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteInvoice('${s.id}')" class="btn btn-sm btn-danger" title="حذف"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        } catch(e) { console.error(e); }
+    }
+
+    // ===== تعديل فاتورة =====
+    window.editInvoice = (id) => {
+        const invoice = allSales.find
