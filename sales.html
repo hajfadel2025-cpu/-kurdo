@@ -292,40 +292,37 @@
     // =============================================
     // 1. تحميل المنتجات (مع بيانات تجريبية)
     // =============================================
-    function loadProducts() {
-        showDebug('🔄 جاري تحميل المنتجات...');
-        
-        db.collection('inventory').get()
-            .then((snapshot) => {
-                allProducts = [];
-                
-                if (snapshot.empty) {
-                    showDebug('⚠️ لا توجد منتجات في Firebase، جاري استخدام بيانات تجريبية');
-                    allProducts = [
-                        { id: 'p1', itemName: 'منتج 1 - تجريبي', quantity: 50, sellingPrice: 1000, costPrice: 800 },
-                        { id: 'p2', itemName: 'منتج 2 - تجريبي', quantity: 30, sellingPrice: 2000, costPrice: 1500 },
-                        { id: 'p3', itemName: 'منتج 3 - تجريبي', quantity: 20, sellingPrice: 500, costPrice: 400 }
-                    ];
-                } else {
-                    snapshot.forEach(d => {
-                        const data = d.data();
-                        allProducts.push({
-                            id: d.id,
-                            itemName: data.itemName || data.name || 'بدون اسم',
-                            quantity: data.quantity || 0,
-                            sellingPrice: data.sellingPrice || data.price || 0,
-                            costPrice: data.costPrice || 0,
-                            category: data.category || 'أخرى'
-                        });
-                    });
-                }
-                
-                showDebug('✅ تم تحميل ' + allProducts.length + ' منتج');
-                updateProductSelect();
-                updateStats();
-            })
-            .catch(err => {
-                showDebug('❌ خطأ في تحميل المنتجات: ' + err.message);
+   function loadProducts() {
+    console.log('🔥 loadProducts بدأت');
+    
+    // جلب البيانات من Firebase
+    db.collection('inventory').get()
+        .then((snapshot) => {
+            console.log('✅ snapshot size:', snapshot.size);
+            allProducts = [];
+            
+            snapshot.forEach(d => {
+                const data = d.data();
+                console.log('📦 المنتج:', data.itemName || data.name);
+                allProducts.push({
+                    id: d.id,
+                    itemName: data.itemName || data.name || 'بدون اسم',
+                    quantity: data.quantity || 0,
+                    sellingPrice: data.sellingPrice || data.price || 0,
+                    costPrice: data.costPrice || 0,
+                    category: data.category || 'أخرى'
+                });
+            });
+            
+            console.log('✅ تم تحميل ' + allProducts.length + ' منتج');
+            updateProductSelect();
+            updateStats();
+        })
+        .catch(err => {
+            console.error('❌ خطأ:', err);
+            alert('❌ خطأ في تحميل المنتجات: ' + err.message);
+        });
+}
                 allProducts = [
                     { id: 'p1', itemName: 'منتج 1 - تجريبي', quantity: 50, sellingPrice: 1000, costPrice: 800 },
                     { id: 'p2', itemName: 'منتج 2 - تجريبي', quantity: 30, sellingPrice: 2000, costPrice: 1500 },
