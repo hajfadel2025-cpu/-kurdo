@@ -1,1 +1,742 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية - مكتب حاج فاضل</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Cairo', 'Tahoma', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: auto;
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .header h1 {
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+        }
+        
+        .user-info {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+        
+        .logout-btn:hover { background: #e74c3c; }
+        
+        /* Navigation */
+        .nav-menu {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        
+        .nav-item {
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            transition: 0.3s;
+        }
+        
+        .nav-item:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .nav-item.mandubs { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .nav-item.inventory { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .nav-item.sales { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .nav-item.customers { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
+        .nav-item.items { background: linear-gradient(135deg, #fa709a, #fee140); color: #1a1a2e; }
+        
+        /* Stats Cards */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: 0.3s;
+            border: 1px solid #ecf0f1;
+        }
+        
+        .stat:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .stat .num { font-size: 28px; font-weight: bold; color: #2980b9; }
+        .stat .txt { color: #7f8c8d; font-size: 12px; margin-top: 5px; }
+        .stat i { font-size: 30px; margin-bottom: 8px; color: #667eea; }
+        
+        /* Charts */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #ecf0f1;
+        }
+        
+        .chart-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-right: 3px solid #667eea;
+            padding-right: 12px;
+            font-size: 16px;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .action-btn {
+            border: none;
+            padding: 14px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+        }
+        
+        .action-btn:hover { transform: translateY(-3px); filter: brightness(1.05); }
+        .btn-inventory { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .btn-sales { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .btn-purchases { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .btn-export { background: linear-gradient(135deg, #fa709a, #fee140); }
+        
+        /* Row Layout */
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .box {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #ecf0f1;
+        }
+        
+        .box h3 {
+            color: #2c3e50;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #ecf0f1;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+        
+        table { width: 100%; font-size: 13px; border-collapse: collapse; }
+        td, th { padding: 10px 8px; border-bottom: 1px solid #ecf0f1; text-align: center; }
+        th { background: #f8f9fa; font-weight: bold; }
+        
+        .badge { padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+        .badge.red { background: #fee; color: #e74c3c; }
+        .badge.orange { background: #ffeaa7; color: #e67e22; }
+        .badge.green { background: #e8f8f5; color: #27ae60; }
+        
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .link {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px;
+            text-decoration: none;
+            border-radius: 15px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        
+        .link:hover { transform: translateY(-3px); filter: brightness(1.05); }
+        
+        .footer { text-align: center; margin-top: 25px; color: #7f8c8d; font-size: 12px; }
+        .refresh-time { font-size: 11px; color: #95a5a6; margin-top: 10px; text-align: center; }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 25px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .close-modal { cursor: pointer; font-size: 28px; color: #999; transition: 0.3s; }
+        .close-modal:hover { color: #e74c3c; }
+        
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-bar input, .filter-bar select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 13px;
+            flex: 1;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #667eea20, #764ba220);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .summary-item { text-align: center; }
+        .summary-item .label { font-size: 12px; color: #666; }
+        .summary-item .value { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        
+        /* Currency Selector */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+        
+        .currency-selector select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .charts-row { grid-template-columns: 1fr; }
+            .row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-landmark"></i> مكتب حاج فاضل - الرئيسية المتكاملة</h1>
+        <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+            <div class="currency-selector">
+                <label style="font-weight:bold;">💰 العملة:</label>
+                <select id="currencySelect" onchange="changeCurrency(this.value)">
+                    <option value="IQD">🇮🇶 دينار عراقي</option>
+                    <option value="USD">🇺🇸 دولار أمريكي</option>
+                </select>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span id="userName">مرحباً بك</span>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav-menu">
+        <a href="mandubs.html" class="nav-item mandubs"><i class="fas fa-user-tie"></i> المندوبين</a>
+        <a href="items.html" class="nav-item items"><i class="fas fa-boxes"></i> الأصناف</a>
+        <a href="inventory.html" class="nav-item inventory"><i class="fas fa-warehouse"></i> المخزون</a>
+        <a href="sales.html" class="nav-item sales"><i class="fas fa-cart-shopping"></i> المبيعات</a>
+        <a href="customers.html" class="nav-item customers"><i class="fas fa-users"></i> العملاء</a>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="stats">
+        <div class="stat"><i class="fas fa-boxes"></i><div class="num" id="productsCount">0</div><div class="txt">المنتجات</div></div>
+        <div class="stat"><i class="fas fa-users"></i><div class="num" id="customersCount">0</div><div class="txt">العملاء</div></div>
+        <div class="stat"><i class="fas fa-user-tie"></i><div class="num" id="mandubsCount">0</div><div class="txt">المندوبين</div></div>
+        <div class="stat"><i class="fas fa-file-invoice"></i><div class="num" id="salesCount">0</div><div class="txt">الفواتير</div></div>
+        <div class="stat"><i class="fas fa-chart-line"></i><div class="num" id="totalSales">0</div><div class="txt">إجمالي المبيعات</div></div>
+        <div class="stat"><i class="fas fa-hand-holding-usd"></i><div class="num" id="totalDebt">0</div><div class="txt">إجمالي الديون</div></div>
+        <div class="stat"><i class="fas fa-coins"></i><div class="num" id="totalProfit">0</div><div class="txt">صافي الأرباح</div></div>
+        <div class="stat"><i class="fas fa-trophy"></i><div class="num" id="topMandub">0</div><div class="txt">أفضل مندوب</div></div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="charts-row">
+        <div class="chart-card"><h3><i class="fas fa-chart-line"></i> المبيعات خلال آخر 7 أيام</h3><canvas id="salesChart"></canvas></div>
+        <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> المبيعات حسب المندوب</h3><canvas id="mandubChart"></canvas></div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="action-btn btn-inventory" onclick="showInventoryReport()"><i class="fas fa-clipboard-list"></i> جرد المخزون</button>
+        <button class="action-btn btn-sales" onclick="showSalesReport()"><i class="fas fa-file-invoice-dollar"></i> جرد فواتير المبيعات</button>
+        <button class="action-btn btn-purchases" onclick="showPurchasesReport()"><i class="fas fa-truck"></i> جرد المشتريات</button>
+        <button class="action-btn btn-export" onclick="exportFullReport()"><i class="fas fa-download"></i> تصدير تقرير كامل</button>
+    </div>
+    
+    <!-- Info Boxes -->
+    <div class="row">
+        <div class="box">
+            <h3><i class="fas fa-exclamation-triangle"></i> منتجات منخفضة المخزون</h3>
+            <table><thead><tr><th>المنتج</th><th>الكمية</th><th>الحالة</th></tr></thead><tbody id="lowStockList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+        </div>
+        <div class="box">
+            <h3><i class="fas fa-exclamation-circle"></i> عملاء متأخرون</h3>
+            <table><thead><tr><th>العميل</th><th>الدين</th><th>الحالة</th></tr></thead><tbody id="overdueList"><tr><td colspan="3">جاري التحميل...</td></tr></tbody></table>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="box">
+            <h3><i class="fas fa-receipt"></i> آخر الفواتير</h3>
+            <table><thead><tr><th>رقم</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody id="recentSales"><tr><td colspan="4">جاري التحميل...</td></tr></tbody></table>
+        </div>
+        <div class="box">
+            <h3><i class="fas fa-chart-simple"></i> إحصائيات سريعة</h3>
+            <div style="padding: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>📊 إجمالي الفواتير:</span><strong id="statSalesCount">0</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>💰 إجمالي المبيعات:</span><strong id="statTotalSales">0 د.ع</strong></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;"><span>🏪 عدد المنتجات:</span><strong id="statProductsCount">0</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>👥 عدد العملاء:</span><strong id="statCustomersCount">0</strong></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer"><i class="fas fa-sync-alt"></i> تحديث تلقائي لحظي من قاعدة البيانات</div>
+    <div class="refresh-time" id="lastUpdate"><i class="far fa-clock"></i> آخر تحديث: --</div>
+</div>
 
+<!-- Modal -->
+<div id="reportModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="reportTitle"><i class="fas fa-chart-bar"></i> التقرير</h2>
+            <span class="close-modal" onclick="closeReportModal()">&times;</span>
+        </div>
+        <div id="reportContent"></div>
+    </div>
+</div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBYYTuw5bY2RZM27mZynVuvmmWxQNvomKQ",
+        authDomain: "haj-fadel-accounting.firebaseapp.com",
+        projectId: "haj-fadel-accounting",
+        storageBucket: "haj-fadel-accounting.firebasestorage.app",
+        messagingSenderId: "449205985318",
+        appId: "1:449205985318:web:2dece1e1412165b01f46e7"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    let allProducts = [];
+    let allCustomers = [];
+    let allSales = [];
+    let salesChart = null;
+    let mandubChart = null;
+    let currentCurrency = 'IQD';
+    
+    // ===== Currency Functions =====
+    function getSymbol() {
+        return currentCurrency === 'USD' ? '$' : 'د.ع';
+    }
+    
+    function changeCurrency(val) {
+        currentCurrency = val;
+        localStorage.setItem('currency', val);
+        updateAllDisplay();
+    }
+    
+    function loadCurrency() {
+        const saved = localStorage.getItem('currency');
+        if (saved) {
+            currentCurrency = saved;
+            document.getElementById('currencySelect').value = saved;
+        }
+    }
+    
+    // ===== Auth =====
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${user.email || 'مرحباً'}`;
+            loadCurrency();
+            startListeners();
+        } else {
+            window.location.href = "login.html";
+        }
+    });
+    
+    window.logout = async function() { 
+        await auth.signOut(); 
+        window.location.href = "login.html"; 
+    };
+    
+    // ===== Start Listeners =====
+    function startListeners() {
+        db.collection('inventory').onSnapshot((snapshot) => {
+            allProducts = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if ((data.quantity || 0) > 0) {
+                    allProducts.push({ id: doc.id, ...data });
+                }
+            });
+            document.getElementById('productsCount').innerText = allProducts.length;
+            document.getElementById('statProductsCount').innerText = allProducts.length;
+            updateLowStockList();
+            updateLastUpdate();
+        });
+        
+        db.collection('customers').onSnapshot((snapshot) => {
+            allCustomers = [];
+            snapshot.forEach(doc => {
+                allCustomers.push({ id: doc.id, ...doc.data() });
+            });
+            document.getElementById('customersCount').innerText = allCustomers.length;
+            document.getElementById('statCustomersCount').innerText = allCustomers.length;
+            updateTotalDebt();
+            updateOverdueList();
+            updateLastUpdate();
+        });
+        
+        db.collection('sales').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+            allSales = [];
+            snapshot.forEach(doc => {
+                allSales.push({ id: doc.id, ...doc.data() });
+            });
+            document.getElementById('salesCount').innerText = allSales.length;
+            document.getElementById('statSalesCount').innerText = allSales.length;
+            updateTotalSales();
+            updateTotalProfit();
+            updateTopMandub();
+            updateRecentSales();
+            updateCharts();
+            updateLastUpdate();
+        });
+        
+        // Count mandubs from users collection
+        db.collection('users').onSnapshot((snapshot) => {
+            let count = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.role === 'mandub' || data.accountType === 'مندوب' || data.type === 'مندوب') count++;
+            });
+            document.getElementById('mandubsCount').innerText = count || 0;
+        });
+    }
+    
+    // ===== Update Functions =====
+    function updateAllDisplay() {
+        const symbol = getSymbol();
+        document.querySelectorAll('.currency-symbol').forEach(el => {
+            el.textContent = symbol;
+        });
+        // تحديث الأرقام
+        updateTotalSales();
+        updateTotalDebt();
+        updateTotalProfit();
+        updateLowStockList();
+        updateOverdueList();
+        updateRecentSales();
+        updateCharts();
+    }
+    
+    function updateTotalDebt() {
+        let total = allCustomers.reduce((sum, c) => sum + (c.totalDebt || 0), 0);
+        document.getElementById('totalDebt').innerText = total.toFixed(0) + ' ' + getSymbol();
+    }
+    
+    function updateTotalSales() {
+        let total = allSales.reduce((sum, s) => sum + (s.total || 0), 0);
+        document.getElementById('totalSales').innerText = total.toFixed(0) + ' ' + getSymbol();
+        document.getElementById('statTotalSales').innerHTML = total.toFixed(0) + ' ' + getSymbol();
+    }
+    
+    function updateTotalProfit() {
+        let total = allSales.reduce((sum, s) => sum + (s.commission || 0), 0);
+        document.getElementById('totalProfit').innerText = total.toFixed(0) + ' ' + getSymbol();
+    }
+    
+    function updateTopMandub() {
+        let mandubSales = {};
+        allSales.forEach(sale => {
+            let name = sale.mandubName || 'غير محدد';
+            mandubSales[name] = (mandubSales[name] || 0) + (sale.total || 0);
+        });
+        let topName = 'لا يوجد', topAmount = 0;
+        for (let [name, amount] of Object.entries(mandubSales)) {
+            if (amount > topAmount) { topAmount = amount; topName = name; }
+        }
+        document.getElementById('topMandub').innerHTML = topAmount > 0 ? `${topName}<br><span style="font-size:10px;">${topAmount.toFixed(0)} ${getSymbol()}</span>` : 'لا يوجد';
+    }
+    
+    function updateLowStockList() {
+        let low = allProducts.filter(p => (p.quantity || 0) <= 20).slice(0, 5);
+        let container = document.getElementById('lowStockList');
+        if (low.length === 0) { container.innerHTML = '<tr><td colspan="3">لا توجد منتجات منخفضة</td></tr>'; return; }
+        let html = '';
+        low.forEach(p => {
+            let qty = p.quantity || 0;
+            let badge = qty <= 5 ? '<span class="badge red">⚠️ حرج</span>' : '<span class="badge orange">⚠️ منخفض</span>';
+            html += `<tr><td><strong>${p.itemName || p.name}</strong></td><td>${qty}</td><td>${badge}</td></tr>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    function updateOverdueList() {
+        let overdue = allCustomers.filter(c => (c.totalDebt || 0) > 100).slice(0, 5);
+        let container = document.getElementById('overdueList');
+        if (overdue.length === 0) { container.innerHTML = '<tr><td colspan="3">لا يوجد عملاء متأخرون</td></tr>'; return; }
+        let html = '';
+        overdue.forEach(c => {
+            html += `<tr><td>${c.customerName || c.name}</td><td>${(c.totalDebt || 0).toFixed(0)} ${getSymbol()}</td><td><span class="badge red">متأخر</span></td></tr>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    function updateRecentSales() {
+        let recent = [...allSales].slice(0, 5);
+        let container = document.getElementById('recentSales');
+        if (recent.length === 0) { container.innerHTML = '<tr><td colspan="4">لا توجد فواتير</td></tr>'; return; }
+        let html = '';
+        recent.forEach(s => {
+            html += `<tr><td>${s.invoiceNumber || '-'}</td><td>${s.customerName || '-'}</td><td>${s.mandubName || '-'}</td><td>${(s.total || 0).toFixed(0)} ${getSymbol()}</td></tr>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    function updateCharts() {
+        // Sales chart last 7 days
+        let last7Days = [];
+        let salesByDay = {};
+        for (let i = 6; i >= 0; i--) {
+            let d = new Date();
+            d.setDate(d.getDate() - i);
+            let ds = d.toLocaleDateString('ar-EG');
+            last7Days.push(ds);
+            salesByDay[ds] = 0;
+        }
+        allSales.forEach(s => {
+            if (s.timestamp) {
+                let sd = new Date(s.timestamp).toLocaleDateString('ar-EG');
+                if (salesByDay[sd] !== undefined) salesByDay[sd] += s.total || 0;
+            }
+        });
+        if (salesChart) salesChart.destroy();
+        salesChart = new Chart(document.getElementById('salesChart'), {
+            type: 'line',
+            data: { 
+                labels: last7Days, 
+                datasets: [{ 
+                    label: 'المبيعات (' + getSymbol() + ')', 
+                    data: last7Days.map(d => salesByDay[d]), 
+                    borderColor: '#667eea', 
+                    backgroundColor: 'rgba(102,126,234,0.1)', 
+                    fill: true, 
+                    tension: 0.4 
+                }] 
+            },
+            options: { responsive: true }
+        });
+        
+        // Mandub chart
+        let mandubSales = {};
+        allSales.forEach(s => {
+            let n = s.mandubName || 'غير محدد';
+            mandubSales[n] = (mandubSales[n] || 0) + (s.total || 0);
+        });
+        if (mandubChart) mandubChart.destroy();
+        mandubChart = new Chart(document.getElementById('mandubChart'), {
+            type: 'doughnut',
+            data: { 
+                labels: Object.keys(mandubSales), 
+                datasets: [{ 
+                    data: Object.values(mandubSales), 
+                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'] 
+                }] 
+            },
+            options: { responsive: true }
+        });
+    }
+    
+    function updateLastUpdate() {
+        document.getElementById('lastUpdate').innerHTML = `<i class="far fa-clock"></i> آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`;
+    }
+    
+    // ==================== REPORT FUNCTIONS ====================
+    
+    function closeReportModal() {
+        document.getElementById('reportModal').style.display = 'none';
+    }
+    
+    window.showInventoryReport = function() {
+        document.getElementById('reportTitle').innerHTML = '<i class="fas fa-clipboard-list"></i> جرد المخزون';
+        let totalQty = 0, totalValue = 0;
+        let html = '<table style="width:100%"><thead><tr><th>#</th><th>المنتج</th><th>الفئة</th><th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>القيمة</th></tr></thead><tbody>';
+        allProducts.forEach((p, idx) => {
+            let qty = p.quantity || 0;
+            let value = (p.costPrice || 0) * qty;
+            totalQty += qty;
+            totalValue += value;
+            html += `<tr><td>${idx+1}</td><td><strong>${p.itemName||p.name}</strong></td><td>${p.category||'-'}</td><td>${qty}</td><td>${(p.costPrice||0).toFixed(2)} ${getSymbol()}</td><td>${(p.sellingPrice||0).toFixed(2)} ${getSymbol()}</td><td>${value.toFixed(2)} ${getSymbol()}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('reportContent').innerHTML = `
+            <div class="summary-card">
+                <div class="summary-item"><div class="label">عدد المنتجات</div><div class="value">${allProducts.length}</div></div>
+                <div class="summary-item"><div class="label">إجمالي القطع</div><div class="value">${totalQty}</div></div>
+                <div class="summary-item"><div class="label">قيمة المخزون</div><div class="value">${totalValue.toFixed(2)} ${getSymbol()}</div></div>
+            </div>
+            ${html}
+        `;
+        document.getElementById('reportModal').style.display = 'flex';
+    };
+    
+    window.showSalesReport = function() {
+        document.getElementById('reportTitle').innerHTML = '<i class="fas fa-file-invoice-dollar"></i> جرد فواتير المبيعات';
+        let totalSales = 0, totalCommission = 0;
+        let html = '<table style="width:100%"><thead><tr><th>#</th><th>رقم</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>طريقة الدفع</th><th>المبلغ</th></tr></thead><tbody>';
+        allSales.forEach((s, idx) => {
+            totalSales += s.total || 0;
+            totalCommission += s.commission || 0;
+            html += `<tr><td>${idx+1}</td><td>${s.invoiceNumber||'-'}</td><td>${s.date||'-'}</td><td>${s.customerName||'-'}</td><td>${s.mandubName||'-'}</td><td>${s.paymentMethod||'-'}</td><td>${(s.total||0).toFixed(2)} ${getSymbol()}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('reportContent').innerHTML = `
+            <div class="summary-card">
+                <div class="summary-item"><div class="label">عدد الفواتير</div><div class="value">${allSales.length}</div></div>
+                <div class="summary-item"><div class="label">إجمالي المبيعات</div><div class="value">${totalSales.toFixed(2)} ${getSymbol()}</div></div>
+                <div class="summary-item"><div class="label">إجمالي العمولات</div><div class="value">${totalCommission.toFixed(2)} ${getSymbol()}</div></div>
+            </div>
+            ${html}
+        `;
+        document.getElementById
