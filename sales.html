@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="currency.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
@@ -14,11 +15,13 @@
         .container{max-width:1200px;margin:auto;background:white;border-radius:25px;padding:25px}
         h2{color:#0c1445;border-right:4px solid #f39c12;padding-right:15px;margin-bottom:20px}
         
+        .header-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px;}
+        .header-actions .currency-selector{display:flex;align-items:center;gap:10px;background:#f8f9fa;padding:8px 15px;border-radius:12px;}
+        
         .form-card{background:#f8f9fa;padding:15px;border-radius:12px;margin-bottom:15px;border:1px solid #e9ecef}
         .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
         .form-group label{display:block;font-size:12px;color:#495057;margin-bottom:4px;font-weight:600}
         .form-group input,.form-group select{width:100%;padding:8px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:14px}
-        .form-group input:focus,.form-group select:focus{outline:none;border-color:#667eea}
         
         .btn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:0.3s;font-size:13px;display:inline-flex;align-items:center;gap:6px}
         .btn:hover{transform:translateY(-2px)}
@@ -28,6 +31,7 @@
         .btn-sm{padding:4px 10px;font-size:11px}
         
         .cart-item{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e9ecef;flex-wrap:wrap;gap:8px;align-items:center;background:white;border-radius:8px;margin-bottom:4px}
+        .cart-item:hover{background:#f8f9fa}
         
         table{width:100%;border-collapse:collapse;font-size:13px}
         th,td{padding:8px 6px;text-align:center;border-bottom:1px solid #e9ecef}
@@ -51,7 +55,17 @@
 </head>
 <body>
 <div class="container">
-    <h2><i class="fas fa-shopping-cart"></i> نظام المبيعات</h2>
+    <!-- Header with Currency Selector -->
+    <div class="header-actions">
+        <h2><i class="fas fa-shopping-cart"></i> نظام المبيعات</h2>
+        <div class="currency-selector">
+            <label style="font-weight:bold;">💰 العملة:</label>
+            <select id="currencySelect" onchange="onCurrencyChange(this.value)" style="padding:8px 15px;border-radius:8px;border:1px solid #ddd;background:white;cursor:pointer;">
+                <option value="IQD">🇮🇶 دينار عراقي</option>
+                <option value="USD">🇺🇸 دولار أمريكي</option>
+            </select>
+        </div>
+    </div>
     
     <!-- Debug Box -->
     <div id="debugBox" class="debug-box">⏳ جاري تحميل البيانات...</div>
@@ -93,7 +107,7 @@
                 <input type="number" id="quantity" value="1" min="1">
             </div>
             <div class="form-group">
-                <label>سعر البيع</label>
+                <label>سعر البيع (<span class="currency-symbol">د.ع</span>)</label>
                 <input type="number" id="salePrice" step="0.01">
             </div>
         </div>
@@ -111,9 +125,9 @@
     </div>
     
     <div class="cart-summary">
-        <span><strong>الإجمالي:</strong> <span id="cartTotal" class="total">0.00</span></span>
-        <span><strong>الخصم:</strong> <span id="cartDiscount" style="color:#f39c12;">0.00</span></span>
-        <span><strong>الصافي:</strong> <span id="cartNet" style="font-size:18px;font-weight:bold;color:#0c1445;">0.00</span></span>
+        <span><strong>الإجمالي:</strong> <span id="cartTotal" class="total">0.00</span> <span class="currency-symbol">د.ع</span></span>
+        <span><strong>الخصم:</strong> <span id="cartDiscount" style="color:#f39c12;">0.00</span> <span class="currency-symbol">د.ع</span></span>
+        <span><strong>الصافي:</strong> <span id="cartNet" style="font-size:18px;font-weight:bold;color:#0c1445;">0.00</span> <span class="currency-symbol">د.ع</span></span>
     </div>
 
     <div class="action-bar">
@@ -164,6 +178,9 @@
         console.log(msg);
     }
 
+    // ===== تحميل العملة المفضلة =====
+    loadPreferredCurrency();
+
     // ===== Auth =====
     auth.onAuthStateChanged(user => {
         if (!user) {
@@ -178,7 +195,7 @@
     });
 
     // =============================================
-    // 1. تحميل المنتجات - استخدام onSnapshot
+    // 1. تحميل المنتجات
     // =============================================
     function loadProducts() {
         debug('🔄 جاري تحميل المنتجات...');
@@ -192,16 +209,14 @@
                     itemName: data.itemName || data.name || 'بدون اسم',
                     quantity: data.quantity || 0,
                     sellingPrice: data.sellingPrice || data.price || 0,
-                    costPrice: data.costPrice || 0
+                    costPrice: data.costPrice || 0,
+                    priceIQD: data.priceIQD || data.sellingPrice || 0,
+                    priceUSD: data.priceUSD || (data.sellingPrice / 1320) || 0
                 });
             });
             
             debug('✅ تم تحميل ' + allProducts.length + ' منتج', 'success');
             updateProductSelect();
-            
-            if (allProducts.length === 0) {
-                debug('⚠️ لا توجد منتجات في المخزون، أضف منتجات أولاً', 'error');
-            }
         }, (error) => {
             debug('❌ خطأ في تحميل المنتجات: ' + error.message, 'error');
         });
@@ -210,15 +225,16 @@
     function updateProductSelect() {
         const select = document.getElementById('productSelect');
         select.innerHTML = '<option value="">-- اختر منتج --</option>';
+        const symbol = getCurrencySymbol();
         
         allProducts.forEach(p => {
             const stock = p.quantity || 0;
-            select.innerHTML += `<option value="${p.id}" data-price="${p.sellingPrice||0}" data-stock="${stock}">
-                ${p.itemName} (${stock})
+            const price = currentCurrency === 'USD' ? (p.priceUSD || p.sellingPrice / 1320) : (p.priceIQD || p.sellingPrice);
+            select.innerHTML += `<option value="${p.id}" data-price="${price}" data-stock="${stock}">
+                ${p.itemName} (${stock}) - ${price.toFixed(2)} ${symbol}
             </option>`;
         });
         
-        // عند تغيير المنتج
         select.onchange = function() {
             const opt = this.options[this.selectedIndex];
             const price = opt?.getAttribute('data-price') || 0;
@@ -230,7 +246,7 @@
     }
 
     // =============================================
-    // 2. تحميل العملاء - استخدام onSnapshot
+    // 2. تحميل العملاء
     // =============================================
     function loadCustomers() {
         debug('🔄 جاري تحميل العملاء...');
@@ -249,10 +265,6 @@
             
             debug('✅ تم تحميل ' + allCustomers.length + ' عميل', 'success');
             updateCustomerSelect();
-            
-            if (allCustomers.length === 0) {
-                debug('⚠️ لا يوجد عملاء، أضف عملاء أولاً', 'error');
-            }
         }, (error) => {
             debug('❌ خطأ في تحميل العملاء: ' + error.message, 'error');
         });
@@ -261,10 +273,11 @@
     function updateCustomerSelect() {
         const select = document.getElementById('customerSelect');
         select.innerHTML = '<option value="">-- اختر عميل --</option>';
+        const symbol = getCurrencySymbol();
         
         allCustomers.forEach(c => {
             const debt = c.totalDebt || 0;
-            select.innerHTML += `<option value="${c.id}">${c.customerName} ${debt > 0 ? '(عليه '+debt+' د)' : ''}</option>`;
+            select.innerHTML += `<option value="${c.id}">${c.customerName} ${debt > 0 ? '(عليه '+debt.toFixed(0)+' '+symbol+')' : ''}</option>`;
         });
     }
 
@@ -302,7 +315,6 @@
             return;
         }
 
-        // إضافة للسلة
         const existing = cart.find(i => i.productId === productId);
         if (existing) {
             if (existing.quantity + qty > stock) {
@@ -329,10 +341,11 @@
     };
 
     // =============================================
-    // 4. عرض السلة
+    // 4. عرض السلة مع العملة
     // =============================================
     function renderCart() {
         const container = document.getElementById('cart');
+        const symbol = getCurrencySymbol();
         let total = 0;
         
         if (cart.length === 0) {
@@ -347,8 +360,8 @@
             total += item.total;
             html += `<div class="cart-item">
                 <div><strong>${item.name}</strong> × ${item.quantity}</div>
-                <div>${item.price.toFixed(2)} د</div>
-                <div style="font-weight:bold;color:#0c1445;">${item.total.toFixed(2)} د</div>
+                <div>${item.price.toFixed(2)} ${symbol}</div>
+                <div style="font-weight:bold;color:#0c1445;">${item.total.toFixed(2)} ${symbol}</div>
                 <div>
                     <button onclick="changeQty(${idx}, -1)" class="btn btn-sm" style="background:#3498db;color:white;">-</button>
                     <button onclick="changeQty(${idx}, 1)" class="btn btn-sm" style="background:#3498db;color:white;">+</button>
@@ -358,16 +371,17 @@
         });
         container.innerHTML = html;
         
-        const discount = 0; // يمكنك إضافة خصم لاحقاً
+        const discount = 0;
         updateSummary(total, discount);
         document.getElementById('cartCount').innerText = '(' + cart.length + ')';
     }
 
     function updateSummary(total, discount) {
+        const symbol = getCurrencySymbol();
         const net = total - discount;
-        document.getElementById('cartTotal').innerText = total.toFixed(2);
-        document.getElementById('cartDiscount').innerText = discount.toFixed(2);
-        document.getElementById('cartNet').innerText = net.toFixed(2);
+        document.getElementById('cartTotal').innerHTML = total.toFixed(2) + ' ' + symbol;
+        document.getElementById('cartDiscount').innerHTML = discount.toFixed(2) + ' ' + symbol;
+        document.getElementById('cartNet').innerHTML = net.toFixed(2) + ' ' + symbol;
     }
 
     window.changeQty = function(idx, delta) {
@@ -394,7 +408,7 @@
     };
 
     // =============================================
-    // 5. حفظ الفاتورة
+    // 5. حفظ الفاتورة مع العملة
     // =============================================
     window.saveSale = async function() {
         const customerId = document.getElementById('customerSelect').value;
@@ -409,6 +423,7 @@
 
         const total = cart.reduce((s, i) => s + i.total, 0);
         const netTotal = total;
+        const currency = getCurrencyName();
 
         try {
             // تحديث المخزون
@@ -427,6 +442,8 @@
                 paymentMethod: document.getElementById('paymentMethod').value,
                 total: total,
                 netTotal: netTotal,
+                currency: currency,
+                currencySymbol: getCurrencySymbol(),
                 items: cart.map(item => ({...item})),
                 timestamp: new Date()
             });
@@ -444,7 +461,7 @@
     };
 
     // =============================================
-    // 6. تحميل المبيعات
+    // 6. تحميل المبيعات مع العملة
     // =============================================
     function loadSales() {
         db.collection('sales').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
@@ -459,15 +476,16 @@
                 return;
             }
             
+            const symbol = getCurrencySymbol();
             let html = '';
             allSales.forEach((s, idx) => {
                 html += `<tr>
                     <td>${idx + 1}</td>
                     <td>${s.date || '-'}</td>
                     <td>${s.customerName || '-'}</td>
-                    <td>${(s.total || 0).toFixed(2)}</td>
-                    <td>${(s.discount || 0).toFixed(2)}</td>
-                    <td style="font-weight:bold;color:#0c1445;">${(s.netTotal || s.total || 0).toFixed(2)}</td>
+                    <td>${(s.total || 0).toFixed(2)} ${s.currencySymbol || symbol}</td>
+                    <td>${(s.discount || 0).toFixed(2)} ${s.currencySymbol || symbol}</td>
+                    <td style="font-weight:bold;color:#0c1445;">${(s.netTotal || s.total || 0).toFixed(2)} ${s.currencySymbol || symbol}</td>
                     <td>${s.paymentMethod || '-'}</td>
                 </tr>`;
             });
